@@ -28,13 +28,13 @@ Domain: `brandbid.wtf` (D39). Links: `https://brandbid.wtf/go/{code}`, no short 
 
 ```
 apps/web/        Next.js: (public) boards + /b/[slug], (dash), admin, go/[code], out/[click], api/{q,og,story,webhooks}
-apps/worker/     pg-boss jobs: check-listing, cleanup, notify, process-refunds, settle-cycles, reconcile-ledgers (built); score-fraud, process-withdrawals, refresh-leaderboards (placeholders)
+apps/worker/     pg-boss jobs: listing checks, cleanup, notifications, refunds, settlements, reconciliation, fraud, withdrawals and leaderboard refresh
 packages/db/     migrations/, tests/ (SQL tests), types.ts (generated)
 packages/shared/ money, codes, hash, ssrf + safeFetch, utm, slug, listing-check, schemas (zod)
 packages/payments/ processor adapter (Razorpay + mock) and refund rules; used by web and worker
 packages/emails/ email templates (listing approved / rejected) and the Resend/Mailpit sender
 ```
-Current state: Phase 1 is code-complete except for items that need accounts or keys (see the progress table). Phase 2 (promoters, links, clicks, earnings) has not started.
+Current state: Phase 1 and the local implementation for Phases 2–4 are substantially built. The progress table records each local implementation and its remaining hosted, provider, device, traffic, legal or policy checks. Setup-dependent work is listed in PHASES.md.
 
 ## Commands
 
@@ -87,7 +87,7 @@ Copy `.env.example` to `apps/web/.env.local` and `apps/worker/.env`. `supabase/m
 
 ## Open decisions (summary; details in PHASES.md)
 
-Still open: Razorpay test keys (finish P1.5/P1.6/P1.9); Google OAuth client (P1.4); Sentry and PostHog credentials (P1.1/P1.11); Resend key (real email); hosted Supabase projects (owner is setting them up, see DEPLOYMENT.md section 3); Cloudflare first deploy (friend); AWS worker (undecided).
+Still open: setup-dependent work listed in PHASES.md → “Setup-dependent checks to do later”. This includes hosted provider credentials and resources, real-device and staging validation, and the CA/provider/trust policy decisions required before money-out and legal launch. Do not place secrets in the repository or chat.
 Decided: D29–D50 in BUILD.md §3 (also brandbid.wtf and AWS Fargate worker) (Razorpay, $10 min bid, no short domain, EU cookie after consent, email-allowlist beta, team invites in Phase 3, gaps G1–G17 adopted). Design: my own take on outbid.lol's style.
 Defaults in force unless you change them: daily board in UTC, listing emails in Phase 1, I draft the categories.
 
