@@ -645,6 +645,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 
 ### P3.9 — Budget refunds (D23)
 **Depends on:** P3.2. **Refs:** BUILD §8 (refund).
+**Needs from you before processor verification:** Razorpay test account/keys with partial refunds enabled, and confirmation of the refund window that applies to this account and payment method. Do not process live refunds until each bid allocation is tested in the sandbox; out-of-window amounts need a manual-refund path.
 **Build:** an eligibility function (`budget_cents > 0`, and `coalesce(last_spend_at, first_bid_at) <= now() − stagnation_days`). SQL `refund_budget(p_brand_id, p_requester)`: settle the brand's pending earnings first (call settlement scoped to the brand), then disable ads, insert a `budget_refunds` row, and write budget ledger −remaining 'refund'. **Only ad budget is refunded (D37):** the worker splits the refund across the most recent bids within the processor's refund window. Each bid gives back at most `budget_cents − budget_refunded_cents`, and `budget_refunded_cents` is incremented. Revenue is never returned. Example: a $100 bid ($50 budget) with $30 unspent → refund $30 against that bid; a later stagnation refund can return at most another $20 from it. If a bid is outside the window, mark it for manual handling and write `audit_log`. Brand dashboard button and eligibility notification. Rank unchanged.
 
 ### P3.10 — Reconciliation and data hygiene
