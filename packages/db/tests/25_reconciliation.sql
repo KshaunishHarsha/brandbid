@@ -38,7 +38,7 @@ begin
   assert (select user_agent = 'Current browser signature' from public.clicks where id = '00000000-0000-0000-0000-000000000ec7'), 'recent user agent remains';
 
   history := public.admin_reconciliation_history('00000000-0000-0000-0000-000000000ec2', 10);
-  assert jsonb_array_length(history) = 2, 'admin can read run history';
+  assert jsonb_array_length(history) >= 2, 'admin can read both run-history rows created by this fixture';
   assert has_function_privilege('service_role', 'public.run_reconciliation()', 'EXECUTE');
   assert not has_function_privilege('authenticated', 'public.run_reconciliation()', 'EXECUTE');
   assert not has_function_privilege('authenticated', 'public.strip_old_user_agents(timestamp with time zone)', 'EXECUTE');

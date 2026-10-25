@@ -132,11 +132,14 @@ begin
     assert not has_table_privilege(role_name, 'public.visitor_keys', 'SELECT');
   end loop;
 
-  -- no function in public is callable by anon; authenticated only gets the two policy helpers
+  -- Anonymous reads are limited to explicitly public discovery/leaderboards. Authenticated adds member-checked
+  -- traffic stats plus the two RLS policy helpers. All money-moving/admin functions stay server-only.
   for r in select p.proname, p.oid from pg_proc p join pg_namespace n on n.oid = p.pronamespace
            where n.nspname = 'public' and p.proname not like 'zz\_%' loop
-    assert not has_function_privilege('anon', r.oid, 'EXECUTE'), format('anon can execute %s', r.proname);
-    assert r.proname in ('is_admin', 'is_brand_member') or not has_function_privilege('authenticated', r.oid, 'EXECUTE'),
+    assert r.proname in ('discover_brands', 'promoter_leaderboard', 'top_promoters_for_brand')
+      or not has_function_privilege('anon', r.oid, 'EXECUTE'), format('anon can execute %s', r.proname);
+    assert r.proname in ('is_admin', 'is_brand_member', 'brand_traffic_stats', 'discover_brands', 'promoter_leaderboard', 'top_promoters_for_brand')
+      or not has_function_privilege('authenticated', r.oid, 'EXECUTE'),
       format('authenticated can execute %s', r.proname);
   end loop;
 end $$;
