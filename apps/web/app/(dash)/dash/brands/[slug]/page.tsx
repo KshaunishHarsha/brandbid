@@ -8,6 +8,7 @@ import { getDashboardData, getMemberBrand } from '@/lib/dashboard';
 import { recordMemberSignal } from '@/lib/member-signals';
 import { PaidWatcher } from './PaidWatcher';
 import { RerankPanel } from './RerankPanel';
+import { RateSetting } from './RateSetting';
 
 export const metadata = { title: 'Brand dashboard' };
 export const dynamic = 'force-dynamic';
@@ -62,7 +63,7 @@ export default async function BrandDashboard({ params, searchParams }: Props) {
             <Stat label="All-time rank" value={d.allTimeRank ? `#${d.allTimeRank}` : '–'} />
             <Stat label="Today" value={d.todayRank ? `#${d.todayRank}` : '–'} sub={d.todayCents > 0 ? `${formatUSDCompact(d.todayCents)} today` : 'no bids today'} />
             <Stat label="Total paid" value={formatUSDCompact(brand.totalPaidCents)} />
-            <Stat label="Ads" value={brand.adsEnabled ? 'Running' : 'Paused'} sub={brand.adsEnabled ? undefined : 'budget used up'} />
+            <Stat label="Ads" value={brand.adsEnabled ? 'Running' : 'Paused'} sub={brand.adsEnabled ? undefined : d.budget.owedCount > 0 ? `${d.budget.owedCount} visitors waiting` : 'budget below rate'} />
           </dl>
 
           <section className="mt-8 rounded-card border border-line bg-surface p-5" aria-labelledby="move">
@@ -91,7 +92,9 @@ export default async function BrandDashboard({ params, searchParams }: Props) {
             {d.budget.owedCount} qualified visitor{d.budget.owedCount === 1 ? ' is' : 's are'} waiting to be paid ({formatUSD(d.budget.owed)}). Your next payment covers them first.
           </p>
         )}
-        <p className="mt-3 text-sm text-muted">Rate: {formatUSD(brand.rateCents)} per qualified visitor. Setting your own rate arrives with promoters.</p>
+        {(brand.status === 'active' || brand.status === 'pending_review') && (
+          <RateSetting slug={brand.slug} rateCents={brand.rateCents} floorCents={d.floorCents} remainingCents={d.budget.remaining} />
+        )}
       </section>
 
       <section className="mt-8" aria-labelledby="bids">

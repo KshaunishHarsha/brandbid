@@ -533,8 +533,10 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 - Changing the rate updates `ads_enabled` (budget < rate → false).
 - Copy explains that the change applies from the next claim click (D24).
 **Done when:**
-- [ ] Below-floor writes fail at the DB level.
-- [ ] The estimate is correct.
+- [x] Below-floor writes fail at the DB level.
+- [x] The estimate uses the current remaining budget and integer-cent rate calculation.
+
+**Built (2026-10-25):** dashboard rate editor, server-side floor validation, and `brands` trigger enforcing the floor and recalculating `ads_enabled` when a rate changes. The trigger keeps non-active brands paused, pauses rates above remaining budget, and keeps ads paused while visitors are waitlisted; existing visitor claim rates and earnings remain unchanged. Verified with route tests and local SQL test `12_brand_rate_floor.sql`.
 
 ### P2.11 — Promoter dashboard (no withdraw)
 

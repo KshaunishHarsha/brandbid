@@ -75,7 +75,7 @@ export async function listMyBrands(): Promise<DashboardBrandRow[]> {
 export type BidRow = { id: string; amountCents: number; budgetCents: number; revenueCents: number; paymentId: string; status: string; createdAt: string };
 export type DashboardData = {
   allTimeRank: number | null; todayRank: number | null; todayCents: number;
-  moveUpPriceCents: number | null; ladder: Array<{ rank: number; priceCents: number }>; minBidCents: number;
+  moveUpPriceCents: number | null; ladder: Array<{ rank: number; priceCents: number }>; minBidCents: number; floorCents: number;
   budget: { remaining: number; added: number; spent: number; refunded: number; owed: number; owedCount: number; visitorsLeft: number };
   bids: BidRow[];
 };
@@ -89,7 +89,7 @@ export async function getDashboardData(member: MemberBrand): Promise<DashboardDa
   const [ranks, summary, settings, bids] = await Promise.all([
     db.rpc('brand_ranks', { p_brand_id: id }),
     db.rpc('brand_budget_summary', { p_brand_id: id }),
-    db.from('settings').select('value').eq('key', 'min_bid_cents').single(),
+    db.from('settings').select('key,value').in('key', ['min_bid_cents', 'floor_cents']),
     supabase.from('bids').select('id, amount_cents, budget_cents, revenue_cents, processor_payment_id, status, created_at').eq('brand_id', id).order('created_at', { ascending: false }).limit(50),
   ]);
   const r = ranks.data?.[0];
@@ -109,7 +109,8 @@ export async function getDashboardData(member: MemberBrand): Promise<DashboardDa
     todayCents: Number(r?.today_cents ?? 0),
     moveUpPriceCents: moveUp.data == null ? null : Number(moveUp.data),
     ladder: (ladder.data ?? []).map((l) => ({ rank: Number(l.target_rank), priceCents: Number(l.price_cents) })),
-    minBidCents: Number(settings.data?.value ?? 1000),
+    minBidCents: Number(settings.data?.find((setting) => setting.key === 'min_bid_cents')?.value ?? 1000),
+    floorCents: Number(settings.data?.find((setting) => setting.key === 'floor_cents')?.value ?? 10),
     budget: {
       remaining, added: Number(s?.added_cents ?? 0), spent: Number(s?.spent_cents ?? 0), refunded: Number(s?.refunded_cents ?? 0),
       owed: Number(s?.waitlisted_cents ?? 0), owedCount: Number(s?.waitlisted_count ?? 0),
