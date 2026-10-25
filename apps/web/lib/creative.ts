@@ -44,7 +44,15 @@ export function monogram(name: string): string {
 }
 
 export async function storyCachePath(creative: LinkCreative): Promise<string> {
-  const source = creative.logoPath ?? 'no-logo';
+  // Uploads overwrite <brandId>.<ext>, so logoPath alone cannot invalidate an old card.
+  // Fingerprint every field rendered into the card; a temporarily unavailable logo also
+  // gets a distinct monogram cache entry and will switch paths when the image loads again.
+  const source = JSON.stringify({
+    logo: creative.logoData,
+    name: creative.name,
+    description: creative.description,
+    rank: creative.rank,
+  });
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(source));
   const hash = Array.from(new Uint8Array(digest)).slice(0, 8).map((b) => b.toString(16).padStart(2, '0')).join('');
   return `${creative.brandId}/${creative.rank ?? 'unranked'}-${hash}.png`;

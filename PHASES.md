@@ -409,7 +409,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Done when:**
 - [ ] Images render for brands with long names, missing logos, and transparent logos.
 
-**Built locally (2026-10-25):** `/api/og/{code}` and `/api/story/{code}.png` render branded cards from an active link, with monogram fallback, rank, brand name and description. Story cards use the `story-cache` Storage bucket and return generated images if the bucket is unavailable. Typecheck passes. Deferred: verify `ImageResponse` in the Cloudflare OpenNext runtime and provision the hosted `story-cache` bucket under P1.12; visually inspect long-name, missing-logo, and transparent-logo cases.
+**Built locally (2026-10-25):** `/api/og/{code}` and `/api/story/{code}.png` render branded cards from an active link, with monogram fallback, rank, brand name and description. Story cache keys fingerprint the rendered logo data, name, description and rank, so overwriting a logo at the same storage path invalidates stale cards; an unavailable logo uses a separate monogram cache entry. Helper tests cover stable and changing creative inputs plus monograms. Story cards return generated images if the `story-cache` bucket is unavailable. Deferred: verify `ImageResponse` in the Cloudflare OpenNext runtime and provision the hosted `story-cache` bucket under P1.12; visually inspect long-name, missing-logo, and transparent-logo cases.
 
 ### Setup-dependent checks to do later
 
