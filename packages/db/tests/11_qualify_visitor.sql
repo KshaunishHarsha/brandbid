@@ -11,6 +11,12 @@ insert into public.budget_ledger (brand_id, delta_cents, reason)
 values ('00000000-0000-0000-0000-0000000000e3', 25, 'bid');
 insert into public.links (id, code, promoter_id, brand_id, channel, created_at)
 values ('00000000-0000-0000-0000-0000000000e4', 'Qualify1', '00000000-0000-0000-0000-0000000000e2', '00000000-0000-0000-0000-0000000000e3', 'link', now() - interval '23 hours');
+insert into public.brands (id, slug, name, url, owner_id, status, rate_cents, budget_cents, ads_enabled)
+values ('00000000-0000-0000-0000-000000000ea1', 'qualify-other', 'Qualify Other', 'https://other.qualify.test', '00000000-0000-0000-0000-0000000000e1', 'active', 25, 25, true);
+insert into public.budget_ledger (brand_id, delta_cents, reason)
+values ('00000000-0000-0000-0000-000000000ea1', 25, 'bid');
+insert into public.links (id, code, promoter_id, brand_id, channel, created_at)
+values ('00000000-0000-0000-0000-000000000ea2', 'Qualify2', '00000000-0000-0000-0000-0000000000e2', '00000000-0000-0000-0000-000000000ea1', 'link', now() - interval '23 hours');
 
 create function public.zz_qualify_click(p_click uuid, p_cookie text, p_ip text, p_ua text, p_age boolean default true, p_ignored boolean default false)
 returns uuid language plpgsql as $$
@@ -53,6 +59,36 @@ end $$;
 do $$ begin
   assert public.qualify_visitor('00000000-0000-0000-0000-0000000000f1', repeat('a', 64), 'cookie-f1', 'ip-f1', 'ua-f1', 10000, 2) = 'qualified';
   assert public.qualify_visitor('00000000-0000-0000-0000-0000000000f1', repeat('a', 64), 'cookie-f1', 'ip-f1', 'ua-f1', 10000, 2) = 'rejected:already_qualified';
+end $$;
+-- A later same-brand promoter click shares the already-qualified visitor and cannot create a second earning.
+select public.record_click(
+  p_click_id => '00000000-0000-0000-0000-000000000f10',
+  p_link_id => '00000000-0000-0000-0000-0000000000e4',
+  p_brand_id => '00000000-0000-0000-0000-0000000000e3',
+  p_promoter_id => '00000000-0000-0000-0000-0000000000e2',
+  p_ip_hash => 'ip-f1', p_ua_hash => 'ua-f1', p_ipua_hash => 'ip-f1:ua-f1', p_rate_limited => false,
+  p_cookie_id => 'cookie-f1', p_cookie_hash => 'cookie-hash:cookie-f1'
+);
+update public.clicks set created_at = now() - interval '11 seconds' where id = '00000000-0000-0000-0000-000000000f10';
+do $$ begin
+  assert public.qualify_visitor('00000000-0000-0000-0000-000000000f10', repeat('a', 64), 'cookie-f1', 'ip-f1', 'ua-f1', 10000, 1) = 'rejected:already_qualified',
+    'a later click cannot pay the same visitor twice for one brand';
+end $$;
+-- The same cookie and fingerprint are independent for a different brand.
+select public.record_click(
+  p_click_id => '00000000-0000-0000-0000-000000000f11',
+  p_link_id => '00000000-0000-0000-0000-000000000ea2',
+  p_brand_id => '00000000-0000-0000-0000-000000000ea1',
+  p_promoter_id => '00000000-0000-0000-0000-0000000000e2',
+  p_ip_hash => 'ip-f1', p_ua_hash => 'ua-f1', p_ipua_hash => 'ip-f1:ua-f1', p_rate_limited => false,
+  p_cookie_id => 'cookie-f1', p_cookie_hash => 'cookie-hash:cookie-f1'
+);
+update public.clicks set created_at = now() - interval '11 seconds' where id = '00000000-0000-0000-0000-000000000f11';
+do $$ begin
+  assert public.qualify_visitor('00000000-0000-0000-0000-000000000f11', repeat('a', 64), 'cookie-f1', 'ip-f1', 'ua-f1', 10000, 1) = 'qualified',
+    'the same identity may qualify independently for another brand';
+  assert (select count(*) from public.earnings where visitor_id=(select visitor_id from public.clicks where id='00000000-0000-0000-0000-000000000f11') and amount_cents=25)=1,
+    'the other brand reserves its own visitor reward';
 end $$;
 select public.zz_qualify_click('00000000-0000-0000-0000-0000000000f4', 'cookie-f4', 'ip-f4', 'ua-f4');
 do $$ begin

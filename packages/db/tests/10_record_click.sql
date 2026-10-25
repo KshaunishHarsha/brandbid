@@ -33,6 +33,9 @@ end $$;
 
 -- First click claims; a later promoter does not steal a live attribution.
 select public.zz_record_click('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000d1', '00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000a2', null, 'cookie-1', 'cookie-hash-1', 'ip-1', 'ua-1', 'ipua-1', 'Mozilla/5.0', 'US', null, false);
+-- Two days into the default seven-day claim, five days remain; a second promoter click must keep A's claim.
+update public.visitors set claim_expires_at = now() + interval '5 days'
+where claim_click_id = '00000000-0000-0000-0000-0000000000c1';
 select public.zz_record_click('00000000-0000-0000-0000-0000000000c2', '00000000-0000-0000-0000-0000000000d2', '00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000a3', null, 'cookie-1', 'cookie-hash-1', 'ip-2', 'ua-2', 'ipua-2', 'Mozilla/5.0', 'US', null, false);
 do $$
 declare v public.visitors;

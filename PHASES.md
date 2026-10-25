@@ -465,7 +465,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 
 **Implementation note:** the server also passes HMACed cookie and IP+UA keys (`p_cookie_hash`, `p_ipua_hash`) so raw visitor identifiers never enter `visitor_keys`; they use the same `IP_PEPPER` as the other request hashes.
 
-**Built locally (2026-10-25):** `record_click` now handles idempotency, ignored self/member/inactive/rate-limited clicks, per-brand visitor matching, locked claim decisions, seven-day default claims and expired unqualified claim replacement. Local SQL coverage passes; the 1,000-qualification workload in the P2.8 stress suite also passes. Remaining: broaden the BUILD §14 attribution table cases.
+**Built locally (2026-10-25):** `record_click` handles idempotency, ignored self/member/inactive/rate-limited clicks, per-brand visitor matching, locked claim decisions, seven-day default claims and expired unqualified claim replacement. SQL fixtures cover two-day live-claim retention, expired-claim replacement, no second same-brand earning after qualification, and independent qualification across brands; all local SQL fixtures pass. The 1,000-qualification workload in the P2.8 stress suite also passes.
 
 **Tests (SQL):** every row of the BUILD §14 attribution table, as named tests. Clock control: tests pass explicit timestamps, or the function takes an optional `p_now` used only in tests. Self and member clicks create no claims.
 **Done when:**
