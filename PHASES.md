@@ -544,7 +544,9 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Depends on:** P2.8. **Refs:** BUILD §17 (promoter), §15 (earnings view).
 **Build:** `/dash/promoter`: pending total and waitlisted total (no "available" yet, but build the component for it), and per brand then channel: clicks, qualified visitors, qualification rate, pending earnings, waitlisted earnings with expiry date, current cycle end (countdown), brand budget status ("active" / "budget used up — new visitors are waitlisted"). Withdraw button shown disabled with "coming soon".
 **Done when:**
-- [ ] Numbers match direct SQL counts for a seeded dataset.
+- [x] Numbers match direct SQL counts for a seeded dataset.
+
+**Built (2026-10-25):** `/dash/promoter` shows pending and waitlisted totals, an available-balance placeholder, disabled withdrawals, and per-brand/channel clicks, qualified visits, qualification rate, earnings, waitlist expiry dates, cycle countdowns, and budget status. Service-role-only `promoter_dashboard` aggregates the protected click/visitor data; SQL test `13_promoter_dashboard.sql` compares it against raw seeded counts.
 
 ### P2.12 — Brand traffic stats
 

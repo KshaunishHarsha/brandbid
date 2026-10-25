@@ -732,6 +732,9 @@ isOneToOne: false
               "board_rank": number,"brand_id": string,"category_id": number,"description": string,"logo_path": string,"name": string,"slug": string,"today_cents": number,"total_paid_cents": number,"url": string
             }[]
                            },
+"promoter_dashboard":
+{ Args: { "p_promoter_id": string }; Returns: Json
+                           },
 "record_bid":
 { Args: { "p_amount_cents": number,"p_brand_id": string,"p_payer_email"?: string,"p_payer_id": string,"p_payment_fingerprint"?: string,"p_processor": string,"p_processor_payment_id": string }; Returns: Json
                            },

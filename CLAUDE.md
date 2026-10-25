@@ -119,7 +119,7 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 | P2.8 | `/api/q`, `qualify_visitor` | wip | 2026-10-25 | SQL reject/budget/waitlist tests and 1,000-visitor concurrency/refill pass locally; web tests/typecheck pass. Left: CI after owner pushes local commits. |
 | P2.9 | `/out/[click_id]` | wip | 2026-10-25 | No-store click-through redirects with brandbid/promoter/channel UTMs; unit tests pass. Left: confirm GA/Plausible attribution on staging. |
 | P2.10 | Rate setting, pause state | done | 2026-10-25 | Dashboard rate editor with live estimate; server and DB floor checks; rate edits pause ads below budget or with waitlisted visitors and never enable non-active brands. Web route tests and local SQL trigger test pass. |
-| P2.11 | Promoter dashboard | todo | | |
+| P2.11 | Promoter dashboard | done | 2026-10-25 | `/dash/promoter` and protected SQL aggregate; raw SQL seeded counts, route mapping tests, and web typecheck pass. Withdrawals and available balance stay placeholders for later phases. |
 | P2.12 | Brand traffic stats | todo | | |
 | P2.13 | Seed and simulator tooling | todo | | |
 | P2.14 | E2E, beta readiness | todo | | |

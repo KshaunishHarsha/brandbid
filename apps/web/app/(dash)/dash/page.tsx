@@ -21,7 +21,10 @@ export default async function Dashboard() {
   return (
     <main className="mx-auto max-w-3xl px-4 pb-16">
       <SiteHeader />
-      <h1 className="text-2xl font-bold">Your brands</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">Your brands</h1>
+        <Link href="/dash/promoter" className="text-sm underline">Promoter dashboard</Link>
+      </div>
       {brands.length === 0 ? (
         <div className="mt-6 rounded-card border border-dashed border-line p-10 text-center">
           <p className="font-semibold">You haven&apos;t listed a brand yet.</p>
