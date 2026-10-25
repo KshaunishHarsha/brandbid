@@ -424,6 +424,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 - [ ] P2.13: configure the local web environment from `supabase status -o env` (`ANON_KEY`, `SERVICE_ROLE_KEY`, `JWT_SECRET`) and a local `IP_PEPPER`, then run `pnpm simulate:clicks`; staging can use the documented Cloudflare Turnstile test keys.
 - [ ] P2.14: run the full beta end-to-end suite after the hosted services and device checks above are available.
 - [ ] P3.1: configure a verified Resend sender/API key and test recipient accounts; trigger the notification matrix and inspect delivery in Gmail and Outlook. Local template/worker tests do not need provider credentials.
+- [ ] P3.4–P3.6: after P3.0, choose the phone, KYC and payout providers; create sandbox accounts, credentials, and webhook settings. Get the CA's tax-data guidance before storing tax details. Build and test in sandbox only until the P3.0 legal/provider gate is complete.
 
 ### P2.5 — `/go/[code]` redirect
 
@@ -635,6 +636,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Depends on:** P3.2. **Refs:** BUILD §15 (clawback), §16 (review outcomes), D27.
 **Build:** SQL `reverse_earning(p_earning_id, p_reason, p_admin_id)`: earning → `reversed`; budget_ledger `+amount 'reversal'`; if the earning was available or withdrawn, `promoter_ledger −amount 'clawback'`; then `fund_waitlist(brand)`, so money recovered from fraud pays honest waitlisted promoters first (D36). A waitlisted earning found to be fraudulent is just set to `reversed`, with no money moving. `ban_promoter`: status `banned`, positive balance → `forfeit` row, links disabled.
 **Tests (SQL):** clawback goes negative, then the next earnings bring it back to zero; reversing a pending earning only touches the budget.
+**Built locally (2026-10-25):** service-role-only, admin-checked `reverse_earning` and `ban_promoter`; reversals verify the original budget reservation, create clawbacks only for credited earnings, return budget to the ordered waitlist, confirm open fraud flags, and preserve idempotency. Waitlisted fraud reversals move no money. Bans disable links and forfeit only a positive ledger balance. SQL fixture `21_reversal_ban.sql` verifies these outcomes and recovery from a negative balance. The schema now permits an unfunded reversed waitlist earning.
 
 ### P3.8 — Admin panel v2
 **Depends on:** P3.3, P3.6, P3.7. **Refs:** BUILD §18.
