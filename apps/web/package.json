@@ -23,6 +23,7 @@
     "@upstash/ratelimit": "^2.2.0",
     "@upstash/redis": "^1.39.0",
     "i18n-iso-countries": "^7.14.0",
+    "isbot": "^5.2.2",
     "next": "16.4.3",
     "posthog-js": "^1.438.21",
     "react": "19.3.0",
