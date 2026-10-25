@@ -137,7 +137,8 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 | P3.11 | Brand dashboard v2 | wip | 2026-10-25 | Brand members can submit a reasoned suspicious-traffic report; it is rate-limited, audited and reviewed in the admin fraud queue, where admins can clear it but cannot reverse an unrelated earning. Owner-only team invitations use hashed expiring tokens, invited-email matching, member-only access, and outbox token cleanup after delivery; local tests pass. Brand owners can request eligible budget refunds (P3.9). Production email delivery still needs verified Resend setup (P3.1). |
 | P3.12 | Legal pages | todo | | |
 | P3.13 | Live money launch | todo | | |
-| P4.1–P4.8 | Growth and scale | todo | | See PHASES.md |
+| P4.1 | Public promoter leaderboards | wip | 2026-10-25 | Weekly UTC and all-time settled earnings snapshots, five-minute concurrent refresh, anonymous opt-out display, and `/promoters` are built locally; SQL and loader/job tests pass. Hosted refresh and product review remain. |
+| P4.2–P4.8 | Growth and scale | todo | | See PHASES.md |
 
 ## Gotchas log
 

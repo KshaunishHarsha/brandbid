@@ -735,6 +735,11 @@ isOneToOne: false
 "brand_traffic_stats":
 { Args: { "p_brand_id": string }; Returns: Json
                            },
+"promoter_leaderboard":
+{ Args: { "p_limit"?: number,"p_offset"?: number,"p_period": string }; Returns: {
+              "board_rank": number,"earned_cents": number,"handle": string,"qualified_visitors": number
+            }[]
+                           },
 "category_counts":
 { Args: Record<PropertyKey, never>; Returns: {
               "id": number,"live_brands": number,"name": string,"slug": string

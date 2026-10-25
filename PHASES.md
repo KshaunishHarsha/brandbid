@@ -688,6 +688,8 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 | P4.7 | More payout rails | §23 |
 | P4.8 | Fraud threshold tuning from real data; log every change in BUILD §3 | §16 |
 
+**P4.1 built locally (2026-10-25):** weekly UTC and all-time materialized totals include available, settled earnings only and refresh concurrently every five minutes. The public function returns no promoter IDs and reads the opt-out flag at request time, rendering opted-out handles as anonymous. `/promoters` has weekly and all-time boards. SQL fixture `30_promoter_leaderboards.sql` covers settled-only totals, UTC-week boundaries, anonymity and view ACLs; loader and refresh-job tests cover mapping and refresh calls.
+
 ---
 
 ## Gaps and proposed additions

@@ -5,6 +5,7 @@ import { runCleanup } from './cleanup.js';
 import { runNotify } from './notify.js';
 import { runProcessRefunds } from './process-refunds.js';
 import { runReconcileLedgers } from './reconcile-ledgers.js';
+import { runRefreshLeaderboards } from './refresh-leaderboards.js';
 import { runSettleCycles } from './settle-cycles.js';
 
 // Every job in BUILD.md section 4. Handlers not built yet are no-ops that say which work package owns them.
@@ -21,7 +22,7 @@ export const JOBS: JobDef[] = [
   { name: 'settle-cycles', cron: '*/5 * * * *', wp: 'P3.2', run: (ctx) => runSettleCycles(ctx) },
   { name: 'score-fraud', wp: 'P3.3' },
   { name: 'process-withdrawals', cron: '*/15 * * * *', wp: 'P3.6' },
-  { name: 'refresh-leaderboards', cron: '* * * * *', wp: 'P1.7' },
+  { name: 'refresh-leaderboards', cron: '*/5 * * * *', wp: 'P4.1', run: (ctx) => runRefreshLeaderboards(ctx.pool) },
   { name: 'reconcile-ledgers', cron: '0 2 * * *', wp: 'P3.10', run: (ctx) => runReconcileLedgers(ctx) },
   // P1.9 sends the listing approved / rejected emails; the other kinds arrive with their phases (P3.1).
   { name: 'notify', cron: '* * * * *', wp: 'P3.1', run: (ctx) => runNotify(ctx) },
