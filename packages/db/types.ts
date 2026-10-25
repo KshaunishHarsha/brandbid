@@ -683,6 +683,22 @@ isOneToOne: false
 "fund_waitlist":
 { Args: { "p_brand_id": string }; Returns: number
                            },
+"get_or_create_link":
+{ Args: { "p_brand_id": string,"p_channel": string,"p_code": string,"p_promoter_id": string }; Returns: {
+              "brand_id": string,
+"channel": string,
+"code": string,
+"created_at": string,
+"id": string,
+"promoter_id": string,
+"status": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "links"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "is_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },

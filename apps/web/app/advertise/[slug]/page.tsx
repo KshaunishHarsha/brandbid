@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getUser, signInUrl } from '@/lib/auth';
 import { canAdvertise } from '@/lib/beta';
 import { getBrandPage } from '@/lib/brand';
+import { getShareLinks } from '@/lib/share-links';
 import { createClient } from '@/lib/supabase/server';
 import { JoinWaitlist } from './JoinWaitlist';
 
@@ -35,13 +36,22 @@ export default async function Advertise({ params }: { params: Promise<{ slug: st
     return <main className="mx-auto max-w-md space-y-4 p-6"><Link href={`/b/${brand.slug}`} className="text-sm underline">← {brand.name}</Link><h1 className="text-2xl font-bold">You can&apos;t promote this brand</h1><p>You&apos;re part of its team.</p></main>;
   }
   if (!profile?.handle || !profile.promoter_terms_accepted_at) redirect(`/onboarding/promoter?next=${encodeURIComponent(next)}`);
+  let links;
+  try {
+    links = await getShareLinks(user.id, brand.id);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('self_promotion')) {
+      return <main className="mx-auto max-w-md p-6"><h1 className="text-2xl font-bold">You can&apos;t promote a brand you&apos;re part of.</h1></main>;
+    }
+    throw error;
+  }
   return (
     <main className="mx-auto max-w-md space-y-4 p-6">
       <Link href={`/b/${brand.slug}`} className="text-sm underline">← {brand.name}</Link>
       <h1 className="text-2xl font-bold">Share {brand.name}</h1>
-      <p>Choose where you want to share. Your own link for each channel is coming in the next step of the beta.</p>
+      <p>Choose where you want to share. Each channel has its own permanent link.</p>
       <div className="grid grid-cols-2 gap-2">
-        {['Instagram story', 'LinkedIn', 'X', 'Copy link'].map((channel) => <button key={channel} disabled className="rounded-lg border border-line bg-surface p-3 text-left opacity-60">{channel}</button>)}
+        {([['story', 'Instagram story'], ['linkedin', 'LinkedIn'], ['x', 'X'], ['link', 'Plain link']] as const).map(([channel, label]) => <div key={channel} className="rounded-lg border border-line bg-surface p-3"><div className="font-medium">{label}</div><code className="mt-2 block break-all text-xs">{links[channel]}</code></div>)}
       </div>
     </main>
   );

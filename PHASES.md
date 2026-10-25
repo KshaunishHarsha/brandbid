@@ -375,6 +375,8 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 - [ ] All tests pass.
 - [ ] The share sheet shows the "You can't promote a brand you're part of." message for members.
 
+**Built locally (2026-10-25):** Service-role-only `get_or_create_link` with server-generated codes, five collision retries, and stable channel URLs on the Advertise page. SQL tests cover existing links, self-promotion, and suspension. A concurrent-call test and live flow remain open.
+
 ### P2.3 — Share sheet
 
 **Goal:** from tap to shared in under 20 s on all four channels.
