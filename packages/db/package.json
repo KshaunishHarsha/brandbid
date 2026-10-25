@@ -1,0 +1,8 @@
+{
+  "name": "@brandbid/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./types.ts",
+  "scripts": { "lint": "echo 'no lint yet'", "typecheck": "echo 'no ts yet'" }
+}

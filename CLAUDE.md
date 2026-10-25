@@ -33,11 +33,22 @@ packages/db/     migrations/, functions/ (money SQL), tests/ (SQL tests), types.
 packages/shared/ money.ts (cents), codes.ts, hash.ts, channels.ts, constants.ts, schemas.ts (zod)
 packages/emails/ email templates
 ```
-Current state: only the docs exist. Scaffolding is P1.1.
+Current state: P1.1 scaffold exists (web with placeholder routes, worker skeleton, empty packages, CI file). No schema yet.
 
 ## Commands
 
-_Fill in during P1.1._ Planned: `pnpm dev`, `pnpm test`, `pnpm test:sql`, `pnpm lint`, `pnpm typecheck`, `pnpm db:reset`, `pnpm db:types`, `supabase start`, `pnpm --filter worker dev`.
+Needs Node ≥ 24 (`.nvmrc`), pnpm 12, Docker running, Supabase CLI.
+
+| Command | Does |
+| --- | --- |
+| `supabase start` | Local Postgres + Auth + Storage (Docker). Prints the anon and service-role keys for `.env` |
+| `pnpm dev` | Web (localhost:3000) and worker together. Web alone: `pnpm --filter web dev` |
+| `pnpm lint` · `pnpm typecheck` · `pnpm test` | Lint, TypeScript (web runs `next typegen` first), Vitest |
+| `pnpm test:sql` | Runs `packages/db/tests/*.sql` against the local DB (needs `psql`) |
+| `pnpm db:reset` | Re-applies all migrations and seeds |
+| `pnpm db:types` | Regenerates `packages/db/types.ts` |
+
+Copy `.env.example` to `apps/web/.env.local` and `apps/worker/.env`. `supabase/migrations` is a symlink to `packages/db/migrations`.
 
 ## Non-negotiable rules
 
@@ -54,6 +65,7 @@ _Fill in during P1.1._ Planned: `pnpm dev`, `pnpm test`, `pnpm test:sql`, `pnpm 
 - Raw IPs are never stored; only `HMAC-SHA256(IP_PEPPER, …)`.
 - Migrations are forward-only, in `packages/db/migrations`. Never edit a merged one. Regenerate `types.ts` after each.
 - Any PR touching money code includes or updates SQL tests, and the 1 000-parallel concurrency test must pass.
+- **Keep `.gitignore` current; the repo is pushed to GitHub regularly.** Never commit secrets: `.env*` (except `.env.example`), keys, `*.pem`, Terraform state or `.tfvars`, database dumps, logs. When adding a new tool, framework or generated folder, update `.gitignore` in the same change and check with `git status` and `git check-ignore -v <file>` before committing. Never ignore real source: for example, `out/` is NOT a global ignore because `apps/web/app/out/[click]` is a route. A real secret that was ever committed must be rotated, not just deleted.
 - Use the BUILD §2 glossary terms in code and UI (promoter, not "advertiser"; link, claim, cycle, settlement…).
 - No ORM over money SQL, no client-side state library, no second database (BUILD §4).
 - Qualification endpoint is `/api/q` (avoids ad blockers). It always returns 204.
@@ -78,7 +90,7 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 
 | WP | Title | Status | Updated | Notes |
 | --- | --- | --- | --- | --- |
-| P1.1 | Monorepo, tooling, CI | todo | | |
+| P1.1 | Monorepo, tooling, CI | wip | 2026-10-25 | Scaffold, lint, typecheck, web routes verified. Still to verify: `supabase start` + worker boot (Docker wasn't running), CI run on GitHub, Sentry event, `staging` branch |
 | P1.2 | Schema, RLS, seeds | todo | | |
 | P1.3 | Shared: money, codes, schemas | todo | | |
 | P1.4 | Auth and profiles | todo | | |
@@ -123,3 +135,7 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 ## Gotchas log
 
 _Append one line per hard-won lesson (date, what, why)._
+
+- 2026-10-25: `create-next-app` turns on `cacheComponents`, which forbids `export const runtime = 'edge'`. It's off in `next.config.ts` because `/go` must be an edge function. Don't turn it back on.
+- 2026-10-25: In Next route handlers use `NextResponse.redirect`, not `Response.redirect`. The latter has immutable headers and returns 500.
+- 2026-10-25: pg-boss 12 exports `{ PgBoss }` (no default export) and needs `createQueue()` before `work()`/`schedule()`.

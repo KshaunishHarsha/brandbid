@@ -1,0 +1,75 @@
+# --- Secrets (never commit; .env.example is the only exception) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+.aws/
+credentials
+service-account*.json
+
+# --- Dependencies ---
+node_modules/
+.pnpm-store/
+.pnp.*
+
+# --- Build output and caches ---
+.next/
+/apps/web/out/
+dist/
+build/
+.turbo/
+.cache/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# --- Tests ---
+test-results/
+playwright-report/
+playwright/.cache/
+
+# --- Supabase local state ---
+supabase/.temp/
+supabase/.branches/
+
+# --- Infrastructure as code (AWS) ---
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform.lock.hcl.bak
+cdk.out/
+cdk.context.json
+
+# --- Deploy tooling ---
+.vercel/
+
+# --- Logs and temp ---
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.tmp/
+tmp/
+
+# --- Database dumps and local data ---
+*.dump
+*.sql.gz
+*.sqlite
+*.db
+
+# --- Editors and OS ---
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+
+# --- Claude Code local settings (shared project config stays tracked) ---
+.claude/settings.local.json
+.claude/scheduled_tasks.lock

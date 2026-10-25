@@ -1,0 +1,23 @@
+{
+  "name": "brandbid",
+  "private": true,
+  "packageManager": "pnpm@12.15.0",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "dev": "pnpm --parallel --filter web --filter worker dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "vitest run",
+    "test:sql": "bash packages/db/run-sql-tests.sh",
+    "db:start": "supabase start",
+    "db:reset": "supabase db reset",
+    "db:types": "supabase gen types typescript --local > packages/db/types.ts",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "prettier": "^3.3.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.0.0"
+  }
+}
