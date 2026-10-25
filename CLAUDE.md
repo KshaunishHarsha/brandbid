@@ -82,8 +82,8 @@ Copy `.env.example` to `apps/web/.env.local` and `apps/worker/.env`. `supabase/m
 
 ## Open decisions (summary; details in PHASES.md)
 
-Still open: **Q7** none of the third-party accounts exist yet (checklist in PHASES.md P1.12).
-Decided: D29–D40 in BUILD.md §3 (also brandbid.wtf and AWS Fargate worker) (Razorpay, $10 min bid, no short domain, EU cookie after consent, email-allowlist beta, team invites in Phase 3, gaps G1–G17 adopted). Design: my own take on outbid.lol's style.
+Still open: **Q7** none of the third-party accounts exist yet (checklist in PHASES.md P1.12); Razorpay test keys (to finish P1.5); Google OAuth client (to finish P1.4).
+Decided: D29–D46 in BUILD.md §3 (also brandbid.wtf and AWS Fargate worker) (Razorpay, $10 min bid, no short domain, EU cookie after consent, email-allowlist beta, team invites in Phase 3, gaps G1–G17 adopted). Design: my own take on outbid.lol's style.
 Defaults in force unless you change them: daily board in UTC, listing emails in Phase 1, I draft the categories.
 
 ## Progress
@@ -95,7 +95,7 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 | P1.1 | Monorepo, tooling, CI | wip | 2026-10-25 | Verified locally: lint, typecheck, web routes, `supabase start`, worker boots and creates all 7 pg-boss queues + 5 schedules, `pnpm test:sql` runs. Still to verify: first CI run on GitHub, Sentry test event (needs DSN). `staging` branch is deferred to P1.12 (D41) |
 | P1.2 | Schema, RLS, seeds | done | 2026-10-25 | 5 migrations; 3 SQL test files (smoke, RLS, constraints) mutation-checked. New tables/functions start with no client access: GRANT explicitly |
 | P1.3 | Shared: money, codes, schemas | done | 2026-10-25 | 79 tests, 100% branch coverage on money.ts + codes.ts. Also hash.ts, constants (bots, consent countries, reserved handles), `linkUrl()` |
-| P1.4 | Auth and profiles | todo | | |
+| P1.4 | Auth and profiles | wip | 2026-10-25 | Magic link done and tested against local Supabase + Mailpit. Left: Google OAuth client (wired, unverified), real Turnstile keys, hosted Supabase email template/SMTP, a browser test |
 | P1.5 | Payments in, `record_bid` | wip | 2026-10-25 | SQL + webhook + adapter done and tested (SQL tests, 100-call concurrency test, 29 unit tests, real route vs local DB). Left: a real Razorpay test-mode payment (needs keys); `/api/checkout` moved to P1.6 |
 | P1.6 | Brand listing flow | todo | | |
 | P1.7 | Leaderboards, claim price | todo | | |
@@ -142,6 +142,7 @@ _Append one line per hard-won lesson (date, what, why)._
 - 2026-10-25: Cloudflare headers: country is `cf-ipcountry`, client IP is `cf-connecting-ip`. Background work after responding is `getCloudflareContext().ctx.waitUntil(...)`.
 - 2026-10-25: In Next route handlers use `NextResponse.redirect`, not `Response.redirect`. The latter has immutable headers and returns 500.
 - 2026-10-25: Docker Desktop on an 8 GB Mac needs its memory limit lowered (~3 GB) to run the Supabase stack comfortably. `psql` isn't installed locally; `pnpm test:sql` falls back to `docker exec` into `supabase_db_brandbid`.
+- 2026-10-25: Auth: `middleware.ts` stays (not Next 16 `proxy.ts`) until the Cloudflare adapter's proxy support is verified. Magic links use the token-hash flow + a Continue button (`/auth/confirm` -> `POST /api/auth/verify`) so they work across browsers and email scanners can't burn them. Local email is in Mailpit at http://127.0.0.1:54324. `supabase/config.toml` raises `email_sent` for local only. Zod 4: put `.max()` before `.pipe(z.email())`.
 - 2026-10-25: Postgres gives every new function `EXECUTE` to PUBLIC. `ALTER DEFAULT PRIVILEGES IN SCHEMA public ... FROM public` does NOT remove that; migration `000550` uses the form without `IN SCHEMA`. The test in `02_constraints.sql` fails if a new function is callable by a client role. Money functions are `SECURITY INVOKER`, service role only.
 - 2026-10-25: If `tsc` reports a stale error (e.g. a BigInt target error) after you changed `tsconfig.json`, delete `apps/web/tsconfig.tsbuildinfo`. Web targets ES2022 because shared code uses BigInt.
 - 2026-10-25: pg-boss 12 exports `{ PgBoss }` (no default export) and needs `createQueue()` before `work()`/`schedule()`.

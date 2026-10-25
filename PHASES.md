@@ -135,6 +135,13 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 - [ ] The profile row is created on first sign-in.
 - [ ] The 6th attempt within 10 min is rate-limited.
 
+**Built (2026-10-25), D45/D46:** Supabase clients (browser, server, middleware), `middleware.ts` session refresh (kept as `middleware.ts`, not Next 16's `proxy.ts`: adapter support for Node proxy is unverified, check in P1.12), `/signin` (magic link + optional Google), `POST /api/auth/magic-link` (zod, Turnstile, 5/IP/10min, 3/email/10min, same answer whether or not the account exists), `/auth/confirm` page + `POST /api/auth/verify` (token-hash flow: works in a different browser than the one that asked, and a "Continue" button stops email scanners burning the one-time link), `/auth/callback` (Google), `POST /auth/signout`, `lib/auth.ts` (`getUser`, `requireUser`, `requireAdmin` with the 12 h rule, 404 for non-admins), `safeNext`, Upstash rate limiter with in-memory fallback for dev only, custom email template in `supabase/templates/`. Tests: 25 unit tests, plus a full run against local Supabase and Mailpit (request link, read the real email, follow it, session, reuse blocked, open redirect blocked, 404 for non-admins, 13 h-old admin sign-in bounced, rate limit).
+**Still open:**
+- [ ] **Google sign-in is wired but unverified**: needs a Google OAuth client. Google Cloud Console -> APIs & Services -> Credentials -> OAuth client ID (Web). Authorised redirect URIs: `http://127.0.0.1:54321/auth/v1/callback` (local) and `https://<project-ref>.supabase.co/auth/v1/callback` (hosted). Then set `GOOGLE_CLIENT_ID/SECRET`, `enabled = true` under `[auth.external.google]` in `supabase/config.toml`, restart Supabase, set `NEXT_PUBLIC_GOOGLE_AUTH=true`. On hosted Supabase, set the same in Dashboard -> Authentication -> Providers, and add the site URL and `https://brandbid.wtf/**` redirect URL.
+- [ ] Real Turnstile keys (local dev without keys skips the check; production without keys fails closed).
+- [ ] Hosted Supabase: copy the email template from `supabase/templates/magic_link.html` into Authentication -> Email Templates (Magic Link and Confirm signup), and configure SMTP (Resend) because Supabase's built-in sender is heavily rate limited.
+- [ ] Playwright browser test (the flow was tested at HTTP level, not in a browser).
+
 ### P1.5 — Payments in: checkout, webhook, `record_bid`
 
 **Goal:** money comes in exactly once, split correctly.
@@ -171,6 +178,8 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 
 **Goal:** a signed-in user turns a URL into a paid, auto-checked listing.
 **Depends on:** P1.4, P1.5. **Refs:** BUILD §8 (listing, policy), [G4].
+
+**D45 change: no sign-in wall.** The visitor lists a brand without an account. At checkout they give one email (typed twice; signed-in users skip it). The server creates or reuses the account for that email and makes it the brand owner, then Razorpay is opened with `notes { brand_id, payer_id }` as before. After payment the receipt email carries a magic link to the dashboard. Needs: a service-role-only SQL helper `find_user_id_by_email(text)` (reads `auth.users`) and `auth.admin.createUser({ email, email_confirm: false })` for new emails; Turnstile and an IP + email rate limit on `/api/checkout` (it creates accounts); the cleanup job removes unpaid `draft` brands after 7 days and unconfirmed users with no bids and no sign-in after 7 days. Risks to handle: a mistyped email (typed twice, and a "resend my link" page), and someone entering another person's email (harmless to the victim since only they receive the link, but rate-limit per email so we can't be used to spam an inbox).
 
 **Build**
 - `/list` page, step 1: enter a URL.

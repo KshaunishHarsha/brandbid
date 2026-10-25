@@ -126,6 +126,8 @@ Every product decision, with the date it was made. To change one, add a new row 
 | D42 | 2026-10-25 | Schema additions from building P1.2: `categories.requires_review` drives the manual-review categories in section 8 (G18); `brands.ads_enabled` defaults to false and is switched on by the first bid; client roles get column-level grants only, and any future table or function starts with no client access. |
 | D43 | 2026-10-25 | The web app is deployed on Cloudflare Workers through the OpenNext adapter (`@opennextjs/cloudflare`), not Vercel. The Node.js runtime is used; `runtime = 'edge'` is not supported by the adapter and must not appear in route files. Every Worker already runs at Cloudflare's edge, so `/go` needs no special runtime. Country comes from the `cf-ipcountry` header and client IP from `cf-connecting-ip`. The worker (AWS, D40) and database (Supabase) are unchanged. |
 | D44 | 2026-10-25 | A successful payment that cannot be recorded (unknown or rejected brand, below the minimum bid, wrong currency, missing attribution, unknown payer) is refunded in full automatically and written to the audit log, never kept. Temporary failures return an error so the processor retries the webhook. |
+| D45 | 2026-10-25 | Brands pay with an email-only checkout: no sign-in wall. The checkout asks for one email (typed twice); an account is created for it behind the scenes (or the existing account is used), and a magic link to the dashboard comes with the receipt. Signed-in users skip the field. Promoters still sign up and verify their email first (D5). Supersedes section 8 step 1 "User signs in". |
+| D46 | 2026-10-25 | Sign-in methods from launch: Google and email magic link. Magic links use the token-hash flow so they work in a different browser than the one that requested them. |
 
 ---
 
@@ -565,7 +567,7 @@ These hold at all times. The nightly `reconcile-ledgers` job checks them and ale
 
 ### Listing a brand
 
-1. User signs in and enters the brand URL.
+1. Visitor enters the brand URL. No sign-in (D45). Later, at checkout, they give one email (typed twice); signed-in users skip it.
 2. Server fetches the page and pre-fills name, description and logo from its title, meta description and Open Graph image. The user edits them and picks a category.
 3. User picks the amount (see "Claim price" below) and pays through the payment processor's hosted checkout.
 4. The processor's webhook calls `record_bid`. The brand becomes `pending_review` with its bid recorded.
