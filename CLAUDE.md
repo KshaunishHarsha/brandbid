@@ -20,9 +20,9 @@ If code disagrees with BUILD.md, the code is wrong. If you change behaviour, upd
 
 ## Stack (BUILD §4)
 
-TypeScript strict · pnpm monorepo · Next.js App Router + Tailwind on Vercel · Supabase (Postgres, Auth with Google and magic link, Storage) · Vercel edge `/go/[code]` · Node worker on Railway with pg-boss · Turnstile · FingerprintJS · Upstash ratelimit · isbot · @vercel/og · Resend · Sentry · PostHog · Vitest / SQL tests / Playwright.
+TypeScript strict · pnpm monorepo · Next.js App Router + Tailwind on Vercel · Supabase (Postgres, Auth with Google and magic link, Storage) · Vercel edge `/go/[code]` · Node worker on AWS ECS Fargate with pg-boss (D40) · Turnstile · FingerprintJS · Upstash ratelimit · isbot · @vercel/og · Resend · Sentry · PostHog · Vitest / SQL tests / Playwright.
 Payments in: **Razorpay** (USD, behind `apps/web/lib/payments` adapter, D29). Payouts out: **TBD (Phase 3)**.
-Links: `https://brandbid.com/go/{code}`, no short domain (D31). Min bid $10 (D30). Daily board resets 00:00 UTC.
+Domain: `brandbid.wtf` (D39). Links: `https://brandbid.wtf/go/{code}`, no short domain (D31). Min bid $10 (D30). Daily board resets 00:00 UTC.
 
 ## Repo layout
 
@@ -46,7 +46,7 @@ _Fill in during P1.1._ Planned: `pnpm dev`, `pnpm test`, `pnpm test:sql`, `pnpm 
 - `brands.budget_cents` = the sum of `budget_ledger` and is never negative. Promoter balance = the sum of `promoter_ledger` (negative only through clawback).
 - A visitor is paid at most once, ever (`earnings.visitor_id` unique). Earning amount = `visitors.claim_rate_cents`.
 - **Budget is reserved at qualification, in strict DB order** (brand row lock). When it runs out, new qualified visitors are `waitlisted`, not lost; any budget increase calls `fund_waitlist` first, in order, no queue-jumping. Waitlist expires after 30 days (D36).
-- **Refunds return ad budget only.** Each bid refunds at most its `budget_cents`; revenue is never refunded (D37). The rejected-listing refund policy is still open.
+- **Stagnation refunds return ad budget only.** Each bid refunds at most its `budget_cents`; revenue is never refunded (D37). **Rejected listings are refunded in full** (D38), since they never went live.
 - RLS is on for every table. The service-role key is used only in API routes, `/go` and the worker, and never reaches the browser.
 - Webhooks verify signatures and are idempotent (`bids.processor_payment_id` unique).
 - `/go` returns **302, never 301**; the visitor never waits on a DB write (`waitUntil`). Link-preview bots get OG HTML and are not counted. Prefetches get 204.
@@ -68,8 +68,8 @@ _Fill in during P1.1._ Planned: `pnpm dev`, `pnpm test`, `pnpm test:sql`, `pnpm 
 
 ## Open decisions (summary; details in PHASES.md)
 
-Still open: **Q7** none of the third-party accounts exist yet (checklist in PHASES.md P1.12) · **Q13** is `brandbid.com` registrable? · **Q14** refund policy for rejected listings (full vs budget-only).
-Decided: D29–D35 in BUILD.md §3 (Razorpay, $10 min bid, no short domain, EU cookie after consent, email-allowlist beta, team invites in Phase 3, gaps G1–G17 adopted). Design: my own take on outbid.lol's style.
+Still open: **Q7** none of the third-party accounts exist yet (checklist in PHASES.md P1.12).
+Decided: D29–D40 in BUILD.md §3 (also brandbid.wtf and AWS Fargate worker) (Razorpay, $10 min bid, no short domain, EU cookie after consent, email-allowlist beta, team invites in Phase 3, gaps G1–G17 adopted). Design: my own take on outbid.lol's style.
 Defaults in force unless you change them: daily board in UTC, listing emails in Phase 1, I draft the categories.
 
 ## Progress

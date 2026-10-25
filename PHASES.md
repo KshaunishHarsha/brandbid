@@ -265,16 +265,16 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Goal:** staging and production exist and deploy safely.
 **Depends on:** P1.1, P1.2. **Refs:** BUILD §5. **Needs from you:** [Q7] none of the accounts exist yet. Create them before this WP, in this order:
 
-1. Domain `brandbid.com` (check availability; if it's taken, the name decision goes back to you).
+1. Domain `brandbid.wtf` (D39). Note: `.wtf` is a normal, working TLD, but some email filters and corporate networks distrust unusual TLDs. Set up SPF, DKIM and DMARC for Resend properly and test deliverability early (P3.1).
 2. GitHub repo (private) for this monorepo.
 3. Supabase: org with 2 projects (`brandbid-staging`, `brandbid-prod`), same region (pick one close to most users; `ap-south-1` if India-first, `us-east-1` if global).
-4. Vercel: project linked to the repo, domains `brandbid.com` and `staging.brandbid.com`.
-5. Railway: project with `worker-staging` and `worker-prod` services.
+4. Vercel: project linked to the repo, domains `brandbid.wtf` and `staging.brandbid.wtf`.
+5. AWS (D40): an account with billing alerts and an IAM role for CI (GitHub OIDC, no long-lived keys). Per environment: an ECR repo, an ECS Fargate service for the worker (1 task, 0.25 vCPU / 0.5 GB to start, always on because pg-boss polls), secrets in Secrets Manager, logs in CloudWatch. Deploy from GitHub Actions: build the worker image, push to ECR, update the service. Infrastructure as code (Terraform or CDK, pick one in P1.12) so staging and production match. Use a region close to the Supabase one. The worker needs the Supabase **direct** connection string, so check the connection limits and whether Supabase's IPv4 add-on is needed (Fargate tasks in public subnets can reach IPv4 only if the DB endpoint is IPv4).
 6. Razorpay: account with test keys now; KYC, international cards activation and live keys before launch.
 7. Cloudflare Turnstile site (test keys work locally), Upstash Redis (one DB per environment), Resend (verify the sending domain), Sentry (web and worker projects), PostHog.
 
 **Build**
-- Supabase projects: staging and production. Vercel project with a production branch `main`, the `staging` branch → staging domain, and PR previews using the staging DB. Railway: worker staging and production services.
+- Supabase projects: staging and production. Vercel project with a production branch `main`, the `staging` branch → staging domain, and PR previews using the staging DB. AWS: worker staging and production ECS services (D40).
 - CI: on merge to `staging` → `supabase db push` to staging → Vercel deploy. On merge to `main` → push to production → deploy. Migrations run **before** the web deploy.
 - Secrets set in each dashboard. Confirm local/preview can never reach production (separate keys, no prod keys in preview env).
 
@@ -321,7 +321,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Build**
 - SQL `get_or_create_link(p_promoter_id, p_brand_id, p_channel)`, following the three steps in BUILD §11. Raises a named error `self_promotion` if the promoter is a brand member, and `not_eligible` for status, email or terms problems.
 - Code generation: SQL can't call the TS `randomCode`. Either (a) generate the code in a server action and pass it in, retrying up to 5 times on a code collision (recommended, because it keeps one code generator), or (b) write a matching base62 generator in SQL using `gen_random_bytes`. Pick (a).
-- Server action `getShareLinks(brandId)` returns all four channel links (creating them lazily), as full URLs `https://brandbid.com/go/{code}` (D31, no short domain). Build the URL from one helper `linkUrl(code)` in `shared`, so adding a short domain later changes one function.
+- Server action `getShareLinks(brandId)` returns all four channel links (creating them lazily), as full URLs `https://brandbid.wtf/go/{code}` (D31, D39, no short domain). Build the URL from one helper `linkUrl(code)` in `shared`, so adding a short domain later changes one function.
 
 **Tests (SQL):** existing link returned; brand member refused; suspended promoter refused; 2 parallel calls produce 1 row.
 **Done when:**
@@ -367,7 +367,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 - `Sec-Purpose: prefetch` / `Purpose: prefetch` → 204.
 - `bb_vid` cookie: read it if present. If absent, set a new 128-bit random value **unless** the country is in `CONSENT_COUNTRIES` (EU/EEA/UK, D32). Those visitors get no cookie at `/go`; matching uses IP+UA until the brand page sets `bb_vid` after consent (P2.7). An EU visitor who already consented has the cookie, and it's read normally.
 - Hashes via `shared/hash.ts`. Country from `x-vercel-ip-country`.
-- Session user id: read the Supabase auth cookie (same domain, brandbid.com, D31) and verify the JWT on the edge (no network call) to get `viewer_user_id` for the self/member check.
+- Session user id: read the Supabase auth cookie (same domain, brandbid.wtf, D31, D39) and verify the JWT on the edge (no network call) to get `viewer_user_id` for the self/member check.
 - `click_id = crypto.randomUUID()`. **302** to `/b/{slug}?c={click_id}&l={code}` [G6].
 - `waitUntil(rpc('record_click', {...}))`. Failures go to Sentry. The visitor never waits.
 
@@ -612,7 +612,7 @@ Risks to watch:
 | Q1 | Payment processor | **Decided:** Razorpay, behind an adapter (D29) |
 | Q2 | Minimum bid amount | **Decided:** $10 (D30) |
 | Q3 | Daily board timezone | **Default:** UTC, as BUILD assumes. Say if you want otherwise |
-| Q4 | Short domain vs cookies | **Decided:** no short domain at launch; links are `brandbid.com/go/{code}` (D31) |
+| Q4 | Short domain vs cookies | **Decided:** no short domain at launch; links are `brandbid.wtf/go/{code}` (D31, D39) |
 | Q5 | EU cookie at `/go` | **Decided:** no `bb_vid` at `/go` for EU/EEA/UK; set after consent on the brand page (D32) |
 | Q6 | Closed-beta gating | **Decided:** email allowlist in `settings` (D33) |
 | Q7 | Accounts | **Open:** none exist yet. Checklist in P1.12. Blocks P1.12 only |
@@ -620,5 +620,6 @@ Risks to watch:
 | Q9 | Team invites phase | **Decided:** Phase 3 (D34) |
 | Q11 | Listing approved/rejected emails in Phase 1 | **Default:** yes |
 | Q12 | Category list for the seed | **Default:** I draft about 15 in P1.2; you edit |
-| Q13 | Is `brandbid.com` registrable? | **Open:** check before P1.12. BUILD assumes this domain |
-| Q14 | Refund for a rejected listing (paid, never went live): full, budget-only, or full minus fee? | **Open:** BUILD §8.6 currently says full. Blocks P1.9 `reject_listing` |
+| Q13 | Domain | **Decided:** `brandbid.wtf` (D39) |
+| Q15 | AWS compute for the worker | **Default:** ECS Fargate, always-on, 1 task per environment (D40). Lambda doesn't suit pg-boss, which needs a long-running process |
+| Q14 | Refund for a rejected listing | **Decided:** full amount (D38) |

@@ -118,6 +118,9 @@ Every product decision, with the date it was made. To change one, add a new row 
 | D34 | 2026-10-24 | Brand team invites ship in Phase 3. |
 | D35 | 2026-10-24 | Schema and behaviour gaps G1–G17 in PHASES.md are adopted as proposed (tie-break column, draft status, `reject_listing`, notification outbox, fraud-signal columns, and the others). |
 | D36 | 2026-10-24 | Budget exhaustion: budget is reserved at qualification in strict server order, and each paid visitor gets the full rate. Visitors who qualify after the budget runs out go on a **waitlist** instead of being counted unpaid. Whenever budget returns (a new bid or a fraud reversal), the waitlist is paid first, in qualification order. Waitlist entries expire after 30 days. Supersedes section 14 step 6 "can't be paid later either". |
+| D38 | 2026-10-24 | A rejected listing (paid, never went live) is refunded the full amount, including brandbid's 50% share. This is separate from D37, which covers stagnation refunds of a live brand. |
+| D39 | 2026-10-25 | The domain is `brandbid.wtf`. Replaces every `brandbid.com` in this file; links are `brandbid.wtf/go/{code}` (D31 otherwise unchanged). |
+| D40 | 2026-10-25 | The background worker runs on AWS instead of Railway: ECS Fargate, one service per environment, pulling images from ECR (default; see PHASES.md P1.12). Supersedes the Railway choice in section 4. |
 | D37 | 2026-10-24 | Budget refunds (D23) return only ad budget. Each bid is refunded at most its own `budget_cents`; brandbid's revenue share is never refunded. |
 
 ---
@@ -135,7 +138,7 @@ Every product decision, with the date it was made. To change one, add a new row 
 | Auth | Supabase Auth | Google and email magic link |
 | File storage | Supabase Storage | Brand logos, generated story images cache |
 | Click redirect | Vercel edge function at `/go/[code]` | Must respond fast worldwide |
-| Background jobs | Node worker on Railway, using pg-boss (a job queue that runs on Postgres) | Settlement, fraud scoring, withdrawals, leaderboards, reconciliation |
+| Background jobs | Node worker on AWS (ECS Fargate), using pg-boss (a job queue that runs on Postgres) | Settlement, fraud scoring, withdrawals, leaderboards, reconciliation |
 | Bot check | Cloudflare Turnstile (invisible) | Signup and qualification |
 | Fingerprinting | FingerprintJS open source to start; Fingerprint Pro if duplicates slip through | Only with consent for EU visitors |
 | Rate limiting | Upstash Redis + `@upstash/ratelimit` | On `/go`, `/api/q`, auth endpoints |
@@ -166,7 +169,7 @@ brandbid/
           og/[code]/     link preview image
           story/[code]/  story image
           webhooks/      payment processor webhooks
-    worker/              Railway worker (pg-boss jobs)
+    worker/              AWS Fargate worker (pg-boss jobs)
       jobs/
         settle-cycles.ts
         score-fraud.ts
@@ -199,11 +202,11 @@ An ORM on top of SQL functions for money, any client-side state library, any sec
 | --- | --- | --- | --- | --- |
 | Local | `pnpm dev` | `supabase start` (Docker) | `pnpm --filter worker dev` | Processor test mode |
 | Preview | Vercel preview per pull request | Staging Supabase project | Not run | Test mode |
-| Staging | Vercel staging branch | Staging Supabase project | Railway staging service | Test mode |
-| Production | Vercel production | Production Supabase project | Railway production service | Live |
+| Staging | Vercel staging branch | Staging Supabase project | AWS staging service | Test mode |
+| Production | Vercel production | Production Supabase project | AWS production service | Live |
 
 - Never connect local or preview to production data.
-- Secrets live in Vercel, Railway and Supabase dashboards. `.env.example` lists every variable with a comment; real `.env` files are never committed.
+- Secrets live in Vercel, AWS (Secrets Manager) and Supabase dashboards. `.env.example` lists every variable with a comment; real `.env` files are never committed.
 
 ### Branching and releases
 
@@ -658,7 +661,7 @@ export function randomCode(len = 8): string {
 ### URL
 
 - Short domain, for example `bbid.to/k7Qx2aPm` (domain TBD, section 23), pointing at the same Vercel project.
-- Fallback that always works: `brandbid.com/go/k7Qx2aPm`.
+- Fallback that always works: `brandbid.wtf/go/k7Qx2aPm`.
 
 ---
 
@@ -726,7 +729,7 @@ promo link ──► A. /go/[code] ──► B. /b/[brand]?c={click_id} ──�
 2. **Look up the code.** In-memory cache per edge instance (60 s), then the database. Unknown or disabled code → 302 to the brandbid homepage.
 3. **Detect link-preview fetchers and bots.** If the user agent matches `isbot` or our list — `Twitterbot`, `LinkedInBot`, `facebookexternalhit`, `Facebot`, `WhatsApp`, `Slackbot`, `TelegramBot`, `Discordbot`, `SkypeUriPreview`, `Pinterestbot`, `redditbot`, `Applebot`, `Googlebot`, `bingbot`, `Embedly` — return the Open Graph HTML from section 12 with status 200. **Not counted, not logged as a click.**
 4. **Ignore prefetches.** If the request has `Sec-Purpose: prefetch` or `Purpose: prefetch`, return 204. Not counted.
-5. **Read or set the visitor cookie** `bb_vid`: 128-bit random ID, first-party on brandbid.com, `HttpOnly; Secure; SameSite=Lax; Max-Age=31536000`.
+5. **Read or set the visitor cookie** `bb_vid`: 128-bit random ID, first-party on brandbid.wtf, `HttpOnly; Secure; SameSite=Lax; Max-Age=31536000`.
 6. **Build signals:**
    - `ip_hash = HMAC-SHA256(IP_PEPPER, ip)` — the raw IP is never stored.
    - `ua_hash = HMAC-SHA256(IP_PEPPER, user_agent)`
