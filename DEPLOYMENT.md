@@ -271,11 +271,19 @@ For each of staging and production:
 1. **Create the project** (names `brandbid-staging`, `brandbid-prod`). Pick a region close to most users and use the same region for both.
 2. **Apply the database.** From the repo root: `supabase link --project-ref <ref>` then `supabase db push`. This applies every migration in `packages/db/migrations` in order. Never edit an applied migration; changes are new migration files.
 3. **Auth → URL Configuration:** Site URL = the environment's URL (`https://staging.brandbid.wtf` or `https://brandbid.wtf`). Redirect URLs: add `https://staging.brandbid.wtf/**` (or `https://brandbid.wtf/**`).
+3b. **Authentication → Providers → Email: keep "Confirm email" ON** (this is the default; do not turn it off). With it off, anyone can create a confirmed account with a session for somebody else's email address. This is a real account-takeover risk with guest checkout, and it is the one setting the checker below fails on. Leave "Allow new users to sign up" ON (magic-link sign-in needs it).
 4. **Auth → Email Templates:** paste the contents of `supabase/templates/magic_link.html` into **both** "Magic Link" and "Confirm signup" (subject: `Your brandbid sign-in link`). The link in the template uses a flow that works across browsers.
 5. **Auth → SMTP settings:** configure a real sender (Resend is planned). Supabase's built-in sender is heavily rate-limited and not for production.
 6. **Storage:** create a bucket named `logos`: **public**, file size limit **1 MiB**, allowed types `image/png`, `image/jpeg`, `image/webp`. (The `config.toml` setting only covers local development.)
 7. **Auth → Providers → Google** (optional, later): needs a Google OAuth client; steps are under P1.4 in `PHASES.md`. Then set `NEXT_PUBLIC_GOOGLE_AUTH=true` for that environment's build.
-8. **Direct connection string** (Project Settings → Database): the AWS worker will need the *direct* (session-mode) one, not the pooler. Keep it safe; it is not needed for Cloudflare.
+8. **Run the checker** (needs only the public values, takes a few seconds). From the repo root:
+
+   ```bash
+   scripts/verify-supabase.sh https://<project-ref>.supabase.co <anon-key>
+   ```
+
+   It confirms the migrations were applied, that outsiders cannot read or call anything sensitive, that email confirmation is on, and that the `logos` bucket exists. For deeper checks pass the service role key through the environment (never on the command line): `SUPABASE_SERVICE_ROLE_KEY=<key> scripts/verify-supabase.sh <url> <anon-key>`. Every line must say PASS before moving on. Re-run it after any change to the project's settings.
+9. **Direct connection string** (Project Settings → Database): the AWS worker will need the *direct* (session-mode) one, not the pooler. Keep it safe; it is not needed for Cloudflare.
 
 ---
 

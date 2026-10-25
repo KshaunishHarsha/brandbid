@@ -28,12 +28,13 @@ Domain: `brandbid.wtf` (D39). Links: `https://brandbid.wtf/go/{code}`, no short 
 
 ```
 apps/web/        Next.js: (public) boards + /b/[slug], (dash), admin, go/[code], out/[click], api/{q,og,story,webhooks}
-apps/worker/     pg-boss jobs: settle-cycles, score-fraud, process-withdrawals, refresh-leaderboards, reconcile-ledgers, notify
-packages/db/     migrations/, functions/ (money SQL), tests/ (SQL tests), types.ts (generated)
-packages/shared/ money.ts (cents), codes.ts, hash.ts, channels.ts, constants.ts, schemas.ts (zod)
-packages/emails/ email templates
+apps/worker/     pg-boss jobs: check-listing, cleanup, notify, process-refunds (built); settle-cycles, score-fraud, process-withdrawals, refresh-leaderboards, reconcile-ledgers (placeholders)
+packages/db/     migrations/, tests/ (SQL tests), types.ts (generated)
+packages/shared/ money, codes, hash, ssrf + safeFetch, utm, slug, listing-check, schemas (zod)
+packages/payments/ processor adapter (Razorpay + mock) and refund rules; used by web and worker
+packages/emails/ email templates (listing approved / rejected) and the Resend/Mailpit sender
 ```
-Current state: P1.1 scaffold, P1.2 schema + RLS + seeds, P1.3 shared helpers done. No auth, payments or UI yet.
+Current state: Phase 1 is code-complete except for items that need accounts or keys (see the progress table). Phase 2 (promoters, links, clicks, earnings) has not started.
 
 ## Commands
 
@@ -86,8 +87,8 @@ Copy `.env.example` to `apps/web/.env.local` and `apps/worker/.env`. `supabase/m
 
 ## Open decisions (summary; details in PHASES.md)
 
-Still open: **Q7** none of the third-party accounts exist yet (checklist in PHASES.md P1.12); Razorpay test keys (to finish P1.5); Google OAuth client (to finish P1.4).
-Decided: D29–D46 in BUILD.md §3 (also brandbid.wtf and AWS Fargate worker) (Razorpay, $10 min bid, no short domain, EU cookie after consent, email-allowlist beta, team invites in Phase 3, gaps G1–G17 adopted). Design: my own take on outbid.lol's style.
+Still open: Razorpay test keys (finish P1.5/P1.6/P1.9); Google OAuth client (P1.4); Sentry and PostHog credentials (P1.1/P1.11); Resend key (real email); hosted Supabase projects (owner is setting them up, see DEPLOYMENT.md section 3); Cloudflare first deploy (friend); AWS worker (undecided).
+Decided: D29–D50 in BUILD.md §3 (also brandbid.wtf and AWS Fargate worker) (Razorpay, $10 min bid, no short domain, EU cookie after consent, email-allowlist beta, team invites in Phase 3, gaps G1–G17 adopted). Design: my own take on outbid.lol's style.
 Defaults in force unless you change them: daily board in UTC, listing emails in Phase 1, I draft the categories.
 
 ## Progress
@@ -156,6 +157,7 @@ _Append one line per hard-won lesson (date, what, why)._
 - 2026-10-25: Built for Workers, `NODE_ENV` is `production`, so the rate limiter refuses to run without Upstash (fails closed, by design). For a local Workers test, expect `/api/auth/magic-link` to return 500 unless the Upstash vars are set.
 - 2026-10-25: Auth: `middleware.ts` stays (not Next 16 `proxy.ts`) until the Cloudflare adapter's proxy support is verified. Magic links use the token-hash flow + a Continue button (`/auth/confirm` -> `POST /api/auth/verify`) so they work across browsers and email scanners can't burn them. Local email is in Mailpit at http://127.0.0.1:54324. `supabase/config.toml` raises `email_sent` for local only. Zod 4: put `.max()` before `.pipe(z.email())`.
 - 2026-10-25: Membership checks use the USER's session (so RLS decides) and only then the service role (`getMemberBrand`). Test scripts that read mail by recipient must filter by subject: after a brand is approved the newest email is no longer the sign-in link.
+- 2026-10-25: SECURITY: no password may ever exist and "Confirm email" must be ON everywhere (D50). Supabase's public signup lets anyone register any email with a password; with guest checkout that is an account takeover (reproduced and fixed). A trigger on `auth.users` blanks `encrypted_password`; `scripts/verify-supabase.sh <url> <anon-key>` checks a project (also RLS, function grants, bucket). Run it after touching any Supabase setting. Local `supabase start` can time out on the optional Studio/log containers on an 8 GB Mac: just run it again.
 - 2026-10-25: Money-moving worker jobs must use `FOR UPDATE SKIP LOCKED`: tested by removing it, two workers made 8 refund calls for 4 payments. psql does not expand `:'var'` in `-c` strings, send SQL on stdin. `\u2028` in a regex written through some tools becomes a literal line separator and breaks the regex: use `\p{Zl}\p{Zp}` with the `u` flag.
 - 2026-10-25: Postgres gives every new function `EXECUTE` to PUBLIC. `ALTER DEFAULT PRIVILEGES IN SCHEMA public ... FROM public` does NOT remove that; migration `000550` uses the form without `IN SCHEMA`. The test in `02_constraints.sql` fails if a new function is callable by a client role. Money functions are `SECURITY INVOKER`, service role only.
 - 2026-10-25: If `tsc` reports a stale error (e.g. a BigInt target error) after you changed `tsconfig.json`, delete `apps/web/tsconfig.tsbuildinfo`. Web targets ES2022 because shared code uses BigInt.
