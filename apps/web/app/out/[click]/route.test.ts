@@ -11,11 +11,10 @@ vi.mock('@sentry/nextjs', () => ({ captureException: mocks.captureException }));
 vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: () => ({
     from: (table: string) => {
-      let updateValues: unknown = null;
       const filters: Array<[string, unknown, unknown?]> = [];
-      const query: Record<string, (...args: any[]) => any> = {
+      const query: Record<string, (...args: unknown[]) => unknown> = {
         select: () => query,
-        update: (values: unknown) => { updateValues = values; mocks.updates.push({ table, values, filters }); return query; },
+        update: (values: unknown) => { mocks.updates.push({ table, values, filters }); return query; },
         eq: (column: string, value: unknown) => { filters.push(['eq', column, value]); return query; },
         is: (column: string, value: unknown) => { filters.push(['is', column, value]); return query; },
         maybeSingle: async () => ({ data: mocks.rows[table] ?? null, error: mocks.lookupErrors[table] ?? null }),
