@@ -6,6 +6,7 @@ import { getBrandPage } from '@/lib/brand';
 import { getShareLinks } from '@/lib/share-links';
 import { createClient } from '@/lib/supabase/server';
 import { JoinWaitlist } from './JoinWaitlist';
+import { ShareSheet } from './ShareSheet';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,14 +46,12 @@ export default async function Advertise({ params }: { params: Promise<{ slug: st
     }
     throw error;
   }
+  const storyUrl = new URL(links.story);
+  const storyCode = storyUrl.pathname.split('/').pop();
+  const storyImageUrl = new URL(`/api/story/${storyCode}.png`, storyUrl.origin).toString();
   return (
-    <main className="mx-auto max-w-md space-y-4 p-6">
-      <Link href={`/b/${brand.slug}`} className="text-sm underline">← {brand.name}</Link>
-      <h1 className="text-2xl font-bold">Share {brand.name}</h1>
-      <p>Choose where you want to share. Each channel has its own permanent link.</p>
-      <div className="grid grid-cols-2 gap-2">
-        {([['story', 'Instagram story'], ['linkedin', 'LinkedIn'], ['x', 'X'], ['link', 'Plain link']] as const).map(([channel, label]) => <div key={channel} className="rounded-lg border border-line bg-surface p-3"><div className="font-medium">{label}</div><code className="mt-2 block break-all text-xs">{links[channel]}</code></div>)}
-      </div>
+    <main className="min-h-screen bg-bg">
+      <ShareSheet brandName={brand.name} description={brand.description ?? ''} links={links} storyImageUrl={storyImageUrl} returnHref={`/b/${brand.slug}`} />
     </main>
   );
 }
