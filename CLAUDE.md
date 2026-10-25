@@ -65,6 +65,7 @@ Copy `.env.example` to `apps/web/.env.local` and `apps/worker/.env`. `supabase/m
 - Raw IPs are never stored; only `HMAC-SHA256(IP_PEPPER, …)`.
 - Migrations are forward-only, in `packages/db/migrations`. Never edit a merged one. Regenerate `types.ts` after each.
 - Any PR touching money code includes or updates SQL tests, and the 1 000-parallel concurrency test must pass.
+- **Git: commit and push straight to `main` until v1 is live (D41).** No feature branches or PRs yet; CI runs on each push. Small commits per work package, message like `P1.2: schema, RLS, seeds`. Never force-push. The branch workflow starts at P1.12.
 - **Keep `.gitignore` current; the repo is pushed to GitHub regularly.** Never commit secrets: `.env*` (except `.env.example`), keys, `*.pem`, Terraform state or `.tfvars`, database dumps, logs. When adding a new tool, framework or generated folder, update `.gitignore` in the same change and check with `git status` and `git check-ignore -v <file>` before committing. Never ignore real source: for example, `out/` is NOT a global ignore because `apps/web/app/out/[click]` is a route. A real secret that was ever committed must be rotated, not just deleted.
 - Use the BUILD §2 glossary terms in code and UI (promoter, not "advertiser"; link, claim, cycle, settlement…).
 - No ORM over money SQL, no client-side state library, no second database (BUILD §4).
@@ -90,7 +91,7 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 
 | WP | Title | Status | Updated | Notes |
 | --- | --- | --- | --- | --- |
-| P1.1 | Monorepo, tooling, CI | wip | 2026-10-25 | Scaffold, lint, typecheck, web routes verified. Still to verify: `supabase start` + worker boot (Docker wasn't running), CI run on GitHub, Sentry event, `staging` branch |
+| P1.1 | Monorepo, tooling, CI | wip | 2026-10-25 | Verified locally: lint, typecheck, web routes, `supabase start`, worker boots and creates all 7 pg-boss queues + 5 schedules, `pnpm test:sql` runs. Still to verify: first CI run on GitHub, Sentry test event (needs DSN). `staging` branch is deferred to P1.12 (D41) |
 | P1.2 | Schema, RLS, seeds | todo | | |
 | P1.3 | Shared: money, codes, schemas | todo | | |
 | P1.4 | Auth and profiles | todo | | |
@@ -138,4 +139,5 @@ _Append one line per hard-won lesson (date, what, why)._
 
 - 2026-10-25: `create-next-app` turns on `cacheComponents`, which forbids `export const runtime = 'edge'`. It's off in `next.config.ts` because `/go` must be an edge function. Don't turn it back on.
 - 2026-10-25: In Next route handlers use `NextResponse.redirect`, not `Response.redirect`. The latter has immutable headers and returns 500.
+- 2026-10-25: Docker Desktop on an 8 GB Mac needs its memory limit lowered (~3 GB) to run the Supabase stack comfortably. `psql` isn't installed locally; `pnpm test:sql` falls back to `docker exec` into `supabase_db_brandbid`.
 - 2026-10-25: pg-boss 12 exports `{ PgBoss }` (no default export) and needs `createQueue()` before `work()`/`schedule()`.

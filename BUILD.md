@@ -121,6 +121,7 @@ Every product decision, with the date it was made. To change one, add a new row 
 | D38 | 2026-10-24 | A rejected listing (paid, never went live) is refunded the full amount, including brandbid's 50% share. This is separate from D37, which covers stagnation refunds of a live brand. |
 | D39 | 2026-10-25 | The domain is `brandbid.wtf`. Replaces every `brandbid.com` in this file; links are `brandbid.wtf/go/{code}` (D31 otherwise unchanged). |
 | D40 | 2026-10-25 | The background worker runs on AWS instead of Railway: ECS Fargate, one service per environment, pulling images from ECR (default; see PHASES.md P1.12). Supersedes the Railway choice in section 4. |
+| D41 | 2026-10-25 | Until v1 is live, work is pushed directly to `main` (CI still runs on every push). The `staging` branch and the feature-branch → PR → `staging` → `main` flow in section 5 start when the deploy pipeline is built (P1.12). |
 | D37 | 2026-10-24 | Budget refunds (D23) return only ad budget. Each bid is refunded at most its own `budget_cents`; brandbid's revenue share is never refunded. |
 
 ---
@@ -210,6 +211,7 @@ An ORM on top of SQL functions for money, any client-side state library, any sec
 
 ### Branching and releases
 
+- **Until v1 is live (D41): commit and push directly to `main`.** The rest of this list applies from P1.12 onward.
 - `main` is production. `staging` is staging.
 - Work happens on short feature branches → pull request to `staging` → tested on staging → `staging` merged to `main`.
 - Every pull request needs: passing CI, a description of what changed, and an update to this file if behaviour or a decision changed.
