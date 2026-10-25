@@ -451,7 +451,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 - `click_id = crypto.randomUUID()`. **302** to `/b/{slug}?c={click_id}&l={code}` [G6].
 - `getCloudflareContext().ctx.waitUntil(rpc('record_click', {...}))`. Failures go to Sentry. The visitor never waits.
 
-**Built locally (2026-10-25):** Node route with 60-second bounded lookup cache, bot/preview HTML, prefetch handling, privacy-aware visitor cookie, hashed IP/UA/IPUA keys, local Supabase JWT verification, Upstash rate limiting and background `record_click` dispatch. Typecheck passes. Deferred: configure `SUPABASE_JWT_SECRET`, Upstash and Sentry secrets in hosted Workers; measure p95 from three regions and verify live preview crawlers after deployment.
+**Built locally (2026-10-25):** Node route with 60-second bounded lookup cache, bot/preview HTML, prefetch handling, privacy-aware visitor cookie, hashed IP/UA/IPUA keys, local Supabase JWT verification, Upstash rate limiting and background `record_click` dispatch. Five route tests now cover malformed/unknown links, escaped crawler previews without click logging, no-store prefetch responses, immediate human redirects with EU cookie suppression and deferred click recording, and secure non-EU visitor cookies. Typecheck passes. Deferred: configure `SUPABASE_JWT_SECRET`, Upstash and Sentry secrets in hosted Workers; measure p95 from three regions and verify live preview crawlers after deployment.
 
 **Tests (Vitest):** bot list classification (a fixture of real UA strings from each platform); prefetch → 204; the redirect is 302 and never 301; unknown code → `/`.
 **Done when:**
