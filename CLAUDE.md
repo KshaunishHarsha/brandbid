@@ -46,6 +46,7 @@ Needs Node ≥ 24 (`.nvmrc`), pnpm 12, Docker running, Supabase CLI.
 | `pnpm lint` · `pnpm typecheck` · `pnpm test` | Lint, TypeScript (web runs `next typegen` first), Vitest |
 | `pnpm test:sql` | Runs `packages/db/tests/*.sql` against the local DB (uses `docker exec` if `psql` is missing) |
 | `pnpm test:concurrency` | Fires parallel `record_bid` calls at the local DB |
+| `pnpm test:worker` | Runs the check-listing/cleanup jobs against the local DB with a fake site probe |
 | `pnpm db:reset` | Re-applies all migrations and seeds |
 | `pnpm db:types` | Regenerates `packages/db/types.ts` |
 | `pnpm --filter web cf:build` | Builds the web app for Cloudflare Workers (OpenNext). Test it locally with `cd apps/web && cp .env.local .dev.vars && pnpm exec wrangler dev` (`.dev.vars` is git-ignored; delete it after) |
@@ -98,7 +99,7 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 | P1.3 | Shared: money, codes, schemas | done | 2026-10-25 | 79 tests, 100% branch coverage on money.ts + codes.ts. Also hash.ts, constants (bots, consent countries, reserved handles), `linkUrl()` |
 | P1.4 | Auth and profiles | wip | 2026-10-25 | Magic link done and tested against local Supabase + Mailpit. Left: Google OAuth client (wired, unverified), real Turnstile keys, hosted Supabase email template/SMTP, a browser test |
 | P1.5 | Payments in, `record_bid` | wip | 2026-10-25 | SQL + webhook + adapter done and tested (SQL tests, 100-call concurrency test, 29 unit tests, real route vs local DB). Left: a real Razorpay test-mode payment (needs keys); `/api/checkout` moved to P1.6 |
-| P1.6 | Brand listing flow | todo | | |
+| P1.6 | Brand listing flow | wip | 2026-10-25 | Done and tested end to end with mock payments: prefill (SSRF-safe), email-only checkout, webhook, worker auto-check + cleanup. Left: real Razorpay widget (keys), rank prices (P1.7), browser click-through test, hosted `logos` bucket |
 | P1.7 | Leaderboards, claim price | todo | | |
 | P1.8 | Brand page (listing mode) | todo | | |
 | P1.9 | Admin v1: listing review | todo | | |
@@ -143,6 +144,10 @@ _Append one line per hard-won lesson (date, what, why)._
 - 2026-10-25: Cloudflare headers: country is `cf-ipcountry`, client IP is `cf-connecting-ip`. Background work after responding is `getCloudflareContext().ctx.waitUntil(...)`.
 - 2026-10-25: In Next route handlers use `NextResponse.redirect`, not `Response.redirect`. The latter has immutable headers and returns 500.
 - 2026-10-25: Docker Desktop on an 8 GB Mac needs its memory limit lowered (~3 GB) to run the Supabase stack comfortably. `psql` isn't installed locally; `pnpm test:sql` falls back to `docker exec` into `supabase_db_brandbid`.
+- 2026-10-25: After adding a migration, run `pnpm db:types` before writing code that uses the new columns/functions; otherwise `tsc` reports them as missing (stale generated types).
+- 2026-10-25: Local payments: set `PAYMENTS_MODE=mock` in `apps/web/.env.local`. The listing wizard then shows a "Simulate paying" button that sends a correctly signed webhook through the real handler. Refused in production. Run a worker job now with `pnpm --filter worker run-once check-listing`.
+- 2026-10-25: In rate-limited endpoints that create things, put strict limits and single-use bot checks AFTER validation, so typos don't burn attempts or Turnstile tokens.
+- 2026-10-25: Vitest resolves the web app's `@/` alias via `vitest.config.ts`.
 - 2026-10-25: pnpm 12 fails `pnpm install --frozen-lockfile` (so CI) if a dependency has a build script that is not approved. After adding any dependency, run `pnpm install --frozen-lockfile` locally; if it reports `ERR_PNPM_IGNORED_BUILDS`, add the package to `allowBuilds` in `pnpm-workspace.yaml`. A plain `pnpm add` only warns, which hides the problem until CI.
 - 2026-10-25: Built for Workers, `NODE_ENV` is `production`, so the rate limiter refuses to run without Upstash (fails closed, by design). For a local Workers test, expect `/api/auth/magic-link` to return 500 unless the Upstash vars are set.
 - 2026-10-25: Auth: `middleware.ts` stays (not Next 16 `proxy.ts`) until the Cloudflare adapter's proxy support is verified. Magic links use the token-hash flow + a Continue button (`/auth/confirm` -> `POST /api/auth/verify`) so they work across browsers and email scanners can't burn them. Local email is in Mailpit at http://127.0.0.1:54324. `supabase/config.toml` raises `email_sent` for local only. Zod 4: put `.max()` before `.pipe(z.email())`.

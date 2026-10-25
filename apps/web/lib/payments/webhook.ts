@@ -29,6 +29,8 @@ export type WebhookDeps = {
   /** Has this payment already been auto-refunded? Makes refunds safe under webhook retries. */
   wasRefunded: (paymentId: string) => Promise<boolean>;
   audit: (action: string, details: Record<string, unknown>) => Promise<void>;
+  /** Best-effort follow-up after a NEW bid is recorded (e.g. email the dashboard link). Failures never fail the webhook. */
+  afterRecorded?: (args: RecordBidArgs) => Promise<void>;
   log?: (msg: string, extra?: Record<string, unknown>) => void;
 };
 
@@ -101,7 +103,19 @@ export async function handlePaymentWebhook(
       fingerprint: payment.fingerprint,
     });
 
-    if (result.ok) return { status: 200, body: result.created ? 'recorded' : 'duplicate' };
+    if (result.ok) {
+      if (result.created && deps.afterRecorded) {
+        try {
+          await deps.afterRecorded({
+            brandId, payerId, amountCents: payment.amountCents, processor: payment.processor,
+            paymentId: payment.paymentId, email: payment.email, fingerprint: payment.fingerprint,
+          });
+        } catch (err) {
+          log('afterRecorded failed (ignored)', { error: err instanceof Error ? err.message : String(err) });
+        }
+      }
+      return { status: 200, body: result.created ? 'recorded' : 'duplicate' };
+    }
 
     if (UNRECORDABLE.has(result.message) || result.code === FK_VIOLATION) {
       return await refundAndLog(UNRECORDABLE.has(result.message) ? result.message : 'payer_not_found');

@@ -28,6 +28,7 @@ let audits: Array<[string, Record<string, unknown>]>;
 let refundedAlready: boolean;
 let orderNotes: Record<string, string>;
 let refundFails: boolean;
+let afterRecorded: ReturnType<typeof vi.fn>;
 
 function deps(): WebhookDeps {
   const real = createRazorpayProcessor({
@@ -49,6 +50,7 @@ function deps(): WebhookDeps {
     recordBid: recordBid as unknown as WebhookDeps['recordBid'],
     wasRefunded: async () => refundedAlready,
     audit: async (a, d) => void audits.push([a, d]),
+    afterRecorded: afterRecorded as unknown as WebhookDeps['afterRecorded'],
   };
 }
 const run = (body: string, sig = sign(body)) => handlePaymentWebhook(deps(), body, sig);
@@ -60,6 +62,7 @@ beforeEach(() => {
   refundedAlready = false;
   refundFails = false;
   orderNotes = {};
+  afterRecorded = vi.fn(async () => {});
 });
 
 describe('payment webhook', () => {
@@ -91,6 +94,20 @@ describe('payment webhook', () => {
       paymentId: 'pay_1', email: 'a@b.c', fingerprint: 'card_1',
     });
     expect(refunds).toHaveLength(0);
+  });
+
+  it('runs the follow-up only for a NEW bid, never a replay', async () => {
+    await run(event());
+    expect(afterRecorded).toHaveBeenCalledTimes(1);
+    expect(afterRecorded).toHaveBeenCalledWith(expect.objectContaining({ brandId: BRAND, payerId: PAYER, paymentId: 'pay_1' }));
+    recordBid.mockResolvedValueOnce({ ok: true, created: false });
+    await run(event());
+    expect(afterRecorded).toHaveBeenCalledTimes(1);
+  });
+
+  it('a failing follow-up never fails the webhook (the bid is already recorded)', async () => {
+    afterRecorded.mockRejectedValueOnce(new Error('email down'));
+    expect(await run(event())).toEqual({ status: 200, body: 'recorded' });
   });
 
   it('treats a replayed webhook as success without refunding', async () => {

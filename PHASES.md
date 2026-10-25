@@ -194,9 +194,19 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 
 **Tests:** unit tests for the SSRF guard (private IPs, redirect to a private IP, `http://`) and slug generation; Playwright: list → pay (test mode) → active on the board.
 **Done when:**
-- [ ] A non-review category goes live immediately after payment.
-- [ ] A review category lands in the admin queue.
-- [ ] A blocklisted domain is held.
+- [x] A non-review category goes live after payment (verified end to end: guest checkout, mock payment through the real webhook handler, real worker job, real network probe of example.com).
+- [x] A review category is held with `review_reason = category_requires_review` (integration test). The admin queue UI that shows it is P1.9.
+- [x] A blocklisted domain is held (also banned words, unreachable sites, and all reasons together, in a fixed order).
+
+**Built (2026-10-25), D45/D47:** shared `ssrf.ts` (IPv4/IPv6 private ranges incl. mapped/NAT64/6to4, decimal/hex/octal IP forms), `safe-fetch.ts` (3 manual redirects each re-validated, 5 s, size cap, DNS-check hook), `html-meta.ts`, `slug.ts`, `listing-check.ts` (pure rules), migration `000700` (`checked_at`, `review_reason`, `find_user_id_by_email`, `cleanup_stale_listings`), `logos` bucket in `supabase/config.toml`, web routes `/api/brands/prefill`, `/api/checkout` (multipart; guest or signed-in), `/api/brands/status` (HMAC token), `/api/dev/mock-pay`, the `/list` wizard and `/list/done`, `PAYMENTS_MODE=mock`, a "send the dashboard link" hook after the first bid, worker jobs `check-listing` (every minute, `FOR UPDATE SKIP LOCKED`) and `cleanup` (nightly), `pnpm --filter worker run-once <job>`. Tests: 250 shared + 67 web/worker unit tests, SQL `04_listing_support`, `pnpm test:worker` (approve/hold/reasons/idempotent/two concurrent workers).
+**Design note:** the strict per-email limit and the single-use Turnstile check run *after* all validation, so a typo never burns an attempt or a token.
+**Still open:**
+- [ ] The real Razorpay Checkout widget (`checkout.js`) is coded to the docs but untested until we have test keys. Everything behind it is tested via the mock.
+- [ ] Step 3 should show "price to take rank N". Needs `claim_price` from P1.7; the amount picker has presets and a custom amount for now.
+- [ ] A click-through browser test (Playwright). I verified every API call and that the pages render, but did not drive the wizard in a browser.
+- [ ] Hosted Supabase: create the `logos` bucket (public, 1 MiB, png/jpeg/webp). `config.toml` only configures local. Add to P1.12.
+- [ ] Logos are stored as uploaded (no resize): Workers has no image library. Fine under 1 MB; revisit if it matters.
+- [ ] Real Turnstile keys.
 
 ### P1.7 — Leaderboards and claim price
 
@@ -291,6 +301,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 - Supabase projects: staging and production. Cloudflare Workers `brandbid-staging` and `brandbid-prod` (wrangler environments), deployed from GitHub Actions; previews use the staging DB. AWS: worker staging and production ECS services (D40).
 - CI: on merge to `staging` → `supabase db push` to staging → `opennextjs-cloudflare deploy --env staging`. On merge to `main` → push to production → deploy. Migrations run **before** the web deploy.
 - **OpenNext adapter setup (D43). Spike done 2026-10-25:** `@opennextjs/cloudflare`, `wrangler`, `open-next.config.ts` and `wrangler.jsonc` are in `apps/web`; `pnpm --filter web cf:build` builds in ~26 s (Next 16.4 with `middleware.ts`; bundle 2.4 MB gzip); verified in the local Workers runtime (`wrangler dev`) against local Supabase: pages, middleware redirect, `/go`, `/api/q`, the signed Razorpay webhook (record, replay, forged). Still to do here: R2 incremental cache, staging/production environments, deploy, and rest of this bullet. Original plan: add `@opennextjs/cloudflare` and `wrangler` to `apps/web`; `open-next.config.ts` (R2 incremental cache); `wrangler.jsonc` with `nodejs_compat`, a current `compatibility_date`, the assets binding, and `staging`/`production` environments; scripts `preview` (local Workers runtime) and `deploy`. Remove any `export const runtime = 'edge'` (the build fails on it). Check the compressed bundle size against the plan limit, and run `wrangler dev` against the local Supabase to confirm Supabase, Upstash and Turnstile calls work from the Workers runtime.
+- Hosted Supabase: create the `logos` Storage bucket (public, 1 MiB limit, png/jpeg/webp); `config.toml` only covers local.
 - Secrets set in each dashboard (Cloudflare Worker secrets for web). Confirm local/preview can never reach production (separate keys, no prod keys in preview env).
 
 **Done when:**

@@ -128,6 +128,7 @@ Every product decision, with the date it was made. To change one, add a new row 
 | D44 | 2026-10-25 | A successful payment that cannot be recorded (unknown or rejected brand, below the minimum bid, wrong currency, missing attribution, unknown payer) is refunded in full automatically and written to the audit log, never kept. Temporary failures return an error so the processor retries the webhook. |
 | D45 | 2026-10-25 | Brands pay with an email-only checkout: no sign-in wall. The checkout asks for one email (typed twice); an account is created for it behind the scenes (or the existing account is used), and a magic link to the dashboard comes with the receipt. Signed-in users skip the field. Promoters still sign up and verify their email first (D5). Supersedes section 8 step 1 "User signs in". |
 | D46 | 2026-10-25 | Sign-in methods from launch: Google and email magic link. Magic links use the token-hash flow so they work in a different browser than the one that requested them. |
+| D47 | 2026-10-25 | The automatic listing check (`check-listing`) polls for freshly paid listings every minute instead of being enqueued by `record_bid`, so a missed trigger can never strand a paid listing. Held listings keep `status = pending_review` and record why in `brands.review_reason`. |
 
 ---
 
@@ -181,6 +182,8 @@ brandbid/
         score-fraud.ts
         process-withdrawals.ts
         refresh-leaderboards.ts
+        check-listing.ts
+        cleanup.ts
         reconcile-ledgers.ts
         notify.ts
   packages/

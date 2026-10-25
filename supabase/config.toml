@@ -153,6 +153,13 @@ max_indexes = 5
 # Vector Buckets is available to Supabase Pro plan.
 # [storage.vector.buckets.documents-openai]
 
+
+# Brand logos (P1.6). Public read; uploads only through our server (service role). No SVG: it can carry scripts.
+[storage.buckets.logos]
+public = true
+file_size_limit = "1MiB"
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp"]
+
 [auth]
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used

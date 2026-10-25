@@ -103,14 +103,14 @@ isOneToOne: false
                   ]
                 },"brands": {
                   Row: {
-                    "ads_enabled": boolean,"budget_cents": number,"category_id": number | null,"created_at": string,"description": string | null,"id": string,"last_spend_at": string | null,"logo_path": string | null,"name": string,"owner_id": string,"rate_cents": number,"slug": string,"status": string,"total_paid_cents": number,"total_reached_at": string | null,"url": string
+                    "ads_enabled": boolean,"budget_cents": number,"category_id": number | null,"checked_at": string | null,"created_at": string,"description": string | null,"id": string,"last_spend_at": string | null,"logo_path": string | null,"name": string,"owner_id": string,"rate_cents": number,"review_reason": string | null,"slug": string,"status": string,"total_paid_cents": number,"total_reached_at": string | null,"url": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "ads_enabled"?: boolean,"budget_cents"?: number,"category_id"?: number | null,"created_at"?: string,"description"?: string | null,"id"?: string,"last_spend_at"?: string | null,"logo_path"?: string | null,"name": string,"owner_id": string,"rate_cents": number,"slug": string,"status"?: string,"total_paid_cents"?: number,"total_reached_at"?: string | null,"url": string
+                    "ads_enabled"?: boolean,"budget_cents"?: number,"category_id"?: number | null,"checked_at"?: string | null,"created_at"?: string,"description"?: string | null,"id"?: string,"last_spend_at"?: string | null,"logo_path"?: string | null,"name": string,"owner_id": string,"rate_cents": number,"review_reason"?: string | null,"slug": string,"status"?: string,"total_paid_cents"?: number,"total_reached_at"?: string | null,"url": string
                   }
                   Update: {
-                    "ads_enabled"?: boolean,"budget_cents"?: number,"category_id"?: number | null,"created_at"?: string,"description"?: string | null,"id"?: string,"last_spend_at"?: string | null,"logo_path"?: string | null,"name"?: string,"owner_id"?: string,"rate_cents"?: number,"slug"?: string,"status"?: string,"total_paid_cents"?: number,"total_reached_at"?: string | null,"url"?: string
+                    "ads_enabled"?: boolean,"budget_cents"?: number,"category_id"?: number | null,"checked_at"?: string | null,"created_at"?: string,"description"?: string | null,"id"?: string,"last_spend_at"?: string | null,"logo_path"?: string | null,"name"?: string,"owner_id"?: string,"rate_cents"?: number,"review_reason"?: string | null,"slug"?: string,"status"?: string,"total_paid_cents"?: number,"total_reached_at"?: string | null,"url"?: string
                   }
                   Relationships: [
                     {
@@ -623,8 +623,14 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "cycle_end":
+            "cleanup_stale_listings":
+{ Args: { "p_days"?: number }; Returns: Json
+                           },
+"cycle_end":
 { Args: { "p_at": string,"p_link_created": string }; Returns: string
+                           },
+"find_user_id_by_email":
+{ Args: { "p_email": string }; Returns: string
                            },
 "fund_waitlist":
 { Args: { "p_brand_id": string }; Returns: number

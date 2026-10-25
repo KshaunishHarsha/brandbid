@@ -99,7 +99,8 @@ flowchart LR
         L["refresh-leaderboards<br/>every 1 / 5 min"]
         R["reconcile-ledgers<br/>nightly"]
         N["notify<br/>every minute"]
-        C["check-listing<br/>on new bid"]
+        C["check-listing<br/>every minute"]
+        X["cleanup<br/>nightly"]
     end
 
     S --> F
@@ -111,6 +112,7 @@ flowchart LR
     R -->|"check invariants · alert on failure"| DB
     N -->|"drain notification_outbox"| RESEND[Resend]
     C -->|"URL · blocklist · category → active or review"| DB
+    X -->|"delete unpaid drafts + throwaway accounts"| DB
 ```
 
 | Job | Job of the job |
@@ -121,7 +123,8 @@ flowchart LR
 | `refresh-leaderboards` | Daily board (every minute) and promoter boards (every 5 min) |
 | `reconcile-ledgers` | Verifies every money invariant in BUILD §7; strips user agents older than 90 days |
 | `notify` | Sends queued emails from `notification_outbox` |
-| `check-listing` | Automatic checks on a freshly paid listing |
+| `check-listing` | Automatic checks on a freshly paid listing (approve, or hold for an admin with the reason) |
+| `cleanup` | Deletes unpaid draft listings and throwaway accounts older than 7 days |
 
 ### Life of a promo click
 

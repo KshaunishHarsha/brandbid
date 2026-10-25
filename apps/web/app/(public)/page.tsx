@@ -8,6 +8,9 @@ export default function Home() {
         <AccountMenu />
       </header>
       <p className="mt-2 text-sm opacity-70">Leaderboard coming in P1.7.</p>
+      <a href="/list" className="mt-6 inline-block rounded-lg bg-black px-4 py-3 text-white dark:bg-white dark:text-black">
+        List your brand
+      </a>
     </main>
   );
 }

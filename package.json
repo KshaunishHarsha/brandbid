@@ -16,7 +16,8 @@
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > packages/db/types.ts",
     "format": "prettier --write .",
-    "test:concurrency": "tsx packages/db/tests/concurrency-record-bid.ts"
+    "test:concurrency": "tsx packages/db/tests/concurrency-record-bid.ts",
+    "test:worker": "DATABASE_URL=\"${DATABASE_URL:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}\" tsx apps/worker/src/jobs/check-listing.integration.ts"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^3.2.7",
