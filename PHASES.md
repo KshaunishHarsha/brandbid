@@ -376,9 +376,9 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 - [ ] All tests pass.
 - [ ] The share sheet shows the "You can't promote a brand you're part of." message for members.
 
-**Built locally (2026-10-25):** Service-role-only `get_or_create_link` with server-generated codes, five collision retries, and stable channel URLs on the Advertise page. SQL tests cover existing links, self-promotion, and suspension. A concurrent-call test and live flow remain open.
+**Built locally (2026-10-25):** Service-role-only `get_or_create_link` with server-generated codes, five collision retries, and stable channel URLs on the Advertise page. SQL tests cover existing links, self-promotion, and suspension. `concurrency-links.ts` now fires 25 parallel requests for the same tuple and verifies one returned and persisted ID/code; the full local concurrency suite passes. Hosted sign-in verification remains open.
 
-**Deferred setup checks:** local concurrent-call verification remains actionable and does not need hosted services. Hosted sign-in verification needs a configured Supabase project and verified allowlisted test user. Mobile share verification needs iOS Safari and Android Chrome devices; track it under P2.3.
+**Deferred setup checks:** hosted sign-in verification needs a configured Supabase project and verified allowlisted test user. Mobile share verification needs iOS Safari and Android Chrome devices; track it under P2.3.
 
 ### P2.3 — Share sheet
 
