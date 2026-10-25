@@ -13,6 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: { default: "brandbid: the pay-to-rank brand leaderboard", template: "%s · brandbid" },
   description: "Brands pay to rank. Half of every payment becomes ad budget that pays people to share them.",
 };

@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { AccountMenu } from '@/components/AccountMenu';
 import { BrandLogo } from '@/components/BrandLogo';
+import { SiteHeader } from '@/components/SiteHeader';
 import { getBoard, getCategoryTabs, type BoardKind, type BoardRow } from '@/lib/leaderboard';
 import { formatUSDCompact } from '@brandbid/shared';
 
@@ -30,13 +30,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ b
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-16">
-      <header className="flex items-center justify-between py-5">
-        <Link href="/" className="text-xl font-extrabold tracking-tight">brandbid</Link>
-        <div className="flex items-center gap-4">
-          <AccountMenu />
-          <Link href="/list" className="rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-accent-fg">List your brand</Link>
-        </div>
-      </header>
+      <SiteHeader />
 
       <section className="pb-6 pt-2">
         <h1 className="text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">Pay to rank. Get shared.</h1>

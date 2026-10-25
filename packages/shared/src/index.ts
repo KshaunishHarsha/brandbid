@@ -9,3 +9,4 @@ export * from './html-meta';
 export * from './slug';
 export * from './listing-check';
 export * from './safe-fetch';
+export * from './utm';

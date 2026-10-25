@@ -244,8 +244,11 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 - Inactive or removed brand → 404.
 
 **Done when:**
-- [ ] Page renders for active brands.
-- [ ] The Visit button lands on the brand site with UTM tags.
+- [x] Page renders for active brands (card, ranks, category, "More in {category}", Open Graph/Twitter tags, canonical URL).
+- [x] The Visit button lands on the brand site with UTM tags (`/out/b/{slug}` -> 302, the brand's own query parameters kept).
+
+**Built (2026-10-25):** `lib/brand.ts` (`getBrandPage`, `getBrandUrlBySlug`; only `status = 'active'` brands exist publicly, impossible slugs never reach the database), `/b/[slug]` page with `generateMetadata`, `/out/b/[slug]` route, shared `addUtm`/`listingUtm` (`packages/shared/src/utm.ts`, reused by P2.9), shared `SiteHeader`, `metadataBase` in the root layout. 38 new unit tests, including that the redirect refuses unsafe stored URLs (http, loopback, metadata address, file/javascript schemes, credentials). Checked on rendered pages with seeded brands in every status.
+**Notes:** a `#fragment` on a brand URL is dropped on redirect, consistent with listing (fragments are never stored). The Visit link opens a new tab with `rel="noopener nofollow sponsored"`. The page has no OG image yet beyond the logo (generated cards are P2.4). The Phase 2 additions (the "via @handle" banner and the 10-second qualification script) go in the marked spot in `page.tsx`.
 
 ### P1.9 — Admin panel v1: listing review
 
