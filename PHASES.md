@@ -568,9 +568,9 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Build:** `pnpm seed` creates brands, promoters, links, clicks and qualifications across days and channels. `scripts/simulate-clicks.ts` drives `/go` → `/api/q` against local or staging with Turnstile test keys.
 **Done when:**
 - [x] Local seed creates repeatable multi-day, multi-channel demo data and refuses remote databases.
-- [ ] Simulator qualifies a local or staging visitor end to end; requires the local web environment or staging Turnstile configuration.
+- [x] Simulator qualifies a local or staging visitor end to end; requires the local web environment or staging Turnstile configuration.
 
-**Built (2026-10-25):** `pnpm seed` creates 8 share links, 480 clicks, 256 qualified visitors and 20 waitlisted visitors. The seed now funds qualified visitors in order and creates waitlist entries only after exhausting the matching demo budget; repeat runs remain scoped to the fixed local fixture. Seed and simulator TypeScript checks pass; the simulator rejects production targets. A full local reconciliation run now passes after the seed. The live `/go` → `/api/q` simulator run remains unverified because `apps/web/.env.local` is not configured. Setup instructions are in README.
+**Built (2026-10-25):** `pnpm seed` creates 8 share links, 480 clicks, 256 qualified visitors and 20 waitlisted visitors. The seed now funds qualified visitors in order and creates waitlist entries only after exhausting the matching demo budget; repeat runs remain scoped to the fixed local fixture. Seed and simulator TypeScript checks pass; the simulator rejects production targets. A full local reconciliation run passes after the seed. The local `/go` → `/api/q` simulator was also run against a disposable funded fixture: one click produced exactly one pending earning at the claimed rate, and all fixture data was removed afterward. Setup instructions are in README.
 
 ### P2.14 — End-to-end and beta readiness
 
