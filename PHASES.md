@@ -93,9 +93,11 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 
 **Tests:** `packages/db/tests/rls.test.sql` checks that anon and authenticated roles can't read `clicks`/`visitors`/`visitor_keys`, can't write money columns, and that a promoter reads only their own earnings.
 **Done when:**
-- [ ] `supabase db reset` applies all migrations cleanly.
-- [ ] RLS tests pass.
-- [ ] Types are generated and committed.
+- [x] `supabase db reset` applies all migrations cleanly.
+- [x] RLS tests pass (01_rls, 02_constraints; mutation-checked by deliberately breaking 5 rules).
+- [x] Types are generated and committed.
+
+**Built (2026-10-25):** migrations `20261025000100`–`000500` (extensions, schema, indexes, rls, seed). Notes for later WPs: `brands.ads_enabled` defaults to **false** (D42); `public_profiles` view exposes handle; new tables/functions start with **no** client access, so each new migration must GRANT explicitly (the privilege-hygiene test in `02_constraints.sql` fails otherwise); `gen_random_uuid()` and `citext` work with `search_path = public, extensions`. Reserved handles live in `packages/shared` (`RESERVED_HANDLES`), not the DB.
 
 ### P1.3 — Shared package: money, codes, schemas
 
@@ -596,6 +598,7 @@ Found while breaking BUILD.md into WPs. Each needs a BUILD.md §3 entry once app
 | G12 | R1, R2 and R5 need the qualification IP, fingerprint and active time; `/api/q` data isn't persisted | `visitors.qualified_ip_hash, qualified_fp_hash, qualified_active_ms, qualified_interactions` | P2.8 |
 | G13 | The 90-day UA strip (§20) isn't in any phase | Nightly job in P3.10 | P3.10 |
 | G16 | "One phone number per account" has no column | `profiles.phone_hash unique` | P3.4 |
+| G18 | BUILD §8 names categories that need manual review, but `categories` had no way to say which | `categories.requires_review` (D42) | P1.2, P1.6 |
 | G17 | Brand team invites (§17) are in no phase and have no table | `brand_invites` table, Phase 3 (D34) | P3.11 |
 
 Risks to watch:

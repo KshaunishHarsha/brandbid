@@ -31,7 +31,7 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: latest
-      - run: supabase start -x gotrue,realtime,storage-api,imgproxy,inbucket,studio,edge-runtime,logflare,vector,supavisor
+      - run: supabase start -x realtime,storage-api,imgproxy,inbucket,studio,edge-runtime,logflare,vector,supavisor
       - run: supabase db reset
       - run: sudo apt-get update && sudo apt-get install -y postgresql-client
       - run: bash packages/db/run-sql-tests.sh

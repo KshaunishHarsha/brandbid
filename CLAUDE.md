@@ -33,7 +33,7 @@ packages/db/     migrations/, functions/ (money SQL), tests/ (SQL tests), types.
 packages/shared/ money.ts (cents), codes.ts, hash.ts, channels.ts, constants.ts, schemas.ts (zod)
 packages/emails/ email templates
 ```
-Current state: P1.1 scaffold exists (web with placeholder routes, worker skeleton, empty packages, CI file). No schema yet.
+Current state: P1.1 scaffold, P1.2 schema + RLS + seeds, P1.3 shared helpers done. No auth, payments or UI yet.
 
 ## Commands
 
@@ -92,8 +92,8 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 | WP | Title | Status | Updated | Notes |
 | --- | --- | --- | --- | --- |
 | P1.1 | Monorepo, tooling, CI | wip | 2026-10-25 | Verified locally: lint, typecheck, web routes, `supabase start`, worker boots and creates all 7 pg-boss queues + 5 schedules, `pnpm test:sql` runs. Still to verify: first CI run on GitHub, Sentry test event (needs DSN). `staging` branch is deferred to P1.12 (D41) |
-| P1.2 | Schema, RLS, seeds | todo | | |
-| P1.3 | Shared: money, codes, schemas | todo | | |
+| P1.2 | Schema, RLS, seeds | done | 2026-10-25 | 5 migrations; 3 SQL test files (smoke, RLS, constraints) mutation-checked. New tables/functions start with no client access: GRANT explicitly |
+| P1.3 | Shared: money, codes, schemas | done | 2026-10-25 | 79 tests, 100% branch coverage on money.ts + codes.ts. Also hash.ts, constants (bots, consent countries, reserved handles), `linkUrl()` |
 | P1.4 | Auth and profiles | todo | | |
 | P1.5 | Payments in, `record_bid` | todo | | Razorpay test mode |
 | P1.6 | Brand listing flow | todo | | |

@@ -118,11 +118,12 @@ Every product decision, with the date it was made. To change one, add a new row 
 | D34 | 2026-10-24 | Brand team invites ship in Phase 3. |
 | D35 | 2026-10-24 | Schema and behaviour gaps G1–G17 in PHASES.md are adopted as proposed (tie-break column, draft status, `reject_listing`, notification outbox, fraud-signal columns, and the others). |
 | D36 | 2026-10-24 | Budget exhaustion: budget is reserved at qualification in strict server order, and each paid visitor gets the full rate. Visitors who qualify after the budget runs out go on a **waitlist** instead of being counted unpaid. Whenever budget returns (a new bid or a fraud reversal), the waitlist is paid first, in qualification order. Waitlist entries expire after 30 days. Supersedes section 14 step 6 "can't be paid later either". |
+| D37 | 2026-10-24 | Budget refunds (D23) return only ad budget. Each bid is refunded at most its own `budget_cents`; brandbid's revenue share is never refunded. |
 | D38 | 2026-10-24 | A rejected listing (paid, never went live) is refunded the full amount, including brandbid's 50% share. This is separate from D37, which covers stagnation refunds of a live brand. |
 | D39 | 2026-10-25 | The domain is `brandbid.wtf`. Replaces every `brandbid.com` in this file; links are `brandbid.wtf/go/{code}` (D31 otherwise unchanged). |
 | D40 | 2026-10-25 | The background worker runs on AWS instead of Railway: ECS Fargate, one service per environment, pulling images from ECR (default; see PHASES.md P1.12). Supersedes the Railway choice in section 4. |
 | D41 | 2026-10-25 | Until v1 is live, work is pushed directly to `main` (CI still runs on every push). The `staging` branch and the feature-branch → PR → `staging` → `main` flow in section 5 start when the deploy pipeline is built (P1.12). |
-| D37 | 2026-10-24 | Budget refunds (D23) return only ad budget. Each bid is refunded at most its own `budget_cents`; brandbid's revenue share is never refunded. |
+| D42 | 2026-10-25 | Schema additions from building P1.2: `categories.requires_review` drives the manual-review categories in section 8 (G18); `brands.ads_enabled` defaults to false and is switched on by the first bid; client roles get column-level grants only, and any future table or function starts with no client access. |
 
 ---
 
@@ -248,13 +249,15 @@ All money columns are `bigint` cents. All timestamps are `timestamptz` in UTC. A
 -- Users (extends auth.users)
 create table profiles (
   id uuid primary key references auth.users(id),
-  handle citext unique,                     -- shown publicly, 3-20 chars, [a-z0-9_]
+  handle citext unique check (handle ~ '^[a-z0-9_]{3,20}$'),  -- shown publicly, 3-20 chars
   country char(2),
   is_admin boolean not null default false,
   status text not null default 'active',    -- active | suspended | banned
   trust_score int not null default 0,
   promoter_terms_accepted_at timestamptz,
+  leaderboard_public boolean not null default true,  -- opt out of the public promoter board (section 9)
   phone_verified_at timestamptz,
+  phone_hash text unique,                   -- HMAC of the phone number: one phone per account
   kyc_status text not null default 'none',  -- none | pending | verified | rejected
   first_withdrawal_reviewed boolean not null default false,
   created_at timestamptz not null default now()
@@ -263,7 +266,8 @@ create table profiles (
 create table categories (
   id serial primary key,
   slug text unique not null,
-  name text not null
+  name text not null,
+  requires_review boolean not null default false  -- crypto, finance, health and supplements, gambling-adjacent (section 8)
 );
 
 create table brands (
@@ -275,11 +279,12 @@ create table brands (
   logo_path text,
   category_id int references categories(id),
   owner_id uuid not null references profiles(id),
-  status text not null default 'pending_review', -- pending_review | active | rejected | removed
+  status text not null default 'draft',          -- draft (created, unpaid) | pending_review | active | rejected | removed
   total_paid_cents bigint not null default 0,    -- drives all-time rank
+  total_reached_at timestamptz,                  -- when it reached that total: rank tie-break (earlier wins)
   budget_cents bigint not null default 0 check (budget_cents >= 0), -- cached; ledger is the truth
   rate_cents bigint not null,                    -- >= floor at time of setting
-  ads_enabled boolean not null default true,
+  ads_enabled boolean not null default false,    -- turned on by the first bid that funds budget >= rate
   last_spend_at timestamptz,
   created_at timestamptz not null default now()
 );
@@ -300,6 +305,10 @@ create table bids (
   budget_cents bigint not null,
   processor text not null,
   processor_payment_id text unique not null,     -- idempotency key
+  payer_email text,                              -- fraud signal R9
+  payment_fingerprint text,                      -- fraud signal R9 (card/payment fingerprint)
+  refunded_at timestamptz,                       -- set when a rejected listing's bid is fully refunded (D38)
+  refund_ref text,
   status text not null default 'succeeded',      -- succeeded | refunded
   budget_refunded_cents bigint not null default 0
     check (budget_refunded_cents <= budget_cents), -- stagnation refunds never touch revenue (D37)
@@ -338,6 +347,10 @@ create table visitors (
   claim_expires_at timestamptz,                  -- claim click + 7 days (D16)
   qualified_at timestamptz,
   qualified_click_id uuid,
+  qualified_ip_hash text,                        -- signals saved at qualification for fraud rules R1, R2, R5
+  qualified_fp_hash text,
+  qualified_active_ms int,
+  qualified_interactions int,
   created_at timestamptz not null default now()
 );
 
@@ -450,6 +463,32 @@ create table settings (
 --       claim_days=7, qualify_seconds=10, cycle_hours=24, stagnation_days=30,
 --       waitlist_days=30
 
+-- Emails queued by SQL functions; the worker's `notify` job sends them
+create table notification_outbox (
+  id bigserial primary key,
+  kind text not null,                       -- template name
+  recipient_user_id uuid references profiles(id),
+  recipient_email text,
+  payload jsonb not null default '{}'::jsonb,
+  dedupe_key text unique,                   -- enforces "max once a day" and digests
+  send_after timestamptz not null default now(),
+  sent_at timestamptz,
+  attempts int not null default 0,
+  last_error text,
+  created_at timestamptz not null default now()
+);
+
+-- Brand members' dashboard sessions, for self-promotion rule R9 (section 16)
+create table member_signals (
+  id bigserial primary key,
+  brand_id uuid not null references brands(id),
+  user_id uuid not null references profiles(id),
+  ip_hash text not null,
+  ua_hash text not null,
+  fp_hash text,
+  seen_at timestamptz not null default now()
+);
+
 create table audit_log (
   id bigserial primary key,
   actor_id uuid,
@@ -474,13 +513,14 @@ create table audit_log (
 
 | Table | Who can read | Who can write |
 | --- | --- | --- |
-| profiles | Owner reads own row; public view exposes handle only | Owner updates handle/country; status, trust, KYC only by server |
-| brands | Public for `active`; members see their own | Members edit description, logo, rate; money columns only by server |
+| profiles | Owner reads own row; the `public_profiles` view exposes id and handle only | Owner updates handle, country, leaderboard flag; status, trust, KYC, terms only by server |
+| brands | Public for `active`; members see their own | Members edit description, logo, rate (column-level grants); status, money columns only by server |
 | links | Promoter reads own | Server only (via `get_or_create_link`) |
-| clicks, visitors, visitor_keys | Nobody from the client | Server only |
 | earnings, promoter_ledger | Promoter reads own | Server only |
 | bids, budget_ledger | Brand members read own brand | Server only |
-| everything else | Admin | Server only |
+| payout_accounts, withdrawals, budget_refunds | Promoter reads own / brand members read own brand | Server only |
+| fraud_flags, settings, audit_log, notification_outbox, member_signals | Admin | Server only |
+| clicks, visitors, visitor_keys | Nobody from the client, admins included (the admin panel uses the server) | Server only |
 
 "Server" means the service-role key, used only in API routes, the `/go` function and the worker. The service-role key never reaches the browser.
 

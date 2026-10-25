@@ -2,7 +2,9 @@
   "name": "brandbid",
   "private": true,
   "packageManager": "pnpm@12.15.0",
-  "engines": { "node": ">=24" },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "pnpm --parallel --filter web --filter worker dev",
     "build": "pnpm -r build",
@@ -16,6 +18,7 @@
     "format": "prettier --write ."
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^3.2.7",
     "prettier": "^3.3.0",
     "typescript": "^5.6.0",
     "vitest": "^3.0.0"
