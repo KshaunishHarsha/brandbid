@@ -51,7 +51,7 @@ Two environments, each its own Worker with its own database and its own keys:
 - [ ] The domain `brandbid.wtf` added as a site (section 2.3).
 - [ ] A **Turnstile** widget per environment (section 2.4).
 - [ ] An **Upstash Redis** database per environment (section 2.5).
-- [ ] A machine with **Node 24** (the repo's `.nvmrc`) and **pnpm 12** (`npm install -g pnpm@12.15.0`) and access to the GitHub repo `KshaunishHarsha/brandbid` (ask the project owner for access).
+- [ ] A machine with **Node 24** (the repo's `.nvmrc`) and **pnpm 12** (`npm install -g pnpm@12.15.0`) and the GitHub repo `KshaunishHarsha/brandbid` (you have been added as a collaborator; accept the GitHub invitation email first).
 
 **You get these from the project owner** (please send them through a password manager or similar, never in chat or in git):
 
