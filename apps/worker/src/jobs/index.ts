@@ -4,6 +4,7 @@ import { runCheckListing } from './check-listing.js';
 import { runCleanup } from './cleanup.js';
 import { runNotify } from './notify.js';
 import { runProcessRefunds } from './process-refunds.js';
+import { runSettleCycles } from './settle-cycles.js';
 
 // Every job in BUILD.md section 4. Handlers not built yet are no-ops that say which work package owns them.
 export type JobDef = {
@@ -16,7 +17,7 @@ export type JobDef = {
 };
 
 export const JOBS: JobDef[] = [
-  { name: 'settle-cycles', cron: '*/5 * * * *', wp: 'P3.2' },
+  { name: 'settle-cycles', cron: '*/5 * * * *', wp: 'P3.2', run: (ctx) => runSettleCycles(ctx) },
   { name: 'score-fraud', wp: 'P3.3' },
   { name: 'process-withdrawals', cron: '*/15 * * * *', wp: 'P3.6' },
   { name: 'refresh-leaderboards', cron: '* * * * *', wp: 'P1.7' },

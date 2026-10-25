@@ -125,7 +125,7 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 | P2.14 | E2E, beta readiness | todo | | |
 | P3.0 | Legal and provider gate | todo | | Needs CA |
 | P3.1 | Notifications infra | wip | 2026-10-25 | Outbox worker, retry/backoff, Resend/Mailpit transports, and HTML/text templates for §19 exist; template tests and local outbid delivery pass. Event triggers arrive with their producing phases. Left: unsubscribe preferences and verified Resend/Gmail/Outlook checks (PHASES setup-dependent checks). |
-| P3.2 | Settlement | todo | | |
+| P3.2 | Settlement | wip | 2026-10-25 | SQL settlement function and five-minute worker schedule built; boundary, hold, expiry, notification, trust, repeat-run and concurrent-call checks pass locally. Keep wip until P3.3 trust policy gaps are resolved. |
 | P3.3 | Fraud rules, trust | wip | 2026-10-25 | Service-role-only scoring and idempotent flag assessment for R1–R6, R8, available R9 signals; SQL fixture verifies triggers, near miss, threshold, history and ACLs. R7 needs Phase 4 IP intelligence. Trust change for sub-threshold scores and a brand billing-name signal need a documented policy/schema decision. |
 | P3.4 | Phone verification | todo | | |
 | P3.5 | Payout account, KYC, tax | todo | | |
