@@ -264,26 +264,30 @@ Then run the section 2.8 checks against `https://brandbid.wtf`. Open a fresh she
 
 ## 3. Supabase (project owner)
 
-You are setting this up. Cloudflare needs three values from you per environment: the **project URL**, the **anon key** and the **service role key** (Project Settings → API Keys).
+Cloudflare needs three values from you per environment: the **project URL**, the **anon key** and the **service role key** (Project Settings → API Keys).
 
-For each of staging and production:
+**Status of staging:** project `brandbid-main` (`rqajoumchvgjzezgbobo`, region `ap-south-1`) has all 15 migrations applied, the `logos` bucket, and its core sign-in settings; the checker passes. Still to do there: custom email sending (step 5), then the email template (step 6).
 
-1. **Create the project** (names `brandbid-staging`, `brandbid-prod`). Pick a region close to most users and use the same region for both.
-2. **Apply the database.** From the repo root: `supabase link --project-ref <ref>` then `supabase db push`. This applies every migration in `packages/db/migrations` in order. Never edit an applied migration; changes are new migration files.
-3. **Auth → URL Configuration:** Site URL = the environment's URL (`https://staging.brandbid.wtf` or `https://brandbid.wtf`). Redirect URLs: add `https://staging.brandbid.wtf/**` (or `https://brandbid.wtf/**`).
-3b. **Authentication → Providers → Email: keep "Confirm email" ON** (this is the default; do not turn it off). With it off, anyone can create a confirmed account with a session for somebody else's email address. This is a real account-takeover risk with guest checkout, and it is the one setting the checker below fails on. Leave "Allow new users to sign up" ON (magic-link sign-in needs it).
-4. **Auth → Email Templates:** paste the contents of `supabase/templates/magic_link.html` into **both** "Magic Link" and "Confirm signup" (subject: `Your brandbid sign-in link`). The link in the template uses a flow that works across browsers.
-5. **Auth → SMTP settings:** configure a real sender (Resend is planned). Supabase's built-in sender is heavily rate-limited and not for production.
-6. **Storage:** create a bucket named `logos`: **public**, file size limit **1 MiB**, allowed types `image/png`, `image/jpeg`, `image/webp`. (The `config.toml` setting only covers local development.)
-7. **Auth → Providers → Google** (optional, later): needs a Google OAuth client; steps are under P1.4 in `PHASES.md`. Then set `NEXT_PUBLIC_GOOGLE_AUTH=true` for that environment's build.
+For each of staging and production (production: copy `deploy/supabase/staging` to `deploy/supabase/production`, change the URLs and the `project-ref`):
+
+1. **Create the project.** Pick a region close to most users, the same one for both environments (and later for the AWS worker).
+2. **Log in and link.** From the repo root: `supabase login`, then `supabase link --project-ref <ref>` (no database password is needed).
+3. **Apply the database:** `supabase db push --linked --dry-run` to preview, then `supabase db push --linked`. This applies every migration in `packages/db/migrations` in order, including the public `logos` storage bucket. Never edit an applied migration; changes are new migration files. **Never run `supabase db reset --linked`**: it would wipe the hosted database.
+   - If a migration fails, the CLI prints the error as a line of JSON. Each migration runs in its own transaction, so a failed one leaves nothing half-applied.
+4. **Sign-in settings:** `deploy/supabase/push-config.sh staging` previews the changes, `deploy/supabase/push-config.sh staging --apply` applies them. This sets the Site URL and redirect list and keeps **email confirmation ON**. It changes only what `deploy/supabase/<env>/core.toml` declares, and never pushes the main `supabase/config.toml` (local-development values such as a 1-second email limit would weaken a real project). **Never turn "Confirm email" off**: with it off, anyone can create a confirmed account, with a session, for somebody else's email address, which is an account-takeover risk with guest checkout (D50).
+5. **Email sending:** Supabase's built-in sender is limited to about 2 emails an hour and is for trying things out only; sign-in links will not work reliably until you configure your own. Create a Resend account and an API key, then in the dashboard go to **Authentication → SMTP Settings**: host `smtp.resend.com`, port `465`, username `resend`, password = the API key, sender `noreply@brandbid.wtf`, name `brandbid`. Until the domain `brandbid.wtf` is verified in Resend (your friend adds its DNS records), Resend only delivers to your own email address, which is enough for a first test.
+6. **Email template** (needs step 5 first, because Supabase refuses template changes on the built-in sender): `deploy/supabase/push-config.sh staging --templates --apply`. The template uses a link that works in a different browser than the one that asked and that email scanners cannot use up.
+7. **Google sign-in** (optional, later): needs a Google OAuth client; steps are under P1.4 in `PHASES.md`. Then set `NEXT_PUBLIC_GOOGLE_AUTH=true` for that environment's build.
 8. **Run the checker** (needs only the public values, takes a few seconds). From the repo root:
 
    ```bash
    scripts/verify-supabase.sh https://<project-ref>.supabase.co <anon-key>
    ```
 
-   It confirms the migrations were applied, that outsiders cannot read or call anything sensitive, that email confirmation is on, and that the `logos` bucket exists. For deeper checks pass the service role key through the environment (never on the command line): `SUPABASE_SERVICE_ROLE_KEY=<key> scripts/verify-supabase.sh <url> <anon-key>`. Every line must say PASS before moving on. Re-run it after any change to the project's settings.
+   It confirms the migrations were applied, that outsiders cannot read or call anything sensitive, that email confirmation is on, and that the `logos` bucket exists. For deeper checks pass the service role key through the environment (never on the command line): `SUPABASE_SERVICE_ROLE_KEY=<key> scripts/verify-supabase.sh <url> <anon-key>`. Every line must say PASS. Re-run it after any change to the project's settings. It cannot see the Site URL or the email template; `push-config.sh <env>` with no flags shows any drift from the declared settings.
 9. **Direct connection string** (Project Settings → Database): the AWS worker will need the *direct* (session-mode) one, not the pooler. Keep it safe; it is not needed for Cloudflare.
+
+**Log out when done** on a shared machine: `supabase logout`. The login covers your whole Supabase account.
 
 ---
 

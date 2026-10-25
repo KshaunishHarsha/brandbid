@@ -1,0 +1,13 @@
+# Email templates for STAGING. Supabase only allows changing these once a CUSTOM SMTP sender (Resend) is configured on
+# the project (the built-in sender is for trying things out), so push them with `--templates` after that.
+#
+# These use the token-hash flow so the link works in a different browser than the one that asked, and so an email
+# scanner cannot use up the one-time link (see apps/web/app/auth/confirm).
+
+[auth.email.template.magic_link]
+subject = "Your brandbid sign-in link"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.confirmation]
+subject = "Your brandbid sign-in link"
+content_path = "./supabase/templates/magic_link.html"

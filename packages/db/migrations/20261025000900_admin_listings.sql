@@ -16,7 +16,7 @@ create index bids_refund_owed_idx on public.bids (refund_retry_at nulls first)
 -- ---------------------------------------------------------------- the review queue
 create function public.admin_pending_listings()
 returns table (
-  brand_id uuid, slug citext, name text, description text, url text, logo_path text,
+  brand_id uuid, slug extensions.citext, name text, description text, url text, logo_path text,
   category_id int, category_name text, category_requires_review boolean,
   owner_id uuid, owner_email text,
   review_reason text, checked_at timestamptz,

@@ -64,9 +64,14 @@ $1" 2>/dev/null; }
 echo "Checking $URL"
 echo
 echo "Reachability"
-call "$ANON" GET "/rest/v1/"
+# (The API root "/rest/v1/" lists the schema and is hidden from the anon key on hosted projects, so probe a public table.)
+call "$ANON" GET "/rest/v1/categories?select=slug&limit=1"
 if [ "$CODE" = "000" ]; then bad "cannot reach the project (wrong URL, or no internet)"; echo; echo "0 checks possible."; exit 1; fi
-[ "$CODE" = "200" ] && ok "the API answers" || bad "the API answered HTTP $CODE (is the anon key right?)"
+case "$CODE" in
+  200) ok "the API answers" ;;
+  401|403) bad "the API refused the anon key (HTTP $CODE): is it the right key for this project?" ;;
+  *) bad "the API answered HTTP $CODE" ;;
+esac
 
 echo
 echo "Migrations applied and public data readable (anon key)"

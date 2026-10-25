@@ -9,7 +9,7 @@ on conflict (key) do nothing;
 
 create table public.beta_waitlist (
   id bigserial primary key,
-  email citext not null unique,
+  email extensions.citext not null unique,
   created_at timestamptz not null default now()
 );
 

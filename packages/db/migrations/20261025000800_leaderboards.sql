@@ -24,7 +24,7 @@ create function public.leaderboard_all_time(
   p_offset int default 0
 )
 returns table (
-  board_rank bigint, brand_id uuid, slug citext, name text, description text, logo_path text,
+  board_rank bigint, brand_id uuid, slug extensions.citext, name text, description text, logo_path text,
   url text, category_id int, total_paid_cents bigint,
   take_price_cents bigint   -- what a NEW brand pays to take this exact spot (= claim_price(null, board_rank))
 )
@@ -49,7 +49,7 @@ create function public.leaderboard_today(
   p_offset int default 0
 )
 returns table (
-  board_rank bigint, brand_id uuid, slug citext, name text, description text, logo_path text,
+  board_rank bigint, brand_id uuid, slug extensions.citext, name text, description text, logo_path text,
   url text, category_id int, total_paid_cents bigint, today_cents bigint
 )
 language sql stable

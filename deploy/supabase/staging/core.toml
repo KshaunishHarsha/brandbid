@@ -1,0 +1,11 @@
+# Core hosted sign-in settings for STAGING (project brandbid-main). Pushed by deploy/supabase/push-config.sh.
+# Only properties declared here are changed on the project; the repo's main supabase/config.toml (local development
+# values such as a 1 second email re-send limit and localhost URLs) is never pushed.
+
+[auth]
+site_url = "https://staging.brandbid.wtf"
+additional_redirect_urls = ["https://staging.brandbid.wtf/**"]
+
+[auth.email]
+enable_signup = true
+enable_confirmations = true   # MUST stay true: see DEPLOYMENT.md section 3 and migration 001300

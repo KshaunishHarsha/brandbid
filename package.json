@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "pnpm --parallel --filter web --filter worker dev",
     "build": "pnpm -r build",
-    "lint": "pnpm -r lint",
+    "lint": "pnpm lint:migrations && pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "test": "vitest run",
     "test:sql": "bash packages/db/run-sql-tests.sh",
@@ -18,7 +18,8 @@
     "format": "prettier --write .",
     "test:concurrency": "tsx packages/db/tests/concurrency-record-bid.ts",
     "test:worker": "DATABASE_URL=\"${DATABASE_URL:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}\" tsx apps/worker/src/jobs/check-listing.integration.ts && DATABASE_URL=\"${DATABASE_URL:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}\" tsx apps/worker/src/jobs/admin-jobs.integration.ts",
-    "admin:grant": "bash scripts/grant-admin.sh"
+    "admin:grant": "bash scripts/grant-admin.sh",
+    "lint:migrations": "bash packages/db/check-migrations.sh"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^3.2.7",
