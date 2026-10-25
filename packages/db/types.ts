@@ -675,6 +675,12 @@ isOneToOne: false
             "report_brand_suspicious_traffic":
 { Args: { "p_brand_id": string,"p_reason": string,"p_reporter_id": string }; Returns: Json
                            },
+            "create_brand_invite":
+{ Args: { "p_brand_id": string,"p_email": string,"p_expires_at": string,"p_invited_by": string,"p_token": string,"p_token_hash": string }; Returns: Json
+                           },
+            "accept_brand_invite":
+{ Args: { "p_token_hash": string,"p_user_id": string }; Returns: Json
+                           },
             "admin_disable_brand_ads":
 { Args: { "p_admin_id": string,"p_brand_id": string,"p_reason": string }; Returns: Json
                            },

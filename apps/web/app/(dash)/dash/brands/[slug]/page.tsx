@@ -109,6 +109,15 @@ export default async function BrandDashboard({ params, searchParams }: Props) {
         </form>
       </section>}
 
+      {live && brand.role === 'owner' && <section className="mt-8 rounded-card border border-line bg-surface p-5" aria-labelledby="team-invite">
+        <h2 id="team-invite" className="text-lg font-bold">Invite a teammate</h2>
+        <p className="mt-1 text-sm text-muted">They will receive a sign-in link and must accept with the invited email. Invitations expire after 7 days. Team members can view and edit the listing but cannot pay or invite others.</p>
+        <form method="post" action={`/api/brands/${encodeURIComponent(brand.slug)}/invite`} className="mt-3 flex flex-wrap items-end gap-2">
+          <label className="text-sm">Email<input name="email" type="email" required maxLength={320} className="mt-1 block w-72 max-w-full rounded-lg border border-line bg-bg px-3 py-2" /></label>
+          <button className="rounded-lg border border-line px-4 py-2 text-sm font-semibold">Send invitation</button>
+        </form>
+      </section>}
+
       <section className="mt-8" aria-labelledby="bids">
         <h2 id="bids" className="mb-3 text-lg font-bold">Payments</h2>
         {d.bids.length === 0 ? (

@@ -34,7 +34,13 @@ export async function runNotify(
       if (!mail) continue;
       try {
         await ctx.send({ to: row.email, ...mail });
-        await client.query(`update public.notification_outbox set sent_at = now(), last_error = null where id = $1`, [row.id]);
+        await client.query(
+          `update public.notification_outbox
+              set sent_at = now(), last_error = null,
+                  payload = case when kind = 'brand_invite' then payload - 'token' else payload end
+            where id = $1`,
+          [row.id],
+        );
         result.sent++;
       } catch (err) {
         const message = (err instanceof Error ? err.message : String(err)).slice(0, 500);

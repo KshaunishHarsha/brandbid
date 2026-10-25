@@ -1,6 +1,6 @@
 // Integration test for the notify and process-refunds jobs against the local database (`supabase start`).
 // Mail sending and the payment processor are fakes, so this never touches the network.
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type { Mail } from '@brandbid/emails';
 import type { PaymentProcessor } from '@brandbid/payments';
 import { createPool } from '../db.js';
@@ -53,6 +53,13 @@ async function main() {
   await q(`insert into public.brands (id, slug, name, url, owner_id, rate_cents) values ($1, $2, 'Approved Co', 'https://a.example.com', $3, 10)`, [approvedBrand, `adm-${tag}-ok`, owner]);
   await q(`select public.record_bid($1, $2, 1000, 'razorpay', $3)`, [approvedBrand, owner, `pay_${tag}_ok`]);
   await q(`select public.approve_listing($1, $2)`, [approvedBrand, admin]);
+  await q(`insert into public.brand_members (brand_id, user_id, role) values ($1, $2, 'owner')`, [approvedBrand, owner]);
+  const inviteToken = randomUUID().replaceAll('-', '').padEnd(64, 'a').slice(0, 64);
+  const inviteHash = createHash('sha256').update(inviteToken).digest('hex');
+  const invite = (await q(`select public.create_brand_invite($1, $2, $3, $4, $5, now() + interval '7 days') as r`, [
+    approvedBrand, owner, `invite-${tag}@test.dev`, inviteHash, inviteToken,
+  ])).rows[0].r;
+  const inviteId = invite.invite_id;
   const rejected = await rejectedBid('rej', 2501);
   await q(`insert into public.notification_outbox (kind, recipient_user_id, payload, dedupe_key) values ('outbid', $1, '{}', $2)`, [owner, `outbid-${tag}`]);
 
@@ -61,7 +68,7 @@ async function main() {
   const mine = () => sent.filter((m) => m.to === ownerEmail);
 
   const r1 = await runNotify(ctx, 100);
-  check(r1.sent >= 3, `expected the approval, rejection, and outbid emails to be sent, got ${JSON.stringify(r1)}`);
+  check(r1.sent >= 4, `expected the approval, rejection, outbid, and invite emails to be sent, got ${JSON.stringify(r1)}`);
   check(mine().length === 3, `owner got exactly 3 emails, got ${mine().length}`);
   const approved = mine().find((m) => m.subject === 'Approved Co is live on brandbid');
   const rej = mine().find((m) => m.subject.startsWith("We couldn't list Brand rej"));
@@ -69,6 +76,10 @@ async function main() {
   check(approved && approved.html.includes(`https://brandbid.wtf/b/adm-${tag}-ok`), 'approval email links to the live page');
   check(rej && rej.html.includes('$25.01') && rej.html.includes('Not a fit'), 'rejection email states the refund and the reason');
   check(outbidMail && outbidMail.html.includes('was outbid'), 'outbid notification is rendered for the recipient');
+  const inviteMail = sent.find((m) => m.to === `invite-${tag}@test.dev`);
+  check(inviteMail && inviteMail.html.includes(`/brands/invite/${inviteToken}`), 'brand invite email carries its one-time acceptance URL');
+  const queuedInvite = (await q(`select sent_at, payload ? 'token' as has_token from public.notification_outbox where kind = 'brand_invite' and payload->>'invite_id' = $1`, [inviteId])).rows[0];
+  check(queuedInvite.sent_at !== null && queuedInvite.has_token === false, 'outbox discards the raw invitation token after successful delivery');
   const outbid = (await q(`select sent_at, attempts from public.notification_outbox where dedupe_key = $1`, [`outbid-${tag}`])).rows[0];
   check(outbid.sent_at !== null && outbid.attempts === 0, 'outbid notification is sent once');
 
@@ -168,8 +179,9 @@ main()
   .finally(async () => {
     const ids = brands;
     for (const [sql, params] of [
-      [`delete from public.notification_outbox where dedupe_key like $1 or recipient_user_id = $2`, [`%${tag}%`, owner]],
+      [`delete from public.notification_outbox where dedupe_key like $1 or recipient_user_id = $2 or payload->>'invite_id' in (select id::text from public.brand_invites where brand_id = any($3::uuid[]))`, [`%${tag}%`, owner, ids]],
       [`delete from public.audit_log where details::text like $1 or subject_id = any($2::uuid[])`, [`%${tag}%`, ids]],
+      [`delete from public.brand_invites where brand_id = any($1::uuid[])`, [ids]],
       [`delete from public.budget_ledger where brand_id = any($1::uuid[])`, [ids]],
       [`delete from public.bids where brand_id = any($1::uuid[])`, [ids]],
       [`delete from public.brand_members where user_id = $1`, [owner]],

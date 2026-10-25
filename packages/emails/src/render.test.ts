@@ -48,6 +48,16 @@ describe('rate_floor_raised', () => {
   });
 });
 
+describe('brand_invite', () => {
+  it('links to the token acceptance page and names the brand', () => {
+    const token = 'a'.repeat(64);
+    const mail = renderEmail('brand_invite', { brand_name: 'Acme', token }, ctx)!;
+    expect(mail.text).toContain('Acme');
+    expect(mail.text).toContain(`https://brandbid.wtf/brands/invite/${token}`);
+    expect(mail.html).toContain('Accept invitation');
+  });
+});
+
 describe('untrusted text', () => {
   const evil = `<img src=x onerror=alert(1)>"&'`;
   it('is escaped in every html field', () => {

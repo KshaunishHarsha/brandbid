@@ -26,6 +26,7 @@ export const SUPPORTED_KINDS = [
   'refund_done',
   'admin_review_digest',
   'reconciliation_failed',
+  'brand_invite',
 ] as const;
 export type EmailKind = (typeof SUPPORTED_KINDS)[number];
 export const isSupportedKind = (k: string): k is EmailKind => (SUPPORTED_KINDS as readonly string[]).includes(k);
@@ -70,6 +71,7 @@ export function renderEmail(kind: string, payload: Record<string, unknown>, ctx:
     refund_done: { subject: 'Your brandbid refund is complete', heading: 'Refund complete', body: `A refund${amount(payload.amount_cents) ? ` of ${amount(payload.amount_cents)}` : ''} has been recorded for ${name}.`, href: `${site}/dash`, action: 'View your dashboard' },
     admin_review_digest: { subject: 'brandbid listing review queue', heading: 'Listings need review', body: `There ${payload.count === 1 ? 'is' : 'are'} ${typeof payload.count === 'number' ? payload.count : 'new'} item${payload.count === 1 ? '' : 's'} in the review queue.`, href: `${site}/admin/listings`, action: 'Open the review queue' },
     reconciliation_failed: { subject: 'brandbid ledger reconciliation failed', heading: 'Ledger reconciliation failed', body: `A reconciliation check reported an error${payload.details ? `: ${str(payload.details)}` : '.'} Please investigate the worker logs and ledger report.`, href: `${site}/admin`, action: 'Open admin' },
+    brand_invite: { subject: 'You were invited to a brand team on brandbid', heading: 'Brand team invitation', body: `You were invited to join ${str(payload.brand_name, 'a brand')} on brandbid. Sign in with the invited email address to accept the invitation.`, href: `${site}/brands/invite/${/^[0-9a-f]{64}$/.test(str(payload.token)) ? str(payload.token) : ''}`, action: 'Accept invitation' },
   };
 
   const message = messages[kind as EmailKind];
