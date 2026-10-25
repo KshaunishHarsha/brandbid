@@ -122,6 +122,8 @@ These are Worker secrets. If they are missing in a deployed environment, sign-in
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | staging site key | production site key |
 | `NEXT_PUBLIC_GOOGLE_AUTH` (optional) | `true` once Google sign-in is configured, else leave unset | same |
 | `NEXT_PUBLIC_SENTRY_DSN` (optional) | | |
+| `NEXT_PUBLIC_POSTHOG_KEY` (optional) | staging project token | production project token |
+| `NEXT_PUBLIC_POSTHOG_HOST` (optional) | PostHog ingest host, defaults to `https://us.i.posthog.com` | same |
 
 **Runtime secrets are NOT in the build.** Set them on the Worker; they never reach browsers. (Also tested: they appear in zero built files.)
 
@@ -248,7 +250,7 @@ Then run the section 2.8 checks against `https://brandbid.wtf`. Open a fresh she
 
 - **Automatic deploys from GitHub (CI).** Not set up. Manual deploys with the script are the plan until the project owner asks. Note that Cloudflare's built-in Git deploys do not fit well because each environment needs its own build variables.
 - **Page cache (R2).** Not wired. The leaderboard pages are rendered fresh on every request, which is correct, just not cached. An R2 incremental cache will be added later; no R2 bucket is needed now.
-- **Sentry source maps, PostHog analytics, email DNS records.** Later.
+- **Sentry source maps and email DNS records.** Later. PostHog client events are wired behind optional consent; set a project token at build time and verify the funnel on staging.
 
 ### 2.14 What has and has not been tested
 
@@ -313,6 +315,7 @@ What this means for now:
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | build | yes | Turnstile widget |
 | `NEXT_PUBLIC_GOOGLE_AUTH` | build | no | `true` when Google sign-in is configured |
 | `NEXT_PUBLIC_SENTRY_DSN` | build | no | Sentry |
+| `NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST` | build | no | PostHog project token and ingest host |
 | `SUPABASE_SERVICE_ROLE_KEY` | secret | yes | Supabase |
 | `IP_PEPPER` | secret | yes (app refuses to hash without it) | `openssl rand -hex 32`, never rotate |
 | `TURNSTILE_SECRET_KEY` | secret | yes (otherwise bot checks fail closed) | Turnstile widget |

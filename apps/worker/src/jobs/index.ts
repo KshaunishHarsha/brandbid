@@ -30,7 +30,11 @@ export const JOBS: JobDef[] = [
   { name: 'cleanup', cron: '0 3 * * *', wp: 'P1.6', run: (ctx) => runCleanup(ctx.pool) },
 ];
 
-export async function registerJobs(boss: PgBoss, ctx: JobContext): Promise<void> {
+export async function registerJobs(
+  boss: PgBoss,
+  ctx: JobContext,
+  onJobRun?: () => void,
+): Promise<void> {
   const placeholders: string[] = [];
   for (const job of JOBS) {
     await boss.createQueue(job.name);
@@ -39,8 +43,10 @@ export async function registerJobs(boss: PgBoss, ctx: JobContext): Promise<void>
     // Placeholders still register and run on schedule so the plumbing is exercised, but stay silent each minute.
     await boss.work(job.name, async () => {
       if (!run) return;
+      onJobRun?.();
       const result = await run(ctx);
-      const noisy = typeof result === 'object' && result !== null && Object.values(result).some((v) => v !== 0);
+      const noisy =
+        typeof result === 'object' && result !== null && Object.values(result).some((v) => v !== 0);
       if (noisy) console.log(`[worker] ${job.name}:`, result);
     });
     if (job.cron) await boss.schedule(job.name, job.cron);

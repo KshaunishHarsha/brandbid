@@ -1,8 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Turnstile } from '@/components/Turnstile';
+import { captureListingEvent } from '@/lib/analytics';
 
 type Category = { id: number; name: string; requires_review: boolean };
 type Step = 1 | 2 | 3;
@@ -77,7 +78,15 @@ export function ListWizard({
   const onToken = useCallback((t: string | null) => setToken(t), []);
   const needsBotCheck = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
-  const [mock, setMock] = useState<null | { orderId: string; brandId: string; payerId: string; amountCents: number; done: string }>(null);
+  const [mock, setMock] = useState<null | {
+    orderId: string;
+    brandId: string;
+    payerId: string;
+    amountCents: number;
+    done: string;
+  }>(null);
+
+  useEffect(() => captureListingEvent('list_started'), []);
 
   function pickLogo(file: File | null) {
     if (logoPreview) URL.revokeObjectURL(logoPreview);
@@ -86,7 +95,8 @@ export function ListWizard({
   }
 
   const minDollars = (minBidCents / 100).toString();
-  const amountOk = /^\d+(\.\d{1,2})?$/.test(amount) && Math.round(parseFloat(amount) * 100) >= minBidCents;
+  const amountOk =
+    /^\d+(\.\d{1,2})?$/.test(amount) && Math.round(parseFloat(amount) * 100) >= minBidCents;
 
   async function prefill(e: React.FormEvent) {
     e.preventDefault();
@@ -100,13 +110,17 @@ export function ListWizard({
         body: JSON.stringify({ url }),
       });
       const data = await res.json();
-      if (res.status === 409) return setError(`That website is already listed. See it at /b/${data.slug}.`);
-      if (!res.ok) return setError(data.message ?? ERRORS[data.error] ?? 'Something went wrong. Try again.');
+      if (res.status === 409)
+        return setError(`That website is already listed. See it at /b/${data.slug}.`);
+      if (!res.ok)
+        return setError(data.message ?? ERRORS[data.error] ?? 'Something went wrong. Try again.');
       setUrl(data.url);
       setName(data.name ?? '');
       setDescription(data.description ?? '');
       setImageUrl(data.image ?? null);
-      if (data.warning) setNote("We couldn't read that page, so please fill in the details yourself.");
+      if (data.warning)
+        setNote("We couldn't read that page, so please fill in the details yourself.");
+      captureListingEvent('list_prefilled', { automatic: !data.warning });
       setStep(2);
     } catch {
       setError('Network error. Try again.');
@@ -144,15 +158,31 @@ export function ListWizard({
       const res = await fetch('/api/checkout', { method: 'POST', body: form });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error === 'already_listed' ? `That website is already listed (/b/${data.slug}).` : (ERRORS[data.error] ?? 'Something went wrong. Try again.'));
+        setError(
+          data.error === 'already_listed'
+            ? `That website is already listed (/b/${data.slug}).`
+            : (ERRORS[data.error] ?? 'Something went wrong. Try again.'),
+        );
         return setBusy(false);
       }
 
       const done = `/list/done?id=${data.brandId}&t=${data.statusToken}`;
-      const order = data.order as { orderId: string; keyId: string; amountCents: number; mode: string };
+      const order = data.order as {
+        orderId: string;
+        keyId: string;
+        amountCents: number;
+        mode: string;
+      };
+      captureListingEvent('checkout_started', { amount_cents: order.amountCents });
 
       if (order.mode === 'mock') {
-        setMock({ orderId: order.orderId, brandId: data.brandId, payerId: data.payerId, amountCents: order.amountCents, done });
+        setMock({
+          orderId: order.orderId,
+          brandId: data.brandId,
+          payerId: data.payerId,
+          amountCents: order.amountCents,
+          done,
+        });
         return setBusy(false);
       }
 
@@ -183,7 +213,12 @@ export function ListWizard({
     const res = await fetch('/api/dev/mock-pay', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderId: mock.orderId, brandId: mock.brandId, payerId: mock.payerId, amountCents: mock.amountCents }),
+      body: JSON.stringify({
+        orderId: mock.orderId,
+        brandId: mock.brandId,
+        payerId: mock.payerId,
+        amountCents: mock.amountCents,
+      }),
     });
     if (res.ok) router.push(mock.done);
     else {
@@ -192,14 +227,19 @@ export function ListWizard({
     }
   }
 
-  const input = 'w-full rounded-lg border border-black/20 bg-transparent px-3 py-3 dark:border-white/30';
-  const primary = 'w-full rounded-lg bg-black px-4 py-3 font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black';
+  const input =
+    'w-full rounded-lg border border-black/20 bg-transparent px-3 py-3 dark:border-white/30';
+  const primary =
+    'w-full rounded-lg bg-black px-4 py-3 font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black';
 
   if (mock) {
     return (
       <div className="space-y-3 rounded-lg border border-amber-500/50 bg-amber-500/10 p-4">
         <h2 className="font-semibold">Test mode: no real payment</h2>
-        <p className="text-sm">This is the local mock checkout (PAYMENTS_MODE=mock). Press the button to pretend the payment succeeded.</p>
+        <p className="text-sm">
+          This is the local mock checkout (PAYMENTS_MODE=mock). Press the button to pretend the
+          payment succeeded.
+        </p>
         <button onClick={mockPay} disabled={busy} className={primary}>
           {busy ? 'Working…' : `Simulate paying $${(mock.amountCents / 100).toFixed(2)}`}
         </button>
@@ -220,10 +260,25 @@ export function ListWizard({
 
       {step === 1 && (
         <form onSubmit={prefill} className="space-y-3">
-          <label htmlFor="url" className="block text-sm font-medium">Your website</label>
-          <input id="url" className={input} value={url} onChange={(e) => setUrl(e.target.value)} placeholder="yourbrand.com" required autoFocus inputMode="url" />
-          <p className="text-xs opacity-60">We read your page to pre-fill the name, description and logo. You can edit everything.</p>
-          <button className={primary} disabled={busy || !url.trim()}>{busy ? 'Reading your site…' : 'Continue'}</button>
+          <label htmlFor="url" className="block text-sm font-medium">
+            Your website
+          </label>
+          <input
+            id="url"
+            className={input}
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="yourbrand.com"
+            required
+            autoFocus
+            inputMode="url"
+          />
+          <p className="text-xs opacity-60">
+            We read your page to pre-fill the name, description and logo. You can edit everything.
+          </p>
+          <button className={primary} disabled={busy || !url.trim()}>
+            {busy ? 'Reading your site…' : 'Continue'}
+          </button>
         </form>
       )}
 
@@ -231,20 +286,52 @@ export function ListWizard({
         <form onSubmit={details} className="space-y-4">
           {note && <p className="rounded-lg bg-amber-500/10 p-3 text-sm">{note}</p>}
           <div>
-            <label htmlFor="name" className="block text-sm font-medium">Brand name</label>
-            <input id="name" className={input} value={name} onChange={(e) => setName(e.target.value)} minLength={2} maxLength={60} required />
+            <label htmlFor="name" className="block text-sm font-medium">
+              Brand name
+            </label>
+            <input
+              id="name"
+              className={input}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              minLength={2}
+              maxLength={60}
+              required
+            />
           </div>
           <div>
-            <label htmlFor="desc" className="block text-sm font-medium">One-line description</label>
-            <textarea id="desc" className={input} value={description} onChange={(e) => setDescription(e.target.value)} minLength={10} maxLength={160} rows={2} required />
+            <label htmlFor="desc" className="block text-sm font-medium">
+              One-line description
+            </label>
+            <textarea
+              id="desc"
+              className={input}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              minLength={10}
+              maxLength={160}
+              rows={2}
+              required
+            />
             <p className="text-right text-xs opacity-60">{description.length}/160</p>
           </div>
           <div>
-            <label htmlFor="cat" className="block text-sm font-medium">Category</label>
-            <select id="cat" className={input} value={categoryId} onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : '')} required>
+            <label htmlFor="cat" className="block text-sm font-medium">
+              Category
+            </label>
+            <select
+              id="cat"
+              className={input}
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : '')}
+              required
+            >
               <option value="">Choose…</option>
               {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}{c.requires_review ? ' (manual review)' : ''}</option>
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                  {c.requires_review ? ' (manual review)' : ''}
+                </option>
               ))}
             </select>
           </div>
@@ -253,21 +340,41 @@ export function ListWizard({
             <div className="mt-2 flex items-center gap-3">
               {(logoPreview ?? imageUrl) ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={(logoPreview ?? imageUrl)!} alt="Logo preview" referrerPolicy="no-referrer" className="h-14 w-14 rounded-lg border object-cover" />
+                <img
+                  src={(logoPreview ?? imageUrl)!}
+                  alt="Logo preview"
+                  referrerPolicy="no-referrer"
+                  className="h-14 w-14 rounded-lg border object-cover"
+                />
               ) : (
-                <div className="flex h-14 w-14 items-center justify-center rounded-lg border text-lg font-bold">{name.slice(0, 1).toUpperCase() || '?'}</div>
+                <div className="flex h-14 w-14 items-center justify-center rounded-lg border text-lg font-bold">
+                  {name.slice(0, 1).toUpperCase() || '?'}
+                </div>
               )}
               <label className="cursor-pointer text-sm underline">
                 Upload your own
-                <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => pickLogo(e.target.files?.[0] ?? null)} />
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="sr-only"
+                  onChange={(e) => pickLogo(e.target.files?.[0] ?? null)}
+                />
               </label>
             </div>
             <p className="mt-1 text-xs opacity-60">PNG, JPEG or WebP, under 1 MB.</p>
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="flex gap-3">
-            <button type="button" onClick={() => setStep(1)} className="rounded-lg border px-4 py-3">Back</button>
-            <button className={primary} disabled={!categoryId}>Continue</button>
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="rounded-lg border px-4 py-3"
+            >
+              Back
+            </button>
+            <button className={primary} disabled={!categoryId}>
+              Continue
+            </button>
           </div>
         </form>
       )}
@@ -278,7 +385,8 @@ export function ListWizard({
             <span className="block text-sm font-medium">How much do you want to pay?</span>
             <div className="mt-2 flex flex-wrap gap-2">
               {ladder.map((step) => {
-                const label = step.priceCents <= minBidCents ? 'Join the board' : `Take #${step.rank}`;
+                const label =
+                  step.priceCents <= minBidCents ? 'Join the board' : `Take #${step.rank}`;
                 const selected = amount === dollars(step.priceCents);
                 return (
                   <button
@@ -295,30 +403,70 @@ export function ListWizard({
             </div>
             <div className="mt-3 flex items-center gap-2">
               <span>$</span>
-              <input className={input} value={amount} onChange={(e) => setAmount(e.target.value.trim())} inputMode="decimal" aria-label="Amount in dollars" />
+              <input
+                className={input}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value.trim())}
+                inputMode="decimal"
+                aria-label="Amount in dollars"
+              />
             </div>
             <p className="mt-1 text-xs opacity-60">
-              Minimum ${minDollars}. Prices move as others bid, and a higher total ranks you higher. Half becomes your ad budget; promoters are paid from it per qualified visitor.
+              Minimum ${minDollars}. Prices move as others bid, and a higher total ranks you higher.
+              Half becomes your ad budget; promoters are paid from it per qualified visitor.
             </p>
           </div>
 
           {signedInEmail ? (
-            <p className="text-sm">Listing as <strong>{signedInEmail}</strong></p>
+            <p className="text-sm">
+              Listing as <strong>{signedInEmail}</strong>
+            </p>
           ) : (
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium">Your email</label>
-              <input id="email" type="email" className={input} value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
-              <input type="email" className={input} value={emailConfirm} onChange={(e) => setEmailConfirm(e.target.value)} placeholder="Type it again" aria-label="Confirm email" required />
-              <p className="text-xs opacity-60">No password. We email you a link to manage your listing, so double-check this address.</p>
+              <label htmlFor="email" className="block text-sm font-medium">
+                Your email
+              </label>
+              <input
+                id="email"
+                type="email"
+                className={input}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                required
+              />
+              <input
+                type="email"
+                className={input}
+                value={emailConfirm}
+                onChange={(e) => setEmailConfirm(e.target.value)}
+                placeholder="Type it again"
+                aria-label="Confirm email"
+                required
+              />
+              <p className="text-xs opacity-60">
+                No password. We email you a link to manage your listing, so double-check this
+                address.
+              </p>
             </div>
           )}
 
           <Turnstile onToken={onToken} />
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="flex gap-3">
-            <button type="button" onClick={() => setStep(2)} className="rounded-lg border px-4 py-3">Back</button>
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              className="rounded-lg border px-4 py-3"
+            >
+              Back
+            </button>
             <button className={primary} disabled={busy || !amountOk || (needsBotCheck && !token)}>
-              {busy ? 'Starting checkout…' : amountOk ? `Pay $${parseFloat(amount).toFixed(2)}` : 'Pay'}
+              {busy
+                ? 'Starting checkout…'
+                : amountOk
+                  ? `Pay $${parseFloat(amount).toFixed(2)}`
+                  : 'Pay'}
             </button>
           </div>
           <p className="text-center text-xs opacity-60">Rejected listings are refunded in full.</p>

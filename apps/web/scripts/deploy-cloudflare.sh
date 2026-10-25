@@ -41,6 +41,8 @@ esac
 # 3. Optional values get an explicit default, so a stray .env.local can never fill them in.
 export NEXT_PUBLIC_GOOGLE_AUTH="${NEXT_PUBLIC_GOOGLE_AUTH:-false}"
 export NEXT_PUBLIC_SENTRY_DSN="${NEXT_PUBLIC_SENTRY_DSN:-}"
+export NEXT_PUBLIC_POSTHOG_KEY="${NEXT_PUBLIC_POSTHOG_KEY:-}"
+export NEXT_PUBLIC_POSTHOG_HOST="${NEXT_PUBLIC_POSTHOG_HOST:-https://us.i.posthog.com}"
 export NEXT_PUBLIC_APP_ENV="$ENV_NAME"
 
 echo "==> Building for $ENV_NAME ($NEXT_PUBLIC_SITE_URL)"

@@ -106,7 +106,7 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 | P1.8 | Brand page (listing mode) | done | 2026-10-25 | `/b/[slug]` (live brands only, else 404), `/out/b/[slug]` UTM redirect, shared `addUtm` for P2.9. Not visually checked in a browser |
 | P1.9 | Admin v1: listing review | done | 2026-10-25 | `/admin`, `/admin/listings`, approve/reject(full refund)/category with audit log; refunds issued immediately + worker retries; approve/reject emails via worker `notify`. Left: one real Razorpay test refund on staging (needs keys). First admin: `pnpm admin:grant <email>` |
 | P1.10 | Brand dashboard v1 | done | 2026-10-25 | `/dash`, `/dash/brands/[slug]`: rank, pay to move up, budget from the ledger, payments, edit description/logo; members only (404 otherwise). Not verified: the browser-side payment widget and auto-refresh |
-| P1.11 | Observability, analytics | todo | | |
+| P1.11 | Observability, analytics | wip | 2026-10-25 | PostHog pageviews and listing funnel events wired behind optional consent; real-job watchdog and Sentry cron check-ins added. Left: staging PostHog/Sentry credentials and live funnel/alert verification; source-map upload needs a private-map deploy design. |
 | P1.12 | Environments, deploy | wip | 2026-10-25 | Cloudflare part handed to a separate person: see DEPLOYMENT.md (envs in wrangler.jsonc, deploy script, tested up to a dry run). Left: their first real deploy; Supabase projects (owner); AWS worker undecided; CI deploys; R2 page cache |
 | P2.1 | Promoter onboarding | todo | | |
 | P2.2 | `get_or_create_link` | todo | | |

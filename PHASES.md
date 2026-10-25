@@ -299,6 +299,8 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Done when:**
 - [ ] The listing funnel is visible in PostHog on staging.
 
+**In progress (2026-10-25):** Web pageviews and the four listing funnel events are wired to PostHog after optional analytics consent. Real worker handlers send Sentry cron check-ins and an in-process warning is emitted after 10 minutes without a handler run. Staging PostHog/Sentry credentials do not exist yet, so live events and alerts remain unverified. Source-map upload remains open until the deploy process can guarantee maps are private.
+
 ### P1.12 — Environments and deploy pipeline
 
 **Goal:** staging and production exist and deploy safely.
