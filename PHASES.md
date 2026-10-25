@@ -596,6 +596,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 ### P3.0 — Legal and provider gate
 **Goal:** the decisions and legal checks every live-money step depends on. **Refs:** BUILD §21, §23.
 **Output:** payout provider(s), KYC provider, phone provider, and the tax info to collect, all logged in BUILD §3. Terms (brand and promoter), privacy policy and refund policy drafted and reviewed (P3.12).
+**Deferred setup:** needs the CA's advice and owner decisions on payout/KYC/phone providers and tax collection before any live-money launch.
 
 ### P3.1 — Notifications infrastructure
 **Depends on:** P2.8 (outbox exists). **Refs:** BUILD §19.
@@ -614,6 +615,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Depends on:** P2.8, [G10–G12]. **Refs:** BUILD §16.
 **Build:** each rule R1–R6, R8 and R9 as a SQL function or query returning `(subject, score, details)`, with thresholds read from `settings`. Group score ≥ 50 → `fraud_flags` rows (status `open`). Below 50, record the history and adjust trust. Trust thresholds: < 0 means withdrawals are reviewed; < −30 means auto-suspend. R9 uses `member_signals`, the `bids` payer email and fingerprint, the email domain against the brand URL, and the payout account name.
 **Tests:** a fixture dataset per rule that triggers it, plus a near-miss fixture that doesn't.
+**Built locally (2026-10-25):** service-role-only `fraud_rule_scores` evaluates R1–R6, R8, and available R9 signals using `fraud_thresholds`; `assess_fraud_group` records every assessment, creates idempotent per-earning flags when the group reaches the configured score, and keeps sub-threshold assessments in `fraud_assessments`. SQL fixture `19_fraud_scoring.sql` covers R1–R6, R8, R9, a no-signal near miss, thresholding, assessment history, ACLs, and repeated-call safety. R7 is deferred to Phase 4 because it needs IP intelligence. **Open policy/data gaps:** BUILD §16 says trust changes on confirmed review, while this phase's prose says sub-threshold scores lower trust without defining the amount; this implementation records history without guessing that money-adjacent policy. R9 payout-name comparison also needs a brand billing-name field, which the current schema does not have.
 
 ### P3.4 — Phone verification
 **Depends on:** P3.0. **Refs:** BUILD §10 step 4.1, [G16].
