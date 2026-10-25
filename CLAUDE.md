@@ -48,6 +48,7 @@ Needs Node ≥ 24 (`.nvmrc`), pnpm 12, Docker running, Supabase CLI.
 | `pnpm test:concurrency` | Fires parallel `record_bid` calls at the local DB |
 | `pnpm db:reset` | Re-applies all migrations and seeds |
 | `pnpm db:types` | Regenerates `packages/db/types.ts` |
+| `pnpm --filter web cf:build` | Builds the web app for Cloudflare Workers (OpenNext). Test it locally with `cd apps/web && cp .env.local .dev.vars && pnpm exec wrangler dev` (`.dev.vars` is git-ignored; delete it after) |
 
 Copy `.env.example` to `apps/web/.env.local` and `apps/worker/.env`. `supabase/migrations` is a symlink to `packages/db/migrations`.
 
@@ -142,6 +143,7 @@ _Append one line per hard-won lesson (date, what, why)._
 - 2026-10-25: Cloudflare headers: country is `cf-ipcountry`, client IP is `cf-connecting-ip`. Background work after responding is `getCloudflareContext().ctx.waitUntil(...)`.
 - 2026-10-25: In Next route handlers use `NextResponse.redirect`, not `Response.redirect`. The latter has immutable headers and returns 500.
 - 2026-10-25: Docker Desktop on an 8 GB Mac needs its memory limit lowered (~3 GB) to run the Supabase stack comfortably. `psql` isn't installed locally; `pnpm test:sql` falls back to `docker exec` into `supabase_db_brandbid`.
+- 2026-10-25: Built for Workers, `NODE_ENV` is `production`, so the rate limiter refuses to run without Upstash (fails closed, by design). For a local Workers test, expect `/api/auth/magic-link` to return 500 unless the Upstash vars are set.
 - 2026-10-25: Auth: `middleware.ts` stays (not Next 16 `proxy.ts`) until the Cloudflare adapter's proxy support is verified. Magic links use the token-hash flow + a Continue button (`/auth/confirm` -> `POST /api/auth/verify`) so they work across browsers and email scanners can't burn them. Local email is in Mailpit at http://127.0.0.1:54324. `supabase/config.toml` raises `email_sent` for local only. Zod 4: put `.max()` before `.pipe(z.email())`.
 - 2026-10-25: Postgres gives every new function `EXECUTE` to PUBLIC. `ALTER DEFAULT PRIVILEGES IN SCHEMA public ... FROM public` does NOT remove that; migration `000550` uses the form without `IN SCHEMA`. The test in `02_constraints.sql` fails if a new function is callable by a client role. Money functions are `SECURITY INVOKER`, service role only.
 - 2026-10-25: If `tsc` reports a stale error (e.g. a BigInt target error) after you changed `tsconfig.json`, delete `apps/web/tsconfig.tsbuildinfo`. Web targets ES2022 because shared code uses BigInt.

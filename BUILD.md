@@ -138,7 +138,7 @@ Every product decision, with the date it was made. To change one, add a new row 
 | Part | Choice | Notes |
 | --- | --- | --- |
 | Language | TypeScript everywhere | Strict mode on |
-| Web app | Next.js (App Router), current stable | Deployed on Cloudflare Workers via OpenNext (D43). Needs the Workers Paid plan: the app bundle is over the free plan's size limit |
+| Web app | Next.js (App Router), current stable | Deployed on Cloudflare Workers via OpenNext (D43). Use the Workers Paid plan: the bundle is ~2.4 MB gzipped today against the 3 MB free limit and will grow, and the free plan's 10 ms CPU per request is too tight for server rendering (check Cloudflare's current limits) |
 | Styling | Tailwind CSS | |
 | Database | Supabase Postgres | All money logic lives in SQL functions (section 7) |
 | Auth | Supabase Auth | Google and email magic link |

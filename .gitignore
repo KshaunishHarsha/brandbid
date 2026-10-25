@@ -73,3 +73,9 @@ tmp/
 # --- Claude Code local settings (shared project config stays tracked) ---
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
+
+# Cloudflare Workers local secrets (wrangler dev)
+.dev.vars
+.dev.vars.*
+.wrangler/
+.open-next/
