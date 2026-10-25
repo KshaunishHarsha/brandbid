@@ -124,7 +124,7 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 | P2.13 | Seed and simulator tooling | wip | 2026-10-25 | Local seed is repeatable and budget-reconciled; simulator typechecks and rejects production. Live `/go` → `/api/q` run awaits local web environment setup (README). |
 | P2.14 | E2E, beta readiness | todo | | |
 | P3.0 | Legal and provider gate | todo | | Needs CA |
-| P3.1 | Notifications infra | todo | | |
+| P3.1 | Notifications infra | wip | 2026-10-25 | Outbox worker, retry/backoff, Resend/Mailpit transports, and HTML/text templates for §19 exist; template tests and local outbid delivery pass. Event triggers arrive with their producing phases. Left: unsubscribe preferences and verified Resend/Gmail/Outlook checks (PHASES setup-dependent checks). |
 | P3.2 | Settlement | todo | | |
 | P3.3 | Fraud rules, trust | todo | | |
 | P3.4 | Phone verification | todo | | |

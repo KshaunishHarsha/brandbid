@@ -61,14 +61,16 @@ async function main() {
   const mine = () => sent.filter((m) => m.to === ownerEmail);
 
   const r1 = await runNotify(ctx, 100);
-  check(r1.sent >= 2, `expected the approval and rejection emails to be sent, got ${JSON.stringify(r1)}`);
-  check(mine().length === 2, `owner got exactly 2 emails, got ${mine().length}`);
+  check(r1.sent >= 3, `expected the approval, rejection, and outbid emails to be sent, got ${JSON.stringify(r1)}`);
+  check(mine().length === 3, `owner got exactly 3 emails, got ${mine().length}`);
   const approved = mine().find((m) => m.subject === 'Approved Co is live on brandbid');
   const rej = mine().find((m) => m.subject.startsWith("We couldn't list Brand rej"));
+  const outbidMail = mine().find((m) => m.subject === 'Your brand was outbid on brandbid');
   check(approved && approved.html.includes(`https://brandbid.wtf/b/adm-${tag}-ok`), 'approval email links to the live page');
   check(rej && rej.html.includes('$25.01') && rej.html.includes('Not a fit'), 'rejection email states the refund and the reason');
+  check(outbidMail && outbidMail.html.includes('was outbid'), 'outbid notification is rendered for the recipient');
   const outbid = (await q(`select sent_at, attempts from public.notification_outbox where dedupe_key = $1`, [`outbid-${tag}`])).rows[0];
-  check(outbid.sent_at === null && outbid.attempts === 0, 'kinds without a template are left alone for their own phase');
+  check(outbid.sent_at !== null && outbid.attempts === 0, 'outbid notification is sent once');
 
   const before = sent.length;
   await runNotify(ctx, 100);

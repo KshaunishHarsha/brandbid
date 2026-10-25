@@ -421,7 +421,9 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 - [ ] P2.5: configure the Supabase JWT signing secret, Upstash and Sentry as hosted Worker secrets; measure redirect p95 from three regions and check live crawler previews.
 - [ ] P2.7: browser-check attribution and URL cleanup; verify consent cookies and a real Turnstile-backed 10-second request after P2.8 is implemented.
 - [ ] P2.9: verify promoter UTM tags appear in the test brand's GA/Plausible after staging is available.
+- [ ] P2.13: configure the local web environment from `supabase status -o env` (`ANON_KEY`, `SERVICE_ROLE_KEY`, `JWT_SECRET`) and a local `IP_PEPPER`, then run `pnpm simulate:clicks`; staging can use the documented Cloudflare Turnstile test keys.
 - [ ] P2.14: run the full beta end-to-end suite after the hosted services and device checks above are available.
+- [ ] P3.1: configure a verified Resend sender/API key and test recipient accounts; trigger the notification matrix and inspect delivery in Gmail and Outlook. Local template/worker tests do not need provider credentials.
 
 ### P2.5 — `/go/[code]` redirect
 
@@ -600,6 +602,8 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Build:** `packages/emails` (React Email templates, one per row in BUILD §19). Worker `notify` job drains `notification_outbox` every minute: renders, sends via Resend, sets `sent_at`. Dedupe keys enforce "max once a day" and the daily digests (budget used up, refilled). Hourly admin digest; reconciliation failures sent immediately. Unsubscribe link for non-transactional emails.
 **Done when:**
 - [ ] Every BUILD §19 email can be triggered on staging and renders in Gmail and Outlook.
+
+**Built locally (2026-10-25):** The existing outbox worker, retry/backoff, Resend and Mailpit transports, and listing decision emails remain in place. `packages/emails` now has renderable HTML/text templates for all §19 notification categories; template escaping and coverage tests pass, and the worker integration confirms the outbid email is sent once. Email trigger wiring belongs to its producing phases. Still open: unsubscribe preferences, real Resend delivery, and Gmail/Outlook rendering after sender/provider setup.
 
 ### P3.2 — Settlement
 **Depends on:** P2.8, P3.3. **Refs:** BUILD §15 (cycles, settlement).

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { escapeHtml, isSupportedKind, renderEmail } from './render';
+import { escapeHtml, isSupportedKind, renderEmail, SUPPORTED_KINDS } from './render';
 
 const ctx = { siteUrl: 'https://brandbid.wtf' };
 
@@ -61,7 +61,26 @@ describe('kinds', () => {
   it('knows which kinds it can send', () => {
     expect(isSupportedKind('listing_approved')).toBe(true);
     expect(isSupportedKind('listing_rejected')).toBe(true);
-    expect(isSupportedKind('outbid')).toBe(false);
-    expect(renderEmail('outbid', {}, ctx)).toBeNull();
+    expect(isSupportedKind('outbid')).toBe(true);
+    expect(renderEmail('not_a_template', {}, ctx)).toBeNull();
+  });
+
+  it('renders every notification kind as both HTML and text', () => {
+    for (const kind of SUPPORTED_KINDS) {
+      const mail = renderEmail(kind, { name: 'Demo Brand', brand_name: 'Demo Brand', amount_cents: 1250, count: 2 }, ctx);
+      expect(mail, kind).not.toBeNull();
+      expect(mail!.subject.length, kind).toBeGreaterThan(0);
+      expect(mail!.html, kind).toContain('<!doctype html>');
+      expect(mail!.text.length, kind).toBeGreaterThan(0);
+    }
+  });
+
+  it('escapes user-supplied notification details in both formats', () => {
+    const evil = `<img src=x onerror=alert(1)>`;
+    for (const kind of SUPPORTED_KINDS) {
+      const mail = renderEmail(kind, { name: evil, brand_name: evil, reason: evil, reason_category: evil, details: evil }, ctx)!;
+      expect(mail.html, kind).not.toContain('<img');
+      expect(mail.subject, kind).not.toMatch(/[\r\n]/);
+    }
   });
 });
