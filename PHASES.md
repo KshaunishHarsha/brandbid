@@ -421,7 +421,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 - [ ] P2.5: configure the Supabase JWT signing secret, Upstash and Sentry as hosted Worker secrets; measure redirect p95 from three regions and check live crawler previews.
 - [ ] P2.7: browser-check attribution and URL cleanup; verify consent cookies and a real Turnstile-backed 10-second request after P2.8 is implemented.
 - [ ] P2.9: verify promoter UTM tags appear in the test brand's GA/Plausible after staging is available.
-- [ ] P2.13: configure the local web environment from `supabase status -o env` (`ANON_KEY`, `SERVICE_ROLE_KEY`, `JWT_SECRET`) and a local `IP_PEPPER`, then run `pnpm simulate:clicks`; staging can use the documented Cloudflare Turnstile test keys.
+- [x] P2.13 local verification: configure the local web environment from `supabase status -o env` (`ANON_KEY`, `SERVICE_ROLE_KEY`, `JWT_SECRET`) and a local `IP_PEPPER`, then run `pnpm simulate:clicks` against a disposable funded fixture. It produced one pending earning at the claimed rate, and all fixture data was removed. Staging Turnstile checks remain under P2.14.
 - [ ] P2.14: run the full beta end-to-end suite after the hosted services and device checks above are available.
 - [ ] P3.1: configure a verified Resend sender/API key and test recipient accounts; trigger the notification matrix and inspect delivery in Gmail and Outlook. Local template/worker tests do not need provider credentials.
 - [ ] P3.4: after P3.0, choose an SMS provider, create its sandbox account/credentials and webhook settings, then verify OTP sends, retries, rate limits and unique-phone behavior.
