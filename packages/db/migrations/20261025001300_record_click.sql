@@ -44,16 +44,16 @@ begin
     raise exception 'link_not_active' using errcode = 'P0001';
   end if;
 
-  if p_rate_limited then
-    v_ignored_reason := 'rate_limited';
-  elsif exists (select 1 from public.profiles p where p.id = p_promoter_id and p.status <> 'active') then
-    v_ignored_reason := 'banned_promoter';
-  elsif p_viewer_user_id = p_promoter_id then
+  if p_viewer_user_id = p_promoter_id then
     v_ignored_reason := 'self';
   elsif p_viewer_user_id is not null and exists (
     select 1 from public.brand_members m where m.brand_id = p_brand_id and m.user_id = p_viewer_user_id
   ) then
     v_ignored_reason := 'brand_member';
+  elsif exists (select 1 from public.profiles p where p.id = p_promoter_id and p.status <> 'active') then
+    v_ignored_reason := 'banned_promoter';
+  elsif p_rate_limited then
+    v_ignored_reason := 'rate_limited';
   end if;
 
   if v_ignored_reason is null then
