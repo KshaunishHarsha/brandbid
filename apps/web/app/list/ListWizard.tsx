@@ -13,8 +13,6 @@ declare global {
   }
 }
 
-const PRESETS = ['10', '25', '50', '100'];
-
 const ERRORS: Record<string, string> = {
   email_mismatch: 'The two email addresses do not match.',
   below_minimum: 'That is below the minimum bid.',
@@ -28,6 +26,11 @@ const ERRORS: Record<string, string> = {
   bot_check_failed: 'Bot check failed. Reload the page and try again.',
   payment_unavailable: 'Payments are unavailable right now. Please try again shortly.',
 };
+
+/** 5100 -> "51", 5150 -> "51.50" */
+function dollars(cents: number): string {
+  return (cents / 100).toFixed(2).replace(/\.00$/, '');
+}
 
 function loadRazorpay(): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -44,10 +47,14 @@ export function ListWizard({
   categories,
   signedInEmail,
   minBidCents,
+  ladder,
+  initialCents,
 }: {
   categories: Category[];
   signedInEmail: string | null;
   minBidCents: number;
+  ladder: Array<{ rank: number; priceCents: number }>;
+  initialCents: number;
 }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>(1);
@@ -63,7 +70,7 @@ export function ListWizard({
   const [logo, setLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
-  const [amount, setAmount] = useState('25');
+  const [amount, setAmount] = useState(dollars(initialCents));
   const [email, setEmail] = useState('');
   const [emailConfirm, setEmailConfirm] = useState('');
   const [token, setToken] = useState<string | null>(null);
@@ -270,18 +277,28 @@ export function ListWizard({
           <div>
             <span className="block text-sm font-medium">How much do you want to pay?</span>
             <div className="mt-2 flex flex-wrap gap-2">
-              {PRESETS.map((p) => (
-                <button type="button" key={p} onClick={() => setAmount(p)} className={`rounded-lg border px-4 py-2 ${amount === p ? 'bg-black text-white dark:bg-white dark:text-black' : ''}`}>
-                  ${p}
-                </button>
-              ))}
+              {ladder.map((step) => {
+                const label = step.priceCents <= minBidCents ? 'Join the board' : `Take #${step.rank}`;
+                const selected = amount === dollars(step.priceCents);
+                return (
+                  <button
+                    type="button"
+                    key={step.rank}
+                    onClick={() => setAmount(dollars(step.priceCents))}
+                    className={`rounded-lg border border-line px-3 py-2 text-left text-sm ${selected ? 'bg-accent text-accent-fg' : 'bg-surface'}`}
+                  >
+                    <span className="block font-semibold">${dollars(step.priceCents)}</span>
+                    <span className="block text-xs opacity-70">{label}</span>
+                  </button>
+                );
+              })}
             </div>
             <div className="mt-3 flex items-center gap-2">
               <span>$</span>
               <input className={input} value={amount} onChange={(e) => setAmount(e.target.value.trim())} inputMode="decimal" aria-label="Amount in dollars" />
             </div>
             <p className="mt-1 text-xs opacity-60">
-              Minimum ${minDollars}. A higher total ranks you higher. Half becomes your ad budget; promoters are paid from it per qualified visitor.
+              Minimum ${minDollars}. Prices move as others bid, and a higher total ranks you higher. Half becomes your ad budget; promoters are paid from it per qualified visitor.
             </p>
           </div>
 

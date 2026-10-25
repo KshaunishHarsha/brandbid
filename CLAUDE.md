@@ -100,7 +100,7 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 | P1.4 | Auth and profiles | wip | 2026-10-25 | Magic link done and tested against local Supabase + Mailpit. Left: Google OAuth client (wired, unverified), real Turnstile keys, hosted Supabase email template/SMTP, a browser test |
 | P1.5 | Payments in, `record_bid` | wip | 2026-10-25 | SQL + webhook + adapter done and tested (SQL tests, 100-call concurrency test, 29 unit tests, real route vs local DB). Left: a real Razorpay test-mode payment (needs keys); `/api/checkout` moved to P1.6 |
 | P1.6 | Brand listing flow | wip | 2026-10-25 | Done and tested end to end with mock payments: prefill (SSRF-safe), email-only checkout, webhook, worker auto-check + cleanup. Left: real Razorpay widget (keys), rank prices (P1.7), browser click-through test, hosted `logos` bucket |
-| P1.7 | Leaderboards, claim price | todo | | |
+| P1.7 | Leaderboards, claim price | done | 2026-10-25 | SQL (live boards, claim_price, ladder) mutation-tested; home page with tabs/categories/take-prices; checkout ladder. Boards are uncached until P1.12. Not visually checked in a browser |
 | P1.8 | Brand page (listing mode) | todo | | |
 | P1.9 | Admin v1: listing review | todo | | |
 | P1.10 | Brand dashboard v1 | todo | | |

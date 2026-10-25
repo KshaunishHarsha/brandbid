@@ -224,7 +224,12 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 
 **Tests (SQL):** tie-break by `total_reached_at`; claim price for rank 1, middle and past the end; a refunded bid is excluded from the daily board.
 **Done when:**
-- [ ] BUILD §22 Phase 1: "appear on both boards at the right rank" and "claim price for rank N is shown correctly" both verified.
+- [x] "Appear on both boards at the right rank": verified in SQL tests (ties, midnight boundary, refunds, inactive brands, categories) and on the rendered pages with seeded data.
+- [x] "Claim price for rank N is shown correctly": SQL tests for every case, and a property test that paying the quoted price really gets the rank (existing brand and newcomer).
+
+**Built (2026-10-25), D48:** migration `000800` (`utc_day_start`, `leaderboard_all_time` with a per-row `take_price_cents`, `leaderboard_today`, `brand_ranks`, `claim_price`, `claim_price_ladder`, `category_counts`, setting `rank_step_cents`), `lib/leaderboard.ts`, design tokens in `globals.css`, the home page with All-time/Today tabs and category chips, `/list?rank=N` hand-off and a live price ladder in checkout step 3. SQL test `05_leaderboards` mutation-checked with 10 sabotage runs.
+**Deviations from the spec above, on purpose:** (1) Today's board is a live query, not a materialized view (D48). (2) No 30 s page cache: on Cloudflare without the R2 incremental cache a revalidating page would be frozen at build time, so boards render per request (`force-dynamic`). Add caching deliberately in P1.12 together with the R2 cache.
+**Not done:** the Advertise button flag (the button itself arrives in P2.1). Pagination beyond the first 50 rows. I could not look at the pages in a browser; layout and the dark theme are untested visually.
 
 ### P1.8 — Brand page (listing mode)
 
@@ -301,6 +306,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 - Supabase projects: staging and production. Cloudflare Workers `brandbid-staging` and `brandbid-prod` (wrangler environments), deployed from GitHub Actions; previews use the staging DB. AWS: worker staging and production ECS services (D40).
 - CI: on merge to `staging` → `supabase db push` to staging → `opennextjs-cloudflare deploy --env staging`. On merge to `main` → push to production → deploy. Migrations run **before** the web deploy.
 - **OpenNext adapter setup (D43). Spike done 2026-10-25:** `@opennextjs/cloudflare`, `wrangler`, `open-next.config.ts` and `wrangler.jsonc` are in `apps/web`; `pnpm --filter web cf:build` builds in ~26 s (Next 16.4 with `middleware.ts`; bundle 2.4 MB gzip); verified in the local Workers runtime (`wrangler dev`) against local Supabase: pages, middleware redirect, `/go`, `/api/q`, the signed Razorpay webhook (record, replay, forged). Still to do here: R2 incremental cache, staging/production environments, deploy, and rest of this bullet. Original plan: add `@opennextjs/cloudflare` and `wrangler` to `apps/web`; `open-next.config.ts` (R2 incremental cache); `wrangler.jsonc` with `nodejs_compat`, a current `compatibility_date`, the assets binding, and `staging`/`production` environments; scripts `preview` (local Workers runtime) and `deploy`. Remove any `export const runtime = 'edge'` (the build fails on it). Check the compressed bundle size against the plan limit, and run `wrangler dev` against the local Supabase to confirm Supabase, Upstash and Turnstile calls work from the Workers runtime.
+- Add page caching for the boards (see P1.7 note): R2 incremental cache plus `revalidate` or on-demand revalidation after a bid.
 - Hosted Supabase: create the `logos` Storage bucket (public, 1 MiB limit, png/jpeg/webp); `config.toml` only covers local.
 - Secrets set in each dashboard (Cloudflare Worker secrets for web). Confirm local/preview can never reach production (separate keys, no prod keys in preview env).
 

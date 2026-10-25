@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { assertCents, cents, formatUSD, splitBid, toCents, visitorsAffordable } from './money';
+import { assertCents, cents, formatUSD, formatUSDCompact, splitBid, toCents, visitorsAffordable } from './money';
 
 describe('toCents', () => {
   it.each([
@@ -45,6 +45,19 @@ describe('formatUSD', () => {
     [-250, '-$2.50'],
   ])('formats %d', (c, expected) => expect(formatUSD(c)).toBe(expected));
   it('rejects non-integers', () => expect(() => formatUSD(1.5)).toThrow(TypeError));
+});
+
+describe('formatUSDCompact', () => {
+  it.each([
+    [0, '$0'],
+    [100, '$1'],
+    [2500, '$25'],
+    [2550, '$25.50'],
+    [5, '$0.05'],
+    [123400, '$1,234'],
+    [123450, '$1,234.50'],
+    [-250, '-$2.50'],
+  ])('formats %d', (c, expected) => expect(formatUSDCompact(c)).toBe(expected));
 });
 
 describe('splitBid (BUILD s7 rule 7)', () => {

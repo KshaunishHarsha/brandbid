@@ -1,16 +1,28 @@
 import Link from 'next/link';
 import { getUser } from '@/lib/auth';
+import { getClaimPrice, getPriceLadder } from '@/lib/leaderboard';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { ListWizard } from './ListWizard';
 
-export const metadata = { title: 'List your brand · brandbid' };
+export const metadata = { title: 'List your brand' };
+export const dynamic = 'force-dynamic';
 
-export default async function ListPage() {
+export default async function ListPage({ searchParams }: { searchParams: Promise<{ rank?: string }> }) {
+  const { rank } = await searchParams;
   const supabase = await createClient();
-  const [{ data: categories }, user] = await Promise.all([
+  const [{ data: categories }, user, ladder, minRow] = await Promise.all([
     supabase.from('categories').select('id, name, requires_review').order('name'),
     getUser(),
+    getPriceLadder(null),
+    createAdminClient().from('settings').select('value').eq('key', 'min_bid_cents').single(),
   ]);
+  const minBidCents = Number(minRow.data?.value ?? 1000);
+
+  // Arrived from "Take #N for $X" on the board: start with that price selected.
+  const wantedRank = Number(rank);
+  const quoted = Number.isInteger(wantedRank) && wantedRank >= 1 ? await getClaimPrice(null, wantedRank).catch(() => null) : null;
+  const initialCents = quoted ?? minBidCents;
 
   return (
     <main className="mx-auto max-w-xl p-6">
@@ -22,7 +34,9 @@ export default async function ListPage() {
       <ListWizard
         categories={categories ?? []}
         signedInEmail={user?.email ?? null}
-        minBidCents={1000}
+        minBidCents={minBidCents}
+        ladder={ladder}
+        initialCents={initialCents}
       />
     </main>
   );

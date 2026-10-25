@@ -623,7 +623,25 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "cleanup_stale_listings":
+            "brand_ranks":
+{ Args: { "p_brand_id": string }; Returns: {
+              "all_time_rank": number,"today_cents": number,"today_rank": number
+            }[]
+                           },
+"category_counts":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "id": number,"live_brands": number,"name": string,"slug": string
+            }[]
+                           },
+"claim_price":
+{ Args: { "p_brand_id": string,"p_rank": number }; Returns: number
+                           },
+"claim_price_ladder":
+{ Args: { "p_brand_id"?: string }; Returns: {
+              "price_cents": number,"target_rank": number
+            }[]
+                           },
+"cleanup_stale_listings":
 { Args: { "p_days"?: number }; Returns: Json
                            },
 "cycle_end":
@@ -641,8 +659,21 @@ isOneToOne: false
 "is_brand_member":
 { Args: { "p_brand_id": string }; Returns: boolean
                            },
+"leaderboard_all_time":
+{ Args: { "p_category_id"?: number,"p_limit"?: number,"p_offset"?: number }; Returns: {
+              "board_rank": number,"brand_id": string,"category_id": number,"description": string,"logo_path": string,"name": string,"slug": string,"take_price_cents": number,"total_paid_cents": number,"url": string
+            }[]
+                           },
+"leaderboard_today":
+{ Args: { "p_category_id"?: number,"p_limit"?: number,"p_offset"?: number }; Returns: {
+              "board_rank": number,"brand_id": string,"category_id": number,"description": string,"logo_path": string,"name": string,"slug": string,"today_cents": number,"total_paid_cents": number,"url": string
+            }[]
+                           },
 "record_bid":
 { Args: { "p_amount_cents": number,"p_brand_id": string,"p_payer_email"?: string,"p_payer_id": string,"p_payment_fingerprint"?: string,"p_processor": string,"p_processor_payment_id": string }; Returns: Json
+                           },
+"utc_day_start":
+{ Args: Record<PropertyKey, never>; Returns: string
                            }
           }
           Enums: {

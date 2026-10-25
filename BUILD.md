@@ -129,6 +129,7 @@ Every product decision, with the date it was made. To change one, add a new row 
 | D45 | 2026-10-25 | Brands pay with an email-only checkout: no sign-in wall. The checkout asks for one email (typed twice); an account is created for it behind the scenes (or the existing account is used), and a magic link to the dashboard comes with the receipt. Signed-in users skip the field. Promoters still sign up and verify their email first (D5). Supersedes section 8 step 1 "User signs in". |
 | D46 | 2026-10-25 | Sign-in methods from launch: Google and email magic link. Magic links use the token-hash flow so they work in a different browser than the one that requested them. |
 | D47 | 2026-10-25 | The automatic listing check (`check-listing`) polls for freshly paid listings every minute instead of being enqueued by `record_bid`, so a missed trigger can never strand a paid listing. Held listings keep `status = pending_review` and record why in `brands.review_reason`. |
+| D48 | 2026-10-25 | Today's board is a live query over the indexed `bids` table, not a materialized view: it is always exact, with no refresh job or one-minute staleness, so a brand that just paid shows up immediately. If it ever gets slow, a materialized view can sit behind the same SQL function. Also: the "+ $1" in the claim price is the `rank_step_cents` setting (100). Supersedes the materialized-view row in section 9. |
 
 ---
 
@@ -619,7 +620,7 @@ No scams, adult content, gambling, weapons, or illegal products. Regulated finan
 | Board | Ranking | Refresh |
 | --- | --- | --- |
 | All-time brands | `total_paid_cents` desc | Live query (indexed) |
-| Today's brands | Sum of bid amounts since 00:00 UTC today | Materialized view, refreshed every minute and after each bid |
+| Today's brands | Sum of succeeded bid amounts since 00:00 UTC today | Live query (D48) |
 | Brands by category | All-time, filtered by category | Live query |
 | Promoters this week | Sum of settled earnings (status `available`) since Monday 00:00 UTC | Materialized view, every 5 minutes |
 | Promoters all time | Sum of settled earnings | Materialized view, every 5 minutes |

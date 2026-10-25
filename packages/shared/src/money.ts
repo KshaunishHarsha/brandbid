@@ -36,6 +36,12 @@ export function formatUSD(value: number): string {
   return `${negative ? '-' : ''}$${whole}.${frac}`;
 }
 
+/** "$1,234" for whole dollars, "$1,234.50" otherwise. For boards, where "$1,000.00" is just noise. */
+export function formatUSDCompact(value: number): string {
+  const s = formatUSD(value);
+  return s.endsWith('.00') ? s.slice(0, -3) : s;
+}
+
 /**
  * Split a bid exactly like BUILD section 7 rule 7:
  *   budget  = floor(amount * budgetShareBps / 10000)
