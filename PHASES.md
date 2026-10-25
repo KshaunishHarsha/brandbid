@@ -393,7 +393,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Done when:**
 - [ ] Each channel tested on iOS Safari, Android Chrome, desktop Chrome.
 
-**Built locally (2026-10-25):** Responsive share modal with editable suggested text (enforces `#ad` at share time), X intent, LinkedIn copy-and-open, plain-link copy, story image Web Share/download, first-use guide and consented PostHog channel events. Typecheck passes. Device checks are deferred under “Setup-dependent checks to do later.”
+**Built locally (2026-10-25):** Responsive share modal with editable suggested text (enforces one `#ad` at share time), X intent, LinkedIn copy-and-open, plain-link copy, story image Web Share/download, first-use guide and consented PostHog channel events. Analytics/guide storage is now best-effort: browser storage denial no longer prevents a share or guide dismissal. Three helper tests and web typecheck pass. Device checks are deferred under “Setup-dependent checks to do later.”
 
 ### P2.4 — OG preview and story images
 

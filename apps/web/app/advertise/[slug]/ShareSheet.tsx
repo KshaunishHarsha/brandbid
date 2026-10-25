@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import posthog from 'posthog-js';
 import { ANALYTICS_CONSENT_KEY } from '@/lib/analytics';
+import { safeStorageGet, safeStorageSet, shareText } from './share-utils';
 
 type Links = { story: string; linkedin: string; x: string; link: string };
 const GUIDE_KEY = 'bb_story_guide_seen';
@@ -18,9 +19,9 @@ export function ShareSheet({ brandName, description, links, storyImageUrl, retur
   const [draft, setDraft] = useState(`Check out ${brandName}: ${description} ${links.link} #ad`.replace(/\s+/g, ' ').trim());
   const [notice, setNotice] = useState('');
   const [showGuide, setShowGuide] = useState(false);
-  const textForShare = () => `${draft.replace(/\s*#ad\s*/gi, ' ').trim()} #ad`;
+  const textForShare = () => shareText(draft);
   const track = (channel: string) => {
-    if (window.localStorage.getItem(ANALYTICS_CONSENT_KEY) === 'yes') {
+    if (safeStorageGet(ANALYTICS_CONSENT_KEY) === 'yes') {
       posthog.capture('share_channel_tapped', { channel });
     }
   };
@@ -46,7 +47,7 @@ export function ShareSheet({ brandName, description, links, storyImageUrl, retur
         URL.revokeObjectURL(objectUrl);
         setNotice('Story image downloaded and link copied. Add the link with Instagram’s Link sticker.');
       }
-      if (window.localStorage.getItem(GUIDE_KEY) !== 'yes') setShowGuide(true);
+      if (safeStorageGet(GUIDE_KEY) !== 'yes') setShowGuide(true);
     } catch {
       setNotice('Could not prepare the story image. Your link is copied; try downloading the image again.');
     }
@@ -91,7 +92,7 @@ export function ShareSheet({ brandName, description, links, storyImageUrl, retur
       </div>
       {notice && <p role="status" className="text-sm text-muted">{notice}</p>}
     </section>
-    {showGuide && <div role="dialog" aria-modal="true" aria-labelledby="story-guide-title" className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-3 sm:items-center"><div className="w-full max-w-sm space-y-4 rounded-t-2xl border border-line bg-surface p-6 sm:rounded-2xl"><h3 id="story-guide-title" className="text-lg font-bold">Finish your Instagram story</h3><ol className="list-decimal space-y-2 pl-5 text-sm"><li>Open Instagram and add the downloaded story image.</li><li>Add Instagram’s Link sticker.</li><li>Paste the copied Brandbid link, then share your story.</li></ol><button type="button" onClick={() => { window.localStorage.setItem(GUIDE_KEY, 'yes'); setShowGuide(false); }} className="w-full rounded-lg bg-accent px-4 py-3 font-semibold text-accent-fg">Got it</button></div></div>}
+    {showGuide && <div role="dialog" aria-modal="true" aria-labelledby="story-guide-title" className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-3 sm:items-center"><div className="w-full max-w-sm space-y-4 rounded-t-2xl border border-line bg-surface p-6 sm:rounded-2xl"><h3 id="story-guide-title" className="text-lg font-bold">Finish your Instagram story</h3><ol className="list-decimal space-y-2 pl-5 text-sm"><li>Open Instagram and add the downloaded story image.</li><li>Add Instagram’s Link sticker.</li><li>Paste the copied Brandbid link, then share your story.</li></ol><button type="button" onClick={() => { safeStorageSet(GUIDE_KEY, 'yes'); setShowGuide(false); }} className="w-full rounded-lg bg-accent px-4 py-3 font-semibold text-accent-fg">Got it</button></div></div>}
     </div>
   );
 }
