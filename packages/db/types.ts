@@ -718,6 +718,9 @@ isOneToOne: false
 "record_bid":
 { Args: { "p_amount_cents": number,"p_brand_id": string,"p_payer_email"?: string,"p_payer_id": string,"p_payment_fingerprint"?: string,"p_processor": string,"p_processor_payment_id": string }; Returns: Json
                            },
+"record_click":
+{ Args: { "p_brand_id": string,"p_click_id": string,"p_cookie_hash"?: string,"p_cookie_id"?: string,"p_country"?: string,"p_ip_hash": string,"p_ipua_hash": string,"p_link_id": string,"p_promoter_id": string,"p_rate_limited": boolean,"p_referrer"?: string,"p_ua_hash": string,"p_user_agent"?: string,"p_viewer_user_id"?: string }; Returns: undefined
+                           },
 "reject_listing":
 { Args: { "p_admin_id": string,"p_brand_id": string,"p_reason": string }; Returns: Json
                            },

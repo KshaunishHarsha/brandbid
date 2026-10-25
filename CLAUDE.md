@@ -113,8 +113,8 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 | P2.2 | Stable promoter links | wip | 2026-10-25 | Atomic SQL creation and server-side four-channel URLs built; existing link, self-promotion, suspension tested. Left: local concurrent-call test and hosted verified-user flow. |
 | P2.3 | Share sheet | wip | 2026-10-25 | Responsive modal with editable disclosure-protected copy, X/LinkedIn/copy/story actions, first-use story guide and consented channel events built. Left: verify share behavior on iOS Safari, Android Chrome and desktop Chrome. |
 | P2.4 | OG and story images | wip | 2026-10-25 | Open Graph and story-card routes, monogram fallback, rank/name/description, story cache built. Left: Cloudflare OpenNext runtime check, hosted Storage bucket, and visual cases. |
-| P2.5 | `/go` edge redirect | todo | | |
-| P2.6 | `record_click` | todo | | |
+| P2.5 | `/go` redirect | wip | 2026-10-25 | Cached code lookup, bot/prefetch handling, privacy-aware cookie and hashes, local JWT verification, rate limiting and async click dispatch built. Left: hosted Worker secrets, regional latency and crawler checks. |
+| P2.6 | `record_click` | wip | 2026-10-25 | SQL visitor matching, claim handling, ignored click reasons and idempotency built; local SQL test passes. Left: full attribution table coverage and concurrency workload. |
 | P2.7 | Brand page promo mode, qualify script | todo | | |
 | P2.8 | `/api/q`, `qualify_visitor` | todo | | |
 | P2.9 | `/out/[click_id]` | todo | | |

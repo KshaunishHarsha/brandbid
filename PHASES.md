@@ -418,6 +418,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 - [ ] P2.1: run the hosted verified-email/allowlist onboarding flow and time it through to sharing.
 - [ ] P2.3: test X, LinkedIn, copy-link and story sharing on iOS Safari, Android Chrome and desktop Chrome.
 - [ ] P2.4: verify generated preview images in the Cloudflare Worker runtime and inspect representative long, missing-logo and transparent-logo brands.
+- [ ] P2.5: configure the Supabase JWT signing secret, Upstash and Sentry as hosted Worker secrets; measure redirect p95 from three regions and check live crawler previews.
 - [ ] P2.14: run the full beta end-to-end suite after the hosted services and device checks above are available.
 
 ### P2.5 — `/go/[code]` redirect
@@ -436,6 +437,8 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 - `click_id = crypto.randomUUID()`. **302** to `/b/{slug}?c={click_id}&l={code}` [G6].
 - `getCloudflareContext().ctx.waitUntil(rpc('record_click', {...}))`. Failures go to Sentry. The visitor never waits.
 
+**Built locally (2026-10-25):** Node route with 60-second bounded lookup cache, bot/preview HTML, prefetch handling, privacy-aware visitor cookie, hashed IP/UA/IPUA keys, local Supabase JWT verification, Upstash rate limiting and background `record_click` dispatch. Typecheck passes. Deferred: configure `SUPABASE_JWT_SECRET`, Upstash and Sentry secrets in hosted Workers; measure p95 from three regions and verify live preview crawlers after deployment.
+
 **Tests (Vitest):** bot list classification (a fixture of real UA strings from each platform); prefetch → 204; the redirect is 302 and never 301; unknown code → `/`.
 **Done when:**
 - [ ] p95 under 100 ms measured from 3 regions on staging. If not, split `/go` into its own tiny Worker (route `brandbid.wtf/go/*`) and re-measure.
@@ -447,13 +450,17 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Depends on:** P1.2. **Refs:** BUILD §13 step A9, §14 (attribution examples), D8, D16, D24.
 
 **Build**
-- SQL `record_click(p_click_id, p_link_id, p_brand_id, p_promoter_id, p_viewer_user_id, p_cookie_id, p_ip_hash, p_ua_hash, p_user_agent, p_country, p_referrer, p_rate_limited bool)`:
+- SQL `record_click(p_click_id, p_link_id, p_brand_id, p_promoter_id, p_ip_hash, p_ua_hash, p_ipua_hash, p_rate_limited, p_viewer_user_id, p_cookie_id, p_cookie_hash, p_user_agent, p_country, p_referrer)`:
   1. `ignored_reason`: `self` if viewer = promoter; `brand_member` if the viewer is a member; `banned_promoter` if the promoter isn't active; `rate_limited` if flagged. Ignored clicks are inserted without a claim.
   2. Visitor match for this brand: `visitor_keys` on `cookie` hash, then `ipua` hash (`hmac(ip_hash||ua_hash)`). If none, create a visitor. Upsert any new keys pointing at the visitor (`on conflict do nothing`).
   3. Claim rule (BUILD §13 A9): set a claim if there's none, or if it expired and the visitor never qualified. `claim_rate_cents = brand.rate_cents` at this moment (D24).
   4. Insert the click with `visitor_id`.
   5. Idempotent on `click_id` (primary key), so retries are safe.
 - Lock the visitor row (`for update`) during the claim decision, so two near-simultaneous clicks from different promoters don't both claim.
+
+**Implementation note:** the server also passes HMACed cookie and IP+UA keys (`p_cookie_hash`, `p_ipua_hash`) so raw visitor identifiers never enter `visitor_keys`; they use the same `IP_PEPPER` as the other request hashes.
+
+**Built locally (2026-10-25):** `record_click` now handles idempotency, ignored self/member/inactive/rate-limited clicks, per-brand visitor matching, locked claim decisions, seven-day default claims and expired unqualified claim replacement. Local SQL coverage passes. Remaining: broaden the attribution table cases and run the concurrent workload in the P2.8 stress suite.
 
 **Tests (SQL):** every row of the BUILD §14 attribution table, as named tests. Clock control: tests pass explicit timestamps, or the function takes an optional `p_now` used only in tests. Self and member clicks create no claims.
 **Done when:**
