@@ -745,6 +745,11 @@ isOneToOne: false
               "brand_id": string,"description": string | null,"logo_path": string | null,"name": string,"rate_cents": number,"remaining_budget_cents": number,"slug": string,"url": string,"visitors_left": number
             }[]
                            },
+"top_promoters_for_brand":
+{ Args: { "p_brand_id": string,"p_limit"?: number }; Returns: {
+              "board_rank": number,"earned_cents": number,"handle": string | null,"is_anonymous": boolean,"qualified_visitors": number
+            }[]
+                           },
 "category_counts":
 { Args: Record<PropertyKey, never>; Returns: {
               "id": number,"live_brands": number,"name": string,"slug": string

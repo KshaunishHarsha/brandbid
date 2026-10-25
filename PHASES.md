@@ -692,6 +692,8 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 
 **P4.2 built locally (2026-10-25):** `/discover` lists active campaigns with ads enabled and at least one visitor affordable, ordered by `rate_cents × remaining_budget_cents`. The public SQL function returns only listing fields and an approximate visitor count. SQL fixture `31_discover_brands.sql` covers ordering and filters; the loader mapping test and web typecheck pass.
 
+**P4.3 built locally (2026-10-25):** live brand pages show their top promoters by settled, available earnings for that brand. Opted-out promoters have no handle in the SQL result and render as Anonymous. SQL fixture `32_top_promoters_by_brand.sql` checks brand scoping, settlement status, ranking, anonymity and public execute grants; loader and brand data tests plus web typecheck pass.
+
 ---
 
 ## Gaps and proposed additions

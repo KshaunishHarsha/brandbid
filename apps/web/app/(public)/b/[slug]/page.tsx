@@ -12,6 +12,7 @@ import { cookies, headers } from 'next/headers';
 import { CONSENT_COOKIE, needsConsent, isValidCode } from '@brandbid/shared';
 import { PromoQualification } from './PromoQualification';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getTopPromotersForBrand } from '@/lib/top-promoters';
 
 // Fresh on every request (page caching comes with the R2 cache, P1.12).
 export const dynamic = 'force-dynamic';
@@ -42,6 +43,7 @@ export default async function BrandPageRoute({ params, searchParams }: Props) {
   const { slug } = await params;
   const brand = await getBrandPage(slug);
   if (!brand) notFound();
+  const topPromoters = await getTopPromotersForBrand(brand.id);
   const user = await getUser();
   const showAdvertise = !user || await canAdvertise(user.email);
   const query = await searchParams;
@@ -101,6 +103,18 @@ export default async function BrandPageRoute({ params, searchParams }: Props) {
         <p className="mt-2 text-center text-xs text-muted">Opens {new URL(brand.url).hostname.replace(/^www\./, '')} in a new tab</p>
         {showAdvertise && <Link href={`/advertise/${brand.slug}`} className="mt-4 block text-center text-sm font-semibold underline">Advertise this brand</Link>}
       </article>
+
+      {topPromoters.length > 0 && <section className="mt-10" aria-labelledby="top-promoters">
+        <h2 id="top-promoters" className="mb-3 text-lg font-bold">Top promoters</h2>
+        <p className="mb-3 text-sm text-muted">Promoters ranked by settled earnings from this brand.</p>
+        <ol className="divide-y divide-line rounded-card border border-line bg-surface">
+          {topPromoters.map((promoter) => <li key={promoter.rank} className="grid grid-cols-[3rem_1fr_auto] items-center gap-3 px-4 py-3">
+            <span className="num text-sm font-bold text-muted">#{promoter.rank}</span>
+            <span className="truncate font-semibold">{promoter.anonymous ? 'Anonymous' : `@${promoter.handle ?? 'anonymous'}`}</span>
+            <span className="text-right"><strong className="num block">{formatUSDCompact(promoter.earnedCents)}</strong><small className="text-muted">{promoter.qualifiedVisitors.toLocaleString()} visitors</small></span>
+          </li>)}
+        </ol>
+      </section>}
 
       {brand.related.length > 0 && (
         <section className="mt-10" aria-labelledby="more">
