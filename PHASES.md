@@ -461,7 +461,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 
 **Implementation note:** the server also passes HMACed cookie and IP+UA keys (`p_cookie_hash`, `p_ipua_hash`) so raw visitor identifiers never enter `visitor_keys`; they use the same `IP_PEPPER` as the other request hashes.
 
-**Built locally (2026-10-25):** `record_click` now handles idempotency, ignored self/member/inactive/rate-limited clicks, per-brand visitor matching, locked claim decisions, seven-day default claims and expired unqualified claim replacement. Local SQL coverage passes. Remaining: broaden the attribution table cases and run the concurrent workload in the P2.8 stress suite.
+**Built locally (2026-10-25):** `record_click` now handles idempotency, ignored self/member/inactive/rate-limited clicks, per-brand visitor matching, locked claim decisions, seven-day default claims and expired unqualified claim replacement. Local SQL coverage passes; the 1,000-qualification workload in the P2.8 stress suite also passes. Remaining: broaden the BUILD §14 attribution table cases.
 
 **Tests (SQL):** every row of the BUILD §14 attribution table, as named tests. Clock control: tests pass explicit timestamps, or the function takes an optional `p_now` used only in tests. Self and member clicks create no claims.
 **Done when:**
@@ -505,6 +505,10 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Concurrency test** `packages/db/tests/concurrency.ts`: 1 000 parallel qualifications at one brand with budget for 300, spread across 5 promoters. Assert exactly 300 `pending` and 700 `waitlisted`; `budget_cents = 0` and never < 0; no visitor paid twice; every pending earning's `created_at` ≤ every waitlisted one's (strict order). Then record a bid that funds 200: assert the 200 **oldest** waitlisted become pending and 500 remain. Also run it with duplicate click IDs mixed in.
 **Done when:**
 - [ ] The concurrency test passes in CI.
+
+**Built locally (2026-10-25):** `/api/q` rate-limits by HMACed IP, validates duration/interactions, verifies Turnstile, hashes fingerprint data server-side only when consent permits it, calls SQL and always returns 204. `qualify_visitor` verifies click age/IP/UA/cookie and claim validity, locks visitor then brand, checks the fingerprint key, stores G12 signals and rejection reasons, reserves the full claimed rate or appends a FIFO waitlist entry, and queues the budget notice. Funding uses `cycle_end` and `fund_waitlist`'s oldest-first order. SQL rejection/funding tests and the 1,000 visitor + 50 retry concurrency/refill test pass locally; web typecheck and route/timer unit tests pass.
+
+**Deferred:** CI confirmation after the owner pushes the accumulated local commits; the qualification browser flow is covered by the P2.14 setup-dependent suite.
 
 ### P2.9 — `/out/[click_id]`
 

@@ -513,6 +513,20 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"qualify_rejections": {
+                  Row: {
+                    "click_id": string | null,"created_at": string,"id": number,"reason": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "click_id"?: string | null,"created_at"?: string,"id"?: number,"reason": string
+                  }
+                  Update: {
+                    "click_id"?: string | null,"created_at"?: string,"id"?: number,"reason"?: string
+                  }
+                  Relationships: [
+
+                  ]
                 },"settings": {
                   Row: {
                     "key": string,"value": Json | null
@@ -670,6 +684,9 @@ isOneToOne: false
 { Args: { "p_brand_id"?: string }; Returns: {
               "price_cents": number,"target_rank": number
             }[]
+                           },
+"qualify_visitor":
+{ Args: { "p_active_ms": number,"p_click_id": string,"p_cookie_id": string | null,"p_fp_hash": string | null,"p_interactions": number,"p_ip_hash": string,"p_ua_hash": string }; Returns: string
                            },
 "cleanup_stale_listings":
 { Args: { "p_days"?: number }; Returns: Json

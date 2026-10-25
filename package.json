@@ -16,7 +16,7 @@
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > packages/db/types.ts",
     "format": "prettier --write .",
-    "test:concurrency": "tsx packages/db/tests/concurrency-record-bid.ts",
+    "test:concurrency": "tsx packages/db/tests/concurrency-record-bid.ts && tsx packages/db/tests/concurrency-qualify.ts",
     "test:worker": "DATABASE_URL=\"${DATABASE_URL:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}\" tsx apps/worker/src/jobs/check-listing.integration.ts && DATABASE_URL=\"${DATABASE_URL:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}\" tsx apps/worker/src/jobs/admin-jobs.integration.ts",
     "admin:grant": "bash scripts/grant-admin.sh",
     "lint:migrations": "bash packages/db/check-migrations.sh"

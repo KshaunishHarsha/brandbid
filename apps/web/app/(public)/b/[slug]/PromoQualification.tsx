@@ -10,7 +10,7 @@ export function PromoQualification({ clickId, linkCode, needsConsent, initialCon
   const [consent, setConsent] = useState(initialConsent);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileReady, setTurnstileReady] = useState(!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
-  const [pending, setPending] = useState(false);
+  const [qualification, setQualification] = useState<{ activeMs: number; interactions: number } | null>(null);
   const fired = useRef(false);
   const requestSent = useRef(false);
   const canMeasure = !needsConsent || consent === 'yes';
@@ -26,7 +26,9 @@ export function PromoQualification({ clickId, linkCode, needsConsent, initialCon
 
   useEffect(() => {
     if (!clickId || !canMeasure) return;
-    const timer = new ActiveTimeQualificationTimer(() => { if (!fired.current) { fired.current = true; setPending(true); } });
+    const timer = new ActiveTimeQualificationTimer((activeMs, interactions) => {
+      if (!fired.current) { fired.current = true; setQualification({ activeMs, interactions }); }
+    });
     const events = ['pointermove', 'pointerdown', 'scroll', 'touchstart', 'keydown'] as const;
     const interaction = () => timer.interact(performance.now(), document.visibilityState === 'visible');
     const visibility = () => timer.visibilityChanged(performance.now(), document.visibilityState === 'visible');
@@ -37,7 +39,7 @@ export function PromoQualification({ clickId, linkCode, needsConsent, initialCon
   }, [clickId, canMeasure]);
 
   useEffect(() => {
-    if (!pending || !clickId || !turnstileReady || requestSent.current) return;
+    if (!qualification || !clickId || !turnstileReady || requestSent.current) return;
     requestSent.current = true;
     let cancelled = false;
     void (async () => {
@@ -50,18 +52,18 @@ export function PromoQualification({ clickId, linkCode, needsConsent, initialCon
         } catch { /* Qualification can continue using cookie/IP+UA signals. */ }
       }
       if (cancelled) return;
-      const body = JSON.stringify({ clickId, linkCode, turnstileToken: turnstileToken ?? undefined, fingerprint });
+      const body = JSON.stringify({ clickId, linkCode, activeMs: qualification.activeMs, interactions: qualification.interactions, turnstileToken: turnstileToken ?? undefined, fingerprint });
       try { await fetch('/api/q', { method: 'POST', headers: { 'content-type': 'application/json' }, body, keepalive: true }); } catch { /* Best-effort beacon; the click remains recorded. */ }
-      setPending(false);
+      setQualification(null);
     })();
     return () => { cancelled = true; };
-  }, [pending, clickId, linkCode, needsConsent, consent, turnstileToken]);
+  }, [qualification, clickId, linkCode, needsConsent, consent, turnstileToken, turnstileReady]);
 
   useEffect(() => {
-    if (!pending || turnstileReady) return;
+    if (!qualification || turnstileReady) return;
     const timeout = window.setTimeout(() => setTurnstileReady(true), 2000);
     return () => window.clearTimeout(timeout);
-  }, [pending, turnstileReady]);
+  }, [qualification, turnstileReady]);
 
   async function chooseConsent(choice: 'yes' | 'no') {
     const response = await fetch('/api/consent', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ choice, clickId }) });
@@ -75,6 +77,6 @@ export function PromoQualification({ clickId, linkCode, needsConsent, initialCon
       <p className="text-sm">Allow a visitor cookie and device recognition to measure qualified visits from promoter links? If you decline, we use only privacy-preserving network signals.</p>
       <div className="mt-3 flex justify-end gap-2"><button className="rounded-lg border border-line px-4 py-2 text-sm" onClick={() => void chooseConsent('no')}>Decline</button><button className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-accent-fg" onClick={() => void chooseConsent('yes')}>Accept</button></div>
     </section>}
-    {pending && <div className="sr-only" aria-hidden="true"><Turnstile onToken={onTurnstileToken} /></div>}
+    {qualification && <div className="sr-only" aria-hidden="true"><Turnstile onToken={onTurnstileToken} /></div>}
   </>;
 }

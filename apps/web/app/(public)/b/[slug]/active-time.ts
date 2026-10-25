@@ -4,10 +4,13 @@ export class ActiveTimeQualificationTimer {
   private interacted = false;
   private finished = false;
 
-  constructor(private readonly onThreshold: () => void, private readonly thresholdMs = 10_000) {}
+  private interactionCount = 0;
+
+  constructor(private readonly onThreshold: (activeMs: number, interactions: number) => void, private readonly thresholdMs = 10_000) {}
 
   interact(now: number, visible: boolean) {
     this.interacted = true;
+    this.interactionCount = Math.min(100, this.interactionCount + 1);
     if (visible) this.resume(now);
     this.check(now);
   }
@@ -38,6 +41,6 @@ export class ActiveTimeQualificationTimer {
     if (total < this.thresholdMs) return;
     this.pause(now);
     this.finished = true;
-    this.onThreshold();
+    this.onThreshold(Math.max(this.thresholdMs, Math.round(total)), this.interactionCount);
   }
 }
