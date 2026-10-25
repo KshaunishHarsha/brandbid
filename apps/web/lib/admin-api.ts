@@ -28,9 +28,9 @@ export async function requireAdminApi(req: Request): Promise<AdminCheck> {
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Redirect back to the queue with a one-line notice. Always 303 so the browser turns the POST into a GET. */
-export function backToQueue(req: Request, notice: string): NextResponse {
+export function backToQueue(req: Request, notice: string, queue = '/admin/listings'): NextResponse {
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(req.url).origin;
-  return NextResponse.redirect(new URL(`/admin/listings?notice=${encodeURIComponent(notice)}`, base), 303);
+  return NextResponse.redirect(new URL(`${queue}?notice=${encodeURIComponent(notice)}`, base), 303);
 }
 
 /** Database error messages we raise on purpose, mapped to what an admin should read. */
@@ -40,6 +40,14 @@ export const ADMIN_ERRORS: Record<string, string> = {
   reason_required: 'Please give a reason (at least 3 characters).',
   category_not_found: 'That category does not exist.',
   brand_ledger_inconsistent: 'Refusing to refund: this listing\'s budget does not add up. Needs a developer.',
+  admin_required: 'Your admin session needs refreshing.',
+  fraud_flag_not_found: 'That fraud flag no longer exists.',
+  earning_not_found: 'The earning linked to that flag no longer exists.',
+  earning_not_reversible: 'That earning can no longer be reversed.',
+  earning_budget_ledger_inconsistent: 'Refusing to reverse: the earning reservation does not add up.',
+  earning_ledger_missing: 'Refusing to reverse: the promoter ledger credit is missing.',
+  subject_not_reviewable: 'This flag type cannot be confirmed through the earning review flow.',
+  invalid_fraud_decision: 'Choose clear or confirm.',
 };
 export function adminErrorNotice(message: string): string {
   return ADMIN_ERRORS[message] ?? 'Something went wrong. Nothing was changed.';

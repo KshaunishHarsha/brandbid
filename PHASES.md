@@ -641,6 +641,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 ### P3.8 — Admin panel v2
 **Depends on:** P3.3, P3.6, P3.7. **Refs:** BUILD §18.
 **Build:** fraud queue (flag, rule, score, related clicks and visitors, clear or confirm → `reverse_earning`); withdrawal review (approve → `processing`, hold); users (search, suspend, ban, ledgers, adjust trust); brands (search, remove, ledgers, disable ads); settings editor (floor, split, min withdrawal, claim days, cycle hours, thresholds). Raising the floor runs `apply_new_floor()`, which moves brands below it up and sends an outbox email. Reconciliation results screen. Everything audited.
+**Built locally (2026-10-25):** admin-only fraud queue shows rule/score and related earning, promoter, brand, link, visitor and click data. Admins can clear flags individually (the earning releases only after every open flag is cleared) or confirm one to invoke the audited reversal. SQL fixture `22_admin_fraud.sql` covers queue context, multi-flag release, one-time ledger credit, confirmation, and ACLs; admin route tests cover access, inputs and safe errors. Remaining P3.8 screens are not yet implemented; withdrawal review and reconciliation views depend on P3.6 and P3.10.
 
 ### P3.9 — Budget refunds (D23)
 **Depends on:** P3.2. **Refs:** BUILD §8 (refund).

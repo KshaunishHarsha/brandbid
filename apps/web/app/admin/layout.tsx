@@ -14,6 +14,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <nav aria-label="Admin" className="flex gap-4 text-sm font-medium">
             <Link href="/admin" className="hover:underline">Overview</Link>
             <Link href="/admin/listings" className="hover:underline">Listings</Link>
+            <Link href="/admin/fraud" className="hover:underline">Fraud</Link>
           </nav>
         </div>
         <span className="text-xs text-muted">{admin.email}</span>

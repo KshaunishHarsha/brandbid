@@ -651,6 +651,9 @@ isOneToOne: false
                 }
           }
           Functions: {
+            "admin_fraud_queue":
+{ Args: { "p_admin_id": string }; Returns: Json
+                           },
             "admin_pending_listings":
 { Args: Record<PropertyKey, never>; Returns: {
               "bid_count": number,"brand_id": string,"category_id": number,"category_name": string,"category_requires_review": boolean,"checked_at": string,"created_at": string,"description": string,"logo_path": string,"name": string,"owner_email": string,"owner_id": string,"review_reason": string,"slug": string,"total_paid_cents": number,"url": string
@@ -743,6 +746,9 @@ isOneToOne: false
                            },
 "record_click":
 { Args: { "p_brand_id": string,"p_click_id": string,"p_cookie_hash"?: string,"p_cookie_id"?: string,"p_country"?: string,"p_ip_hash": string,"p_ipua_hash": string,"p_link_id": string,"p_promoter_id": string,"p_rate_limited": boolean,"p_referrer"?: string,"p_ua_hash": string,"p_user_agent"?: string,"p_viewer_user_id"?: string }; Returns: undefined
+                           },
+"review_fraud_flag":
+{ Args: { "p_admin_id": string,"p_decision": string,"p_flag_id": string,"p_reason": string }; Returns: Json
                            },
 "reject_listing":
 { Args: { "p_admin_id": string,"p_brand_id": string,"p_reason": string }; Returns: Json

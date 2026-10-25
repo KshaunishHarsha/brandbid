@@ -131,7 +131,7 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 | P3.5 | Payout account, KYC, tax | todo | | |
 | P3.6 | Withdrawals | todo | | |
 | P3.7 | Reversal, clawback, ban | done | 2026-10-25 | Admin-checked service functions reverse/reconcile budget, claw back credited earnings, fund the waitlist, and idempotently ban/forfeit; transactional SQL fixture covers pending/available/waitlisted reversals, recovery from negative balance, link disablement and positive-balance forfeiture. |
-| P3.8 | Admin v2 | todo | | |
+| P3.8 | Admin v2 | wip | 2026-10-25 | Admin fraud queue with related earning/click context and clear/confirm actions is built and locally tested. Remaining screens depend on withdrawal and reconciliation work (P3.6, P3.10). |
 | P3.9 | Budget refunds | todo | | |
 | P3.10 | Reconciliation, data hygiene | todo | | |
 | P3.11 | Brand dashboard v2 | todo | | |
