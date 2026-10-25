@@ -37,7 +37,10 @@ export default async function BrandDashboard({ params, searchParams }: Props) {
         <BrandLogo name={brand.name} logoPath={brand.logoPath} size={64} />
         <div className="min-w-0">
           <h1 className="truncate text-2xl font-extrabold tracking-tight">{brand.name}</h1>
-          {live ? <Link href={`/b/${brand.slug}`} className="text-sm underline">View public page</Link> : <span className="text-sm text-muted">{brand.categoryName}</span>}
+          <div className="flex flex-wrap gap-x-3">
+            {live ? <Link href={`/b/${brand.slug}`} className="text-sm underline">View public page</Link> : <span className="text-sm text-muted">{brand.categoryName}</span>}
+            {live && <Link href={`/dash/brands/${encodeURIComponent(brand.slug)}/traffic`} className="text-sm underline">Traffic stats</Link>}
+          </div>
         </div>
       </div>
 

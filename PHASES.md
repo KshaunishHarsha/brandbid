@@ -554,7 +554,9 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Depends on:** P2.8, P2.9. **Refs:** BUILD §17 (brand: traffic).
 **Build:** clicks, qualified visitors and click-throughs by day, channel and country, for the last 30 days. Use SQL views or functions scoped by `is_brand_member`. Budget spent and estimated visitors left. Use the dataviz skill for the charts.
 **Done when:**
-- [ ] Charts match direct SQL counts.
+- [x] Charts match direct SQL counts.
+
+**Built (2026-10-25):** member-only `/dash/brands/[slug]/traffic` shows daily clicks, qualifications and outbound visits for 30 UTC days, channel/country breakdowns, and budget spent/remaining/visitor estimate. `brand_traffic_stats` checks membership and returns only aggregates; test `14_brand_traffic_stats.sql` compares results with raw seeded rows and rejects non-members.
 
 ### P2.13 — Seed and load data tooling
 

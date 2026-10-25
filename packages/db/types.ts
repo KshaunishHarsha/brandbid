@@ -672,6 +672,9 @@ isOneToOne: false
               "all_time_rank": number,"today_cents": number,"today_rank": number
             }[]
                            },
+"brand_traffic_stats":
+{ Args: { "p_brand_id": string }; Returns: Json
+                           },
 "category_counts":
 { Args: Record<PropertyKey, never>; Returns: {
               "id": number,"live_brands": number,"name": string,"slug": string
