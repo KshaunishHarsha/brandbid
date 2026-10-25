@@ -690,6 +690,9 @@ isOneToOne: false
             "admin_review_withdrawal":
 { Args: { "p_admin_id": string,"p_withdrawal_id": string,"p_decision": string,"p_reason"?: string | null }; Returns: Json
                            },
+            "request_withdrawal":
+{ Args: { "p_promoter_id": string }; Returns: Json
+                           },
             "admin_update_setting":
 { Args: { "p_admin_id": string,"p_key": string,"p_reason": string,"p_value": Json }; Returns: Json
                            },

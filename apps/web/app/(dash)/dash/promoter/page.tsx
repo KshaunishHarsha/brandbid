@@ -19,9 +19,10 @@ function expiryDate(value: string) {
   return new Date(value).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 }
 
-export default async function PromoterDashboard() {
+export default async function PromoterDashboard({ searchParams }: { searchParams: Promise<{ notice?: string }> }) {
   const user = await requireUser('/dash/promoter');
   const data = await getPromoterDashboard(user.id);
+  const { notice } = await searchParams;
   const nowAt = new Date().toISOString();
   const brands = new Map<string, PromoterLinkStats[]>();
   for (const link of data.links) brands.set(link.brandId, [...(brands.get(link.brandId) ?? []), link]);
@@ -38,13 +39,27 @@ export default async function PromoterDashboard() {
       </div>
 
       <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Earnings summary">
-        <BalancePlaceholder label="Available balance" />
+        <Balance label="Available balance" cents={data.totals.balanceCents} />
         <Balance label="Pending" cents={data.totals.pendingCents} />
         <Balance label="Waitlisted" cents={data.totals.waitlistedCents} />
       </section>
-      <button disabled className="mt-4 cursor-not-allowed rounded-lg border border-line px-4 py-2 text-sm text-muted" title="Withdrawals are not available yet">
-        Withdraw · Coming soon
-      </button>
+      {notice && <p role="status" className="mt-4 rounded-lg border border-line bg-surface p-3 text-sm">{notice}</p>}
+      <section className="mt-4 rounded-card border border-line bg-surface p-4" aria-label="Withdrawals">
+        <h2 className="font-semibold">Withdraw available earnings</h2>
+        <p className="mt-1 text-sm text-muted">Minimum {formatUSD(data.totals.minWithdrawalCents)}. The first request is reviewed by an admin. Payout delivery becomes available after phone, KYC and payout-provider setup.</p>
+        {data.totals.withdrawalOpen ? <p className="mt-3 text-sm">You already have a withdrawal request awaiting review or processing.</p> : canWithdraw(data.totals) ? (
+          <form method="post" action="/api/promoter/withdrawals" className="mt-3">
+            <button className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-fg">Request {formatUSD(data.totals.balanceCents)}</button>
+          </form>
+        ) : <p className="mt-3 text-sm text-muted">{withdrawalRequirement(data.totals)}</p>}
+        {data.withdrawals.length > 0 && <ul className="mt-4 divide-y divide-line border-t border-line">
+          {data.withdrawals.map((item) => <li key={item.id} className="py-3 text-sm">
+            <span className="font-medium">{formatUSD(item.amountCents)} · {item.status}</span>
+            <span className="ml-2 text-muted">{item.provider} · {expiryDate(item.createdAt)}</span>
+            {item.feeCents != null && <span className="ml-2 text-muted">Fee {formatUSD(item.feeCents)}</span>}
+          </li>)}
+        </ul>}
+      </section>
 
       <section className="mt-8" aria-labelledby="links-title">
         <h2 id="links-title" className="text-lg font-bold">Link performance</h2>
@@ -113,8 +128,15 @@ function Balance({ label, cents }: { label: string; cents: number }) {
   return <div className="rounded-card border border-line bg-surface p-4"><p className="text-xs text-muted">{label}</p><p className="num mt-1 text-xl font-bold">{formatUSD(cents)}</p></div>;
 }
 
-function BalancePlaceholder({ label }: { label: string }) {
-  return <div className="rounded-card border border-line bg-surface p-4"><p className="text-xs text-muted">{label}</p><p className="mt-1 text-xl font-bold">Coming soon</p></div>;
+type Wallet = { balanceCents: number; minWithdrawalCents: number; phoneVerified: boolean; kycStatus: string; payoutAccountVerified: boolean; withdrawalOpen: boolean; accountActive: boolean };
+function canWithdraw(wallet: Wallet) {
+  return wallet.accountActive && !wallet.withdrawalOpen && wallet.balanceCents >= wallet.minWithdrawalCents && wallet.phoneVerified && wallet.kycStatus === 'verified' && wallet.payoutAccountVerified;
+}
+function withdrawalRequirement(wallet: Wallet) {
+  if (!wallet.accountActive) return 'An active promoter account is required to request a withdrawal.';
+  if (wallet.balanceCents < wallet.minWithdrawalCents) return `Your settled balance must reach ${formatUSD(wallet.minWithdrawalCents)} before you can request a withdrawal.`;
+  if (!wallet.phoneVerified || wallet.kycStatus !== 'verified' || !wallet.payoutAccountVerified) return 'Complete phone verification, KYC and payout-account setup to request a withdrawal.';
+  return 'No balance is currently available to withdraw.';
 }
 
 function Metric({ label, value }: { label: string; value: string }) {

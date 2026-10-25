@@ -13,6 +13,8 @@ describe('getPromoterDashboard', () => {
       error: null,
       data: {
         totals: { pending_cents: 60, waitlisted_cents: 15 },
+        wallet: { balance_cents: 2500, min_withdrawal_cents: 1000, phone_verified: true, kyc_status: 'verified', payout_account_verified: true, withdrawal_open: false, account_active: true,
+          withdrawals: [{ id: 'withdrawal-1', amount_cents: 1500, fee_cents: 25, provider: 'local-fixture', status: 'paid', created_at: '2026-10-20T00:00:00Z', paid_at: '2026-10-21T00:00:00Z' }] },
         links: [{
           link_id: 'link-1', link_code: 'Abc12345', link_status: 'active', channel: 'story', link_created_at: '2026-10-01T00:00:00Z',
           brand_id: 'brand-1', brand_name: 'Brand', brand_slug: 'brand', brand_status: 'active', ads_enabled: false,
@@ -24,7 +26,8 @@ describe('getPromoterDashboard', () => {
       },
     });
     await expect(getPromoterDashboard('promoter-1')).resolves.toMatchObject({
-      totals: { pendingCents: 60, waitlistedCents: 15 },
+      totals: { pendingCents: 60, waitlistedCents: 15, balanceCents: 2500, phoneVerified: true, kycStatus: 'verified', payoutAccountVerified: true, accountActive: true },
+      withdrawals: [{ amountCents: 1500, feeCents: 25, status: 'paid' }],
       links: [{ brandSlug: 'brand', clicks: 2, qualifiedVisitors: 1, waitlistedEarnings: [{ amountCents: 15 }] }],
     });
     expect(rpc).toHaveBeenCalledWith('promoter_dashboard', { p_promoter_id: 'promoter-1' });

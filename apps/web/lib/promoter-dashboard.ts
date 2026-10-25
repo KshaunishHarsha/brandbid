@@ -10,16 +10,24 @@ export type PromoterLinkStats = {
   waitlistedEarnings: PromoterWaitlistedEarning[]; currentCycleEndsAt: string;
 };
 export type PromoterDashboardData = {
-  totals: { pendingCents: number; waitlistedCents: number };
+  totals: {
+    pendingCents: number; waitlistedCents: number; balanceCents: number; minWithdrawalCents: number;
+    phoneVerified: boolean; kycStatus: string; payoutAccountVerified: boolean; withdrawalOpen: boolean; accountActive: boolean;
+  };
+  withdrawals: Array<{ id: string; amountCents: number; feeCents: number | null; provider: string; status: string; createdAt: string; paidAt: string | null }>;
   links: PromoterLinkStats[];
 };
 
 type JsonObject = { [key: string]: Json | undefined };
 const object = (value: Json | undefined): JsonObject =>
   value !== null && typeof value === 'object' && !Array.isArray(value) ? value : {};
-const number = (value: Json | undefined) => {
+const number = (value: Json | undefined, fallback = 0) => {
   const parsed = Number(value ?? 0);
-  return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : 0;
+  return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : fallback;
+};
+const signedNumber = (value: Json | undefined) => {
+  const parsed = Number(value ?? 0);
+  return Number.isSafeInteger(parsed) ? parsed : 0;
 };
 const string = (value: Json | undefined) => typeof value === 'string' ? value : '';
 const nullableString = (value: Json | undefined) => typeof value === 'string' ? value : null;
@@ -31,6 +39,14 @@ export async function getPromoterDashboard(promoterId: string): Promise<Promoter
   if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Promoter dashboard returned invalid data');
   const root = object(data);
   const totals = object(root.totals);
+  const wallet = object(root.wallet);
+  const withdrawals = Array.isArray(wallet.withdrawals) ? wallet.withdrawals.map((raw) => {
+    const row = object(raw);
+    return {
+      id: string(row.id), amountCents: number(row.amount_cents), feeCents: row.fee_cents == null ? null : number(row.fee_cents),
+      provider: string(row.provider), status: string(row.status), createdAt: string(row.created_at), paidAt: nullableString(row.paid_at),
+    };
+  }) : [];
   const links = Array.isArray(root.links) ? root.links.map((raw): PromoterLinkStats => {
     const row = object(raw);
     const waitlistedEarnings = Array.isArray(row.waitlisted_earnings)
@@ -50,7 +66,12 @@ export async function getPromoterDashboard(promoterId: string): Promise<Promoter
   return {
     totals: {
       pendingCents: number(totals.pending_cents), waitlistedCents: number(totals.waitlisted_cents),
+      balanceCents: signedNumber(wallet.balance_cents), minWithdrawalCents: number(wallet.min_withdrawal_cents, 1000),
+      phoneVerified: wallet.phone_verified === true, kycStatus: string(wallet.kyc_status),
+      payoutAccountVerified: wallet.payout_account_verified === true, withdrawalOpen: wallet.withdrawal_open === true,
+      accountActive: wallet.account_active === true,
     },
+    withdrawals,
     links,
   };
 }
