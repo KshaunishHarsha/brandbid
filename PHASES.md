@@ -563,6 +563,11 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Goal:** realistic local data and a click simulator for testing the pipeline.
 **Depends on:** P2.6.
 **Build:** `pnpm seed` creates brands, promoters, links, clicks and qualifications across days and channels. `scripts/simulate-clicks.ts` drives `/go` → `/api/q` against local or staging with Turnstile test keys.
+**Done when:**
+- [x] Local seed creates repeatable multi-day, multi-channel demo data and refuses remote databases.
+- [ ] Simulator qualifies a local or staging visitor end to end; requires the local web environment or staging Turnstile configuration.
+
+**Built (2026-10-25):** `pnpm seed` was run twice against local Supabase and created 8 share links, 480 clicks, 256 qualified visitors and 20 waitlisted visitors with reconciled budget. Seed and simulator TypeScript checks pass; the simulator rejects production targets. The live `/go` → `/api/q` simulator run remains unverified because `apps/web/.env.local` is not configured. Setup instructions are in README.
 
 ### P2.14 — End-to-end and beta readiness
 

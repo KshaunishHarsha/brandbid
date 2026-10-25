@@ -215,4 +215,25 @@ brandbid/
 
 ## Getting started
 
-Not available yet. Commands (`pnpm dev`, `supabase start`, tests) will be listed here when P1.1 (repo and tooling) is done.
+Start Supabase and load a local-only demo fixture:
+
+```sh
+pnpm db:start
+pnpm seed
+cp .env.example apps/web/.env.local
+pnpm --filter web dev
+```
+
+Before starting the web app, fill in `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_JWT_SECRET` in `apps/web/.env.local` using the corresponding `ANON_KEY`, `SERVICE_ROLE_KEY`, and `JWT_SECRET` values from `supabase status -o env`; also set a local `IP_PEPPER`. Keep that file out of Git. The checked-in Turnstile test keys work only with Cloudflare's test mode.
+
+`pnpm seed` rebuilds only the `Demo Analytics Brand` fixture and refuses non-local `DATABASE_URL` hosts. It creates two promoter profiles and four channel links per promoter, with 30 days of synthetic clicks and qualifications. Use the printed `demo0001` link or the promoter dashboard to explore the data.
+
+To drive one real local request through `/go` and `/api/q` (including the required 10-second active-time minimum):
+
+```sh
+pnpm simulate:clicks
+```
+
+The simulator defaults to the seeded `demo0001` link on `127.0.0.1:3000`, verifies the resulting earning against local Postgres, and only accepts local hosts or `https://staging.brandbid.wtf`. For staging, set `SIMULATE_BASE_URL`, `SIMULATE_LINK_CODE`, and `SIMULATE_TURNSTILE_TOKEN=XXXX.DUMMY.TOKEN.XXXX`; use the matching Cloudflare test sitekey and secret key on staging. Never put Turnstile test keys in production. Optional settings are `SIMULATE_COUNT` (1–10) and `SIMULATE_WAIT_MS` (10,000–180,000).
+
+The local seed and script typechecks are verified. Run the simulator after completing the local web environment setup above; its `/go` → `/api/q` flow has not been exercised in this checkout yet.
