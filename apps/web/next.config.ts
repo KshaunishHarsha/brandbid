@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  async rewrites() {
+    return [{ source: '/api/story/:code.png', destination: '/api/story/:code' }];
+  },
 };
 
 export default nextConfig;

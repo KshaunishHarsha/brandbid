@@ -110,10 +110,9 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 | P1.11 | Observability, analytics | wip | 2026-10-25 | PostHog pageviews and listing funnel events wired behind optional consent; real-job watchdog and Sentry cron check-ins added. Left: staging PostHog/Sentry credentials and live funnel/alert verification; source-map upload needs a private-map deploy design. |
 | P1.12 | Environments, deploy | wip | 2026-10-25 | Cloudflare part handed to a separate person: see DEPLOYMENT.md. Staging Supabase (`brandbid-main`, ap-south-1) is set up: 15 migrations, logos bucket, core sign-in settings, checker 48/48. Left: Resend SMTP then email template (owner); production Supabase; Cloudflare first deploy (friend); AWS worker undecided; CI deploys; R2 page cache |
 | P2.1 | Promoter onboarding | wip | 2026-10-25 | Advertise entry, verified-email and beta gate, waitlist/admin editor, promoter profile and terms, country/handle checks, member signals built locally. Left: live timed flow with configured auth and full share actions from P2.3. |
-| P2.2 | Stable promoter links | wip | 2026-10-25 | Atomic SQL creation and server-side four-channel URLs built; existing link, self-promotion, suspension tested. Left: real concurrent-call test and live share flow. |
-| P2.2 | `get_or_create_link` | todo | | |
+| P2.2 | Stable promoter links | wip | 2026-10-25 | Atomic SQL creation and server-side four-channel URLs built; existing link, self-promotion, suspension tested. Left: local concurrent-call test and hosted verified-user flow. |
 | P2.3 | Share sheet | todo | | |
-| P2.4 | OG and story images | todo | | |
+| P2.4 | OG and story images | wip | 2026-10-25 | Open Graph and story-card routes, monogram fallback, rank/name/description, story cache built. Left: Cloudflare OpenNext runtime check, hosted Storage bucket, and visual cases. |
 | P2.5 | `/go` edge redirect | todo | | |
 | P2.6 | `record_click` | todo | | |
 | P2.7 | Brand page promo mode, qualify script | todo | | |

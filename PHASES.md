@@ -378,6 +378,8 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 
 **Built locally (2026-10-25):** Service-role-only `get_or_create_link` with server-generated codes, five collision retries, and stable channel URLs on the Advertise page. SQL tests cover existing links, self-promotion, and suspension. A concurrent-call test and live flow remain open.
 
+**Deferred setup checks:** local concurrent-call verification remains actionable and does not need hosted services. Hosted sign-in verification needs a configured Supabase project and verified allowlisted test user. Mobile share verification needs iOS Safari and Android Chrome devices; track it under P2.3.
+
 ### P2.3 — Share sheet
 
 **Goal:** from tap to shared in under 20 s on all four channels.
@@ -404,6 +406,17 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 
 **Done when:**
 - [ ] Images render for brands with long names, missing logos, and transparent logos.
+
+**Built locally (2026-10-25):** `/api/og/{code}` and `/api/story/{code}.png` render branded cards from an active link, with monogram fallback, rank, brand name and description. Story cards use the `story-cache` Storage bucket and return generated images if the bucket is unavailable. Typecheck passes. Deferred: verify `ImageResponse` in the Cloudflare OpenNext runtime and provision the hosted `story-cache` bucket under P1.12; visually inspect long-name, missing-logo, and transparent-logo cases.
+
+### Setup-dependent checks to do later
+
+- [ ] P1.11: configure staging PostHog and Sentry credentials; verify real funnel events and alerts. Keep source-map upload deferred as requested.
+- [ ] P1.12: create staging/production Supabase, Cloudflare and AWS resources and secrets; configure hosted Storage buckets including `logos` and `story-cache`; validate deployment.
+- [ ] P2.1: run the hosted verified-email/allowlist onboarding flow and time it through to sharing.
+- [ ] P2.3: test X, LinkedIn, copy-link and story sharing on iOS Safari, Android Chrome and desktop Chrome.
+- [ ] P2.4: verify generated preview images in the Cloudflare Worker runtime and inspect representative long, missing-logo and transparent-logo brands.
+- [ ] P2.14: run the full beta end-to-end suite after the hosted services and device checks above are available.
 
 ### P2.5 — `/go/[code]` redirect
 

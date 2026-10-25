@@ -160,6 +160,12 @@ public = true
 file_size_limit = "1MiB"
 allowed_mime_types = ["image/png", "image/jpeg", "image/webp"]
 
+# Generated story cards. Uploads are server-side; cards are public for social preview crawlers.
+[storage.buckets.story-cache]
+public = true
+file_size_limit = "5MiB"
+allowed_mime_types = ["image/png"]
+
 [auth]
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
