@@ -5,6 +5,7 @@ import { BrandLogo } from '@/components/BrandLogo';
 import { SiteHeader } from '@/components/SiteHeader';
 import { requireUser } from '@/lib/auth';
 import { getDashboardData, getMemberBrand } from '@/lib/dashboard';
+import { recordMemberSignal } from '@/lib/member-signals';
 import { PaidWatcher } from './PaidWatcher';
 import { RerankPanel } from './RerankPanel';
 
@@ -21,6 +22,7 @@ export default async function BrandDashboard({ params, searchParams }: Props) {
   await requireUser(`/dash/brands/${slug}`);
   const member = await getMemberBrand(slug);
   if (!member) notFound(); // not a member, or no such brand: the same answer
+  await recordMemberSignal(member.brand.id, member.user.id);
   const { brand } = member;
   const d = await getDashboardData(member);
   const live = brand.status === 'active';

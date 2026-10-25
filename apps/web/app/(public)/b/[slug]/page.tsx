@@ -5,6 +5,8 @@ import { formatUSDCompact } from '@brandbid/shared';
 import { BrandLogo } from '@/components/BrandLogo';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getBrandPage } from '@/lib/brand';
+import { getUser } from '@/lib/auth';
+import { canAdvertise } from '@/lib/beta';
 import { logoPublicUrl } from '@/lib/logos';
 
 // Fresh on every request (page caching comes with the R2 cache, P1.12).
@@ -36,6 +38,8 @@ export default async function BrandPageRoute({ params }: Props) {
   const { slug } = await params;
   const brand = await getBrandPage(slug);
   if (!brand) notFound();
+  const user = await getUser();
+  const showAdvertise = !user || await canAdvertise(user.email);
 
   // Phase 2 adds the "You're here via @handle" banner and the 10-second qualification script here (BUILD section 13, step B).
 
@@ -73,6 +77,7 @@ export default async function BrandPageRoute({ params }: Props) {
           Visit {brand.name} →
         </a>
         <p className="mt-2 text-center text-xs text-muted">Opens {new URL(brand.url).hostname.replace(/^www\./, '')} in a new tab</p>
+        {showAdvertise && <Link href={`/advertise/${brand.slug}`} className="mt-4 block text-center text-sm font-semibold underline">Advertise this brand</Link>}
       </article>
 
       {brand.related.length > 0 && (

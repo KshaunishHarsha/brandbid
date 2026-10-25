@@ -358,6 +358,8 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 - [ ] A new user goes from tapping Advertise to the share sheet in under a minute (timed).
 - [ ] Taken and reserved handles are rejected.
 
+**Built locally (2026-10-25):** Advertise entry on boards and brand pages, verified-email and allowlist checks, waitlist and admin allowlist editor, promoter profile with handle/country/terms validation, `/earn`, and hashed brand-member dashboard signals. The share destination is a placeholder until P2.2/P2.3 supplies links and channel actions. Live timing of the sign-in-to-share flow remains open. Unit, type, lint, and all local SQL suites pass.
+
 ### P2.2 — `get_or_create_link`
 
 **Goal:** one stable link per promoter × brand × channel.

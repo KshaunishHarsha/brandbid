@@ -2,7 +2,7 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
-  
+
   "graphql_public": {
           Tables: {
             [_ in never]: never
@@ -35,7 +35,21 @@ export type Database = {
                     "action"?: string,"actor_id"?: string | null,"created_at"?: string,"details"?: Json | null,"id"?: number,"subject_id"?: string | null,"subject_type"?: string | null
                   }
                   Relationships: [
-                    
+
+                  ]
+                },"beta_waitlist": {
+                  Row: {
+                    "created_at": string,"email": string,"id": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"email": string,"id"?: number
+                  }
+                  Update: {
+                    "created_at"?: string,"email"?: string,"id"?: number
+                  }
+                  Relationships: [
+
                   ]
                 },"bids": {
                   Row: {
@@ -215,7 +229,7 @@ isOneToOne: false
                     "id"?: number,"name"?: string,"requires_review"?: boolean,"slug"?: string
                   }
                   Relationships: [
-                    
+
                   ]
                 },"clicks": {
                   Row: {
@@ -459,7 +473,7 @@ isOneToOne: true
                     "country"?: string | null,"created_at"?: string,"first_withdrawal_reviewed"?: boolean,"handle"?: string | null,"id"?: string,"is_admin"?: boolean,"kyc_status"?: string,"leaderboard_public"?: boolean,"phone_hash"?: string | null,"phone_verified_at"?: string | null,"promoter_terms_accepted_at"?: string | null,"status"?: string,"trust_score"?: number
                   }
                   Relationships: [
-                    
+
                   ]
                 },"promoter_ledger": {
                   Row: {
@@ -501,17 +515,17 @@ isOneToOne: false
                   ]
                 },"settings": {
                   Row: {
-                    "key": string,"value": NonNullable<Json>
+                    "key": string,"value": Json | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "key": string,"value": NonNullable<Json>
+                    "key": string,"value"?: Json | null
                   }
                   Update: {
-                    "key"?: string,"value"?: NonNullable<Json>
+                    "key"?: string,"value"?: Json | null
                   }
                   Relationships: [
-                    
+
                   ]
                 },"visitor_keys": {
                   Row: {
@@ -618,7 +632,7 @@ isOneToOne: false
                            "handle"?: string | null,"id"?: string | null
                          }
                         Relationships: [
-                    
+
                   ]
                 }
           }
@@ -812,11 +826,11 @@ export type CompositeTypes<
 export const Constants = {
   "graphql_public": {
           Enums: {
-            
+
           }
         },"public": {
           Enums: {
-            
+
           }
         }
 } as const

@@ -3,6 +3,8 @@ import { BrandLogo } from '@/components/BrandLogo';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getBoard, getCategoryTabs, type BoardKind, type BoardRow } from '@/lib/leaderboard';
 import { formatUSDCompact } from '@brandbid/shared';
+import { getUser } from '@/lib/auth';
+import { canAdvertise } from '@/lib/beta';
 
 // Fresh on every request. Page caching comes with the R2 incremental cache in P1.12: on Cloudflare without
 // it a revalidating page would be frozen at its build-time contents.
@@ -27,6 +29,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ b
   const rows = await getBoard(board, category?.id ?? null);
   // "Take this spot" prices are global all-time ranks, so they only make sense on the unfiltered all-time board.
   const canTake = board === 'all' && !category;
+  const user = await getUser();
+  const showAdvertise = !user || await canAdvertise(user.email);
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-16">
@@ -74,7 +78,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ b
       ) : (
         <ol className="mt-2 divide-y divide-line rounded-card border border-line bg-surface">
           {rows.map((r) => (
-            <Row key={r.brandId} row={r} board={board} canTake={canTake} />
+            <Row key={r.brandId} row={r} board={board} canTake={canTake} showAdvertise={showAdvertise} />
           ))}
         </ol>
       )}
@@ -82,7 +86,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ b
   );
 }
 
-function Row({ row, board, canTake }: { row: BoardRow; board: BoardKind; canTake: boolean }) {
+function Row({ row, board, canTake, showAdvertise }: { row: BoardRow; board: BoardKind; canTake: boolean; showAdvertise: boolean }) {
   const amount = board === 'today' ? row.todayCents! : row.totalPaidCents;
   return (
     <li className="flex items-center gap-3 p-3 sm:gap-4 sm:p-4">
@@ -95,6 +99,7 @@ function Row({ row, board, canTake }: { row: BoardRow; board: BoardKind; canTake
       <div className="shrink-0 text-right">
         <div className="num font-bold">{formatUSDCompact(amount)}</div>
         <div className="text-xs text-muted">{board === 'today' ? 'today' : 'paid'}</div>
+        {showAdvertise && <Link href={`/advertise/${row.slug}`} className="mt-1 block text-xs font-semibold underline">Advertise</Link>}
         {canTake && row.takePriceCents !== null && (
           <Link href={`/list?rank=${row.rank}`} className="mt-1 hidden text-xs font-semibold underline sm:inline-block">
             Take #{row.rank} for {formatUSDCompact(row.takePriceCents)}

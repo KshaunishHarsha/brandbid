@@ -10,6 +10,7 @@ export default async function AdminHome() {
   return (
     <main className="pt-6">
       <h1 className="text-2xl font-bold">Overview</h1>
+      <Link href="/admin/beta" className="mt-2 inline-block text-sm underline">Promoter beta access</Link>
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <Card href="/admin/listings" label="Listings waiting for review" value={o.pendingListings} hot={o.pendingListings > 0} />
         <Card label="Refunds in progress" value={o.refundsOwed} hint="Payments being returned to rejected brands" />

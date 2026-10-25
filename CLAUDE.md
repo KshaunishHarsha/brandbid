@@ -108,7 +108,7 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 | P1.10 | Brand dashboard v1 | done | 2026-10-25 | `/dash`, `/dash/brands/[slug]`: rank, pay to move up, budget from the ledger, payments, edit description/logo; members only (404 otherwise). Not verified: the browser-side payment widget and auto-refresh |
 | P1.11 | Observability, analytics | wip | 2026-10-25 | PostHog pageviews and listing funnel events wired behind optional consent; real-job watchdog and Sentry cron check-ins added. Left: staging PostHog/Sentry credentials and live funnel/alert verification; source-map upload needs a private-map deploy design. |
 | P1.12 | Environments, deploy | wip | 2026-10-25 | Cloudflare part handed to a separate person: see DEPLOYMENT.md (envs in wrangler.jsonc, deploy script, tested up to a dry run). Left: their first real deploy; Supabase projects (owner); AWS worker undecided; CI deploys; R2 page cache |
-| P2.1 | Promoter onboarding | todo | | |
+| P2.1 | Promoter onboarding | wip | 2026-10-25 | Advertise entry, verified-email and beta gate, waitlist/admin editor, promoter profile and terms, country/handle checks, member signals built locally. Left: live timed flow with configured auth and real share sheet from P2.2/P2.3. |
 | P2.2 | `get_or_create_link` | todo | | |
 | P2.3 | Share sheet | todo | | |
 | P2.4 | OG and story images | todo | | |
