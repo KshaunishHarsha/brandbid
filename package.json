@@ -11,7 +11,7 @@
     "lint": "pnpm lint:migrations && pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "test": "vitest run",
-    "test:sql": "bash packages/db/run-sql-tests.sh",
+    "test:sql": "node packages/db/run-sql-tests.mjs",
     "db:start": "supabase start",
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > packages/db/types.ts",
