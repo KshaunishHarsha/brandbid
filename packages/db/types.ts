@@ -185,6 +185,15 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"budget_refund_items": {
+                  Row: { "amount_cents": number,"attempts": number,"bid_id": string,"created_at": string,"done_at": string | null,"id": string,"last_error": string | null,"processor_refund_ref": string | null,"refund_id": string,"retry_at": string | null,"status": string }
+                  ComputedFields: never
+                  Insert: { "amount_cents": number,"attempts"?: number,"bid_id": string,"created_at"?: string,"done_at"?: string | null,"id"?: string,"last_error"?: string | null,"processor_refund_ref"?: string | null,"refund_id": string,"retry_at"?: string | null,"status"?: string }
+                  Update: { "amount_cents"?: number,"attempts"?: number,"bid_id"?: string,"created_at"?: string,"done_at"?: string | null,"id"?: string,"last_error"?: string | null,"processor_refund_ref"?: string | null,"refund_id"?: string,"retry_at"?: string | null,"status"?: string }
+                  Relationships: [
+                    { foreignKeyName: "budget_refund_items_bid_id_fkey"; columns: ["bid_id"]; isOneToOne: false; referencedRelation: "bids"; referencedColumns: ["id"] },
+                    { foreignKeyName: "budget_refund_items_refund_id_fkey"; columns: ["refund_id"]; isOneToOne: false; referencedRelation: "budget_refunds"; referencedColumns: ["id"] }
+                  ]
                 },"budget_refunds": {
                   Row: {
                     "amount_cents": number,"brand_id": string,"created_at": string,"done_at": string | null,"id": string,"processor_refund_ref": string | null,"requested_by": string,"status": string
@@ -669,6 +678,12 @@ isOneToOne: false
             "admin_settings":
 { Args: { "p_admin_id": string }; Returns: Json
                            },
+            "admin_budget_refunds":
+{ Args: { "p_admin_id": string,"p_limit"?: number }; Returns: Json
+                           },
+            "admin_complete_budget_refund_item":
+{ Args: { "p_admin_id": string,"p_item_id": string,"p_reference": string }; Returns: Json
+                           },
             "admin_update_setting":
 { Args: { "p_admin_id": string,"p_key": string,"p_reason": string,"p_value": Json }; Returns: Json
                            },
@@ -705,6 +720,12 @@ isOneToOne: false
 { Args: { "p_brand_id": string }; Returns: {
               "added_cents": number,"rate_cents": number,"refunded_cents": number,"remaining_cents": number,"spent_cents": number,"visitors_left": number,"waitlisted_cents": number,"waitlisted_count": number
             }[]
+                           },
+"budget_refund_eligibility":
+{ Args: { "p_brand_id": string,"p_requester": string }; Returns: Json
+                           },
+"refund_budget":
+{ Args: { "p_brand_id": string,"p_requester": string }; Returns: Json
                            },
 "brand_ranks":
 { Args: { "p_brand_id": string }; Returns: {

@@ -95,6 +95,19 @@ export default async function BrandDashboard({ params, searchParams }: Props) {
             {d.budget.owedCount} qualified visitor{d.budget.owedCount === 1 ? ' is' : 's are'} waiting to be paid ({formatUSD(d.budget.owed)}). Your next payment covers them first.
           </p>
         )}
+      {live && brand.role === 'owner' && <section className="mt-8 rounded-card border border-line bg-surface p-5" aria-labelledby="refund-budget">
+        <h2 id="refund-budget" className="text-lg font-bold">Refund unspent ad budget</h2>
+        {d.refund && ['requested', 'processing', 'manual'].includes(d.refund.status) ? (
+          <p className="mt-2 text-sm">Refund request for {formatUSD(d.refund.amountCents)} · <strong>{d.refund.status === 'manual' ? 'needs manual review' : d.refund.status === 'requested' ? 'awaiting processor setup' : 'in progress'}</strong>. Revenue share is never included.</p>
+        ) : d.refundEligibility?.eligible ? (
+          <>
+            <p className="mt-1 text-sm text-muted">No visitor was funded for 30 days and no visitors are waiting. Only the remaining ad budget is included; rank and brandbid&apos;s revenue share stay unchanged. Payment age and the configured processor window may require manual handling.</p>
+            <form method="post" action={`/api/brands/${encodeURIComponent(brand.slug)}/refund`} className="mt-3">
+              <button className="rounded-lg border border-line px-4 py-2 text-sm font-semibold">Request {formatUSD(d.refundEligibility.amountCents)} refund</button>
+            </form>
+          </>
+        ) : <p className="mt-1 text-sm text-muted">{d.refundEligibility?.reason === 'budget_not_stagnant' ? 'Refunds are available after 30 days without a funded visitor.' : d.refundEligibility?.reason === 'waitlist_owed' ? 'Pay the waiting visitors from a future top-up before requesting a refund.' : 'There is no refundable ad budget right now.'}</p>}
+      </section>}
         {(brand.status === 'active' || brand.status === 'pending_review') && (
           <RateSetting slug={brand.slug} rateCents={brand.rateCents} floorCents={d.floorCents} remainingCents={d.budget.remaining} />
         )}

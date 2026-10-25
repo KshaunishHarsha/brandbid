@@ -78,6 +78,8 @@ export type DashboardData = {
   moveUpPriceCents: number | null; ladder: Array<{ rank: number; priceCents: number }>; minBidCents: number; floorCents: number;
   budget: { remaining: number; added: number; spent: number; refunded: number; owed: number; owedCount: number; visitorsLeft: number };
   bids: BidRow[];
+  refundEligibility: { eligible: boolean; reason: string | null; amountCents: number } | null;
+  refund: { status: string; amountCents: number } | null;
 };
 
 /** Numbers for the dashboard. Call only after getMemberBrand() succeeded. */
@@ -86,11 +88,15 @@ export async function getDashboardData(member: MemberBrand): Promise<DashboardDa
   const supabase = await createClient();
   const id = member.brand.id;
 
-  const [ranks, summary, settings, bids] = await Promise.all([
+  const [ranks, summary, settings, bids, refundEligibility, refund] = await Promise.all([
     db.rpc('brand_ranks', { p_brand_id: id }),
     db.rpc('brand_budget_summary', { p_brand_id: id }),
     db.from('settings').select('key,value').in('key', ['min_bid_cents', 'floor_cents']),
     supabase.from('bids').select('id, amount_cents, budget_cents, revenue_cents, processor_payment_id, status, created_at').eq('brand_id', id).order('created_at', { ascending: false }).limit(50),
+    member.brand.role === 'owner'
+      ? db.rpc('budget_refund_eligibility', { p_brand_id: id, p_requester: member.user.id })
+      : Promise.resolve({ data: null }),
+    supabase.from('budget_refunds').select('status, amount_cents').eq('brand_id', id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
   ]);
   const r = ranks.data?.[0];
   const allTimeRank = r?.all_time_rank == null ? null : Number(r.all_time_rank);
@@ -102,6 +108,8 @@ export async function getDashboardData(member: MemberBrand): Promise<DashboardDa
   ]);
 
   const s = summary.data?.[0];
+  const re = refundEligibility.data && typeof refundEligibility.data === 'object'
+    ? refundEligibility.data as { eligible?: unknown; reason?: unknown; amount_cents?: unknown } : null;
   const remaining = Number(s?.remaining_cents ?? member.brand.budgetCents);
   return {
     allTimeRank,
@@ -117,5 +125,11 @@ export async function getDashboardData(member: MemberBrand): Promise<DashboardDa
       visitorsLeft: member.brand.rateCents > 0 ? visitorsAffordable(remaining, member.brand.rateCents) : 0,
     },
     bids: (bids.data ?? []).map((b) => ({ id: b.id, amountCents: Number(b.amount_cents), budgetCents: Number(b.budget_cents), revenueCents: Number(b.revenue_cents), paymentId: b.processor_payment_id, status: b.status, createdAt: b.created_at })),
+    refundEligibility: re ? {
+      eligible: re.eligible === true,
+      reason: typeof re.reason === 'string' ? re.reason : null,
+      amountCents: Number(re.amount_cents ?? 0),
+    } : null,
+    refund: refund.data ? { status: refund.data.status, amountCents: Number(refund.data.amount_cents) } : null,
   };
 }
