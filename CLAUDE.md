@@ -138,7 +138,8 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 | P3.12 | Legal pages | todo | | |
 | P3.13 | Live money launch | todo | | |
 | P4.1 | Public promoter leaderboards | wip | 2026-10-25 | Weekly UTC and all-time settled earnings snapshots, five-minute concurrent refresh, anonymous opt-out display, and `/promoters` are built locally; SQL and loader/job tests pass. Hosted refresh and product review remain. |
-| P4.2–P4.8 | Growth and scale | todo | | See PHASES.md |
+| P4.2 | Discover brands | wip | 2026-10-25 | `/discover` lists active funded campaigns ranked by rate × remaining budget; SQL and loader tests pass locally. |
+| P4.3–P4.8 | Growth and scale | todo | | See PHASES.md |
 
 ## Gotchas log
 

@@ -690,6 +690,8 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 
 **P4.1 built locally (2026-10-25):** weekly UTC and all-time materialized totals include available, settled earnings only and refresh concurrently every five minutes. The public function returns no promoter IDs and reads the opt-out flag at request time, rendering opted-out handles as anonymous. `/promoters` has weekly and all-time boards. SQL fixture `30_promoter_leaderboards.sql` covers settled-only totals, UTC-week boundaries, anonymity and view ACLs; loader and refresh-job tests cover mapping and refresh calls.
 
+**P4.2 built locally (2026-10-25):** `/discover` lists active campaigns with ads enabled and at least one visitor affordable, ordered by `rate_cents × remaining_budget_cents`. The public SQL function returns only listing fields and an approximate visitor count. SQL fixture `31_discover_brands.sql` covers ordering and filters; the loader mapping test and web typecheck pass.
+
 ---
 
 ## Gaps and proposed additions

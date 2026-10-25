@@ -740,6 +740,11 @@ isOneToOne: false
               "board_rank": number,"earned_cents": number,"handle": string,"qualified_visitors": number
             }[]
                            },
+"discover_brands":
+{ Args: { "p_limit"?: number,"p_offset"?: number }; Returns: {
+              "brand_id": string,"description": string | null,"logo_path": string | null,"name": string,"rate_cents": number,"remaining_budget_cents": number,"slug": string,"url": string,"visitors_left": number
+            }[]
+                           },
 "category_counts":
 { Args: Record<PropertyKey, never>; Returns: {
               "id": number,"live_brands": number,"name": string,"slug": string
