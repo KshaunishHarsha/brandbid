@@ -131,7 +131,7 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 | P3.5 | Payout account, KYC, tax | todo | | |
 | P3.6 | Withdrawals | todo | | |
 | P3.7 | Reversal, clawback, ban | done | 2026-10-25 | Admin-checked service functions reverse/reconcile budget, claw back credited earnings, fund the waitlist, and idempotently ban/forfeit; transactional SQL fixture covers pending/available/waitlisted reversals, recovery from negative balance, link disablement and positive-balance forfeiture. |
-| P3.8 | Admin v2 | wip | 2026-10-25 | Fraud queue and user search with ledger context plus audited suspend/ban actions are built locally. SQL fixtures and focused route tests cover both slices. Remaining screens include withdrawal review (P3.6), reconciliation (P3.10), brands, settings and trust adjustments (policy decision needed). |
+| P3.8 | Admin v2 | wip | 2026-10-25 | Fraud queue, user search/moderation, and brand search/moderation with financial ledger context are built locally. Active brand ads can be disabled or brands soft-removed without erasing financial history. SQL fixtures and focused route tests cover these slices. Remaining work includes withdrawal review (P3.6), reconciliation (P3.10), settings, trust adjustments (policy decision needed), and refund request handling. |
 | P3.9 | Budget refunds | todo | | |
 | P3.10 | Reconciliation, data hygiene | todo | | |
 | P3.11 | Brand dashboard v2 | todo | | |

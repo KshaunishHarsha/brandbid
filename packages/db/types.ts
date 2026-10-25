@@ -660,6 +660,15 @@ isOneToOne: false
             "admin_ban_promoter":
 { Args: { "p_admin_id": string,"p_promoter_id": string,"p_reason": string }; Returns: Json
                            },
+            "admin_search_brands":
+{ Args: { "p_admin_id": string,"p_query": string }; Returns: Json
+                           },
+            "admin_disable_brand_ads":
+{ Args: { "p_admin_id": string,"p_brand_id": string,"p_reason": string }; Returns: Json
+                           },
+            "admin_remove_brand":
+{ Args: { "p_admin_id": string,"p_brand_id": string,"p_reason": string }; Returns: Json
+                           },
             "admin_suspend_promoter":
 { Args: { "p_admin_id": string,"p_promoter_id": string,"p_reason": string }; Returns: Json
                            },

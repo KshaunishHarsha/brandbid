@@ -30,7 +30,9 @@ export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f
 /** Redirect back to the queue with a one-line notice. Always 303 so the browser turns the POST into a GET. */
 export function backToQueue(req: Request, notice: string, queue = '/admin/listings'): NextResponse {
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(req.url).origin;
-  return NextResponse.redirect(new URL(`${queue}?notice=${encodeURIComponent(notice)}`, base), 303);
+  const target = new URL(queue, base);
+  target.searchParams.set('notice', notice);
+  return NextResponse.redirect(target, 303);
 }
 
 /** Database error messages we raise on purpose, mapped to what an admin should read. */
@@ -51,6 +53,7 @@ export const ADMIN_ERRORS: Record<string, string> = {
   promoter_not_found: 'That promoter account no longer exists.',
   admin_target_protected: 'Admin accounts cannot be suspended or banned from this screen.',
   promoter_banned: 'That promoter is already banned.',
+  brand_not_active: 'Only active brands can be changed here. Pending listings must be handled in the review queue.',
 };
 export function adminErrorNotice(message: string): string {
   return ADMIN_ERRORS[message] ?? 'Something went wrong. Nothing was changed.';
