@@ -99,11 +99,24 @@ describe('getDashboardData', () => {
       if (fn === 'claim_price_ladder') return { data: [{ target_rank: 1, price_cents: 9100 }, { target_rank: 2, price_cents: 5100 }] };
       return { data: null };
     });
-    const c = { rpc, from: () => ({ select: () => ({ eq: () => ({ single: async () => ({ data: { value: 1000 } }) }) }) }) };
+    const c = { rpc, from: () => {
+      const chain: Record<string, unknown> = {};
+      chain.select = () => chain;
+      chain.eq = () => chain;
+      chain.in = async () => ({ data: [{ key: 'min_bid_cents', value: 1000 }, { key: 'floor_cents', value: 10 }] });
+      chain.single = async () => ({ data: { value: 1000 } });
+      return chain;
+    } };
     adminClient.mockReturnValue(c);
     return c;
   }
-  const bidsClient = (rows: unknown[]) => userClient.mockResolvedValue({ from: () => { const c: Record<string, unknown> = {}; for (const m of ['select', 'eq', 'order', 'limit']) c[m] = () => c; c.then = (r: (v: unknown) => void) => r({ data: rows }); return c; } });
+  const bidsClient = (rows: unknown[]) => userClient.mockResolvedValue({ from: (table: string) => {
+    const c: Record<string, unknown> = {};
+    for (const m of ['select', 'eq', 'order', 'limit']) c[m] = () => c;
+    c.maybeSingle = async () => ({ data: table === 'budget_refunds' ? null : null });
+    c.then = (resolve: (v: unknown) => void) => resolve({ data: table === 'bids' ? rows : [] });
+    return c;
+  } });
 
   it('maps ranks, budget, price to move up, ladder, and bids', async () => {
     const a = admin();

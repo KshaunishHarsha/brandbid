@@ -84,7 +84,9 @@ describe('responses', () => {
   it('backToQueue is a 303 to the queue with an encoded notice', () => {
     const res = backToQueue(post('https://brandbid.wtf'), 'Done & dusted');
     expect(res.status).toBe(303);
-    expect(res.headers.get('location')).toBe('https://brandbid.wtf/admin/listings?notice=Done%20%26%20dusted');
+    const location = new URL(res.headers.get('location')!);
+    expect(location.origin + location.pathname).toBe('https://brandbid.wtf/admin/listings');
+    expect(location.searchParams.get('notice')).toBe('Done & dusted');
   });
   it('adminErrorNotice explains known errors and hides unknown ones', () => {
     expect(adminErrorNotice('reason_required')).toContain('reason');
