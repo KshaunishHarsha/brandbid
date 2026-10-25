@@ -419,6 +419,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 - [ ] P2.3: test X, LinkedIn, copy-link and story sharing on iOS Safari, Android Chrome and desktop Chrome.
 - [ ] P2.4: verify generated preview images in the Cloudflare Worker runtime and inspect representative long, missing-logo and transparent-logo brands.
 - [ ] P2.5: configure the Supabase JWT signing secret, Upstash and Sentry as hosted Worker secrets; measure redirect p95 from three regions and check live crawler previews.
+- [ ] P2.7: browser-check attribution and URL cleanup; verify consent cookies and a real Turnstile-backed 10-second request after P2.8 is implemented.
 - [ ] P2.14: run the full beta end-to-end suite after the hosted services and device checks above are available.
 
 ### P2.5 — `/go/[code]` redirect
@@ -479,8 +480,12 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 
 **Tests:** unit-test the active-time counter with fake timers and visibility events; Playwright: a real 10 s session sends exactly one `/api/q` request, and an idle session sends none.
 **Done when:**
-- [ ] Banner shows the right handle.
-- [ ] Idle or hidden tabs never qualify.
+- [x] Banner shows the right handle.
+- [x] Idle or hidden tabs never qualify.
+
+**Built locally (2026-10-25):** `/b/{slug}` validates the click UUID, active link code, brand match and public promoter handle before rendering the attribution banner; `PromoQualification` strips `c`/`l`, asks EU/EEA/UK visitors for consent, saves accept/decline choices, creates or clears `bb_vid`, and binds an accepted cookie hash to the click's visitor. FingerprintJS is loaded only after 10 active seconds and only when consent permits it. Invisible Turnstile is requested at the threshold; the active-time timer starts after a user interaction, pauses while hidden, resumes on return, and fires once. Unit tests cover idle, threshold, hidden pause and resume. `pnpm --filter web typecheck` passes.
+
+**Deferred:** browser verification of the banner, URL cleanup, consent cookies and the real 10-second request; staging Turnstile/consent checks; the qualification endpoint is implemented in P2.8. These are tracked under “Setup-dependent checks to do later” / P2.14.
 
 ### P2.8 — `/api/q` and `qualify_visitor`
 

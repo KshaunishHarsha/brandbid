@@ -8,11 +8,15 @@ import { getBrandPage } from '@/lib/brand';
 import { getUser } from '@/lib/auth';
 import { canAdvertise } from '@/lib/beta';
 import { logoPublicUrl } from '@/lib/logos';
+import { cookies, headers } from 'next/headers';
+import { CONSENT_COOKIE, needsConsent, isValidCode } from '@brandbid/shared';
+import { PromoQualification } from './PromoQualification';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 // Fresh on every request (page caching comes with the R2 cache, P1.12).
 export const dynamic = 'force-dynamic';
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = { params: Promise<{ slug: string }>; searchParams?: Promise<{ c?: string; l?: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -34,18 +38,36 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 const listed = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
 const rankColor = (rank: number) => (rank === 1 ? 'text-gold' : rank === 2 ? 'text-silver' : rank === 3 ? 'text-bronze' : 'text-fg');
 
-export default async function BrandPageRoute({ params }: Props) {
+export default async function BrandPageRoute({ params, searchParams }: Props) {
   const { slug } = await params;
   const brand = await getBrandPage(slug);
   if (!brand) notFound();
   const user = await getUser();
   const showAdvertise = !user || await canAdvertise(user.email);
-
-  // Phase 2 adds the "You're here via @handle" banner and the 10-second qualification script here (BUILD section 13, step B).
+  const query = await searchParams;
+  const clickId = query?.c && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(query.c) ? query.c : null;
+  const linkCode = query?.l && isValidCode(query.l) ? query.l : null;
+  let viaHandle: string | null = null;
+  let promoLinkCode: string | null = null;
+  if (clickId && linkCode) {
+    const admin = createAdminClient();
+    const { data: link } = await admin.from('links').select('brand_id,promoter_id').eq('code', linkCode).eq('status', 'active').maybeSingle();
+    if (link?.brand_id === brand.id) {
+      const { data: profile } = await admin.from('public_profiles').select('handle').eq('id', link.promoter_id).maybeSingle();
+      if (profile?.handle) { viaHandle = profile.handle; promoLinkCode = linkCode; }
+    }
+  }
+  const requestHeaders = await headers();
+  const country = requestHeaders.get('cf-ipcountry');
+  const consentRequired = needsConsent(country);
+  const consentCookie = (await cookies()).get(CONSENT_COOKIE)?.value;
+  const initialConsent = consentCookie === 'yes' || consentCookie === 'no' ? consentCookie : null;
 
   return (
     <main className="mx-auto max-w-3xl px-4 pb-16">
       <SiteHeader />
+
+      <PromoQualification clickId={viaHandle ? clickId : null} linkCode={promoLinkCode} needsConsent={consentRequired} initialConsent={initialConsent} viaHandle={viaHandle} />
 
       <article className="rounded-card border border-line bg-surface p-5 sm:p-7">
         <div className="flex items-start gap-4">
