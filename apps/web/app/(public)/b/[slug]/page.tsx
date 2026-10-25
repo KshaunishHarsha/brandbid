@@ -91,7 +91,7 @@ export default async function BrandPageRoute({ params, searchParams }: Props) {
         </dl>
 
         <a
-          href={`/out/b/${brand.slug}`}
+          href={viaHandle && clickId ? `/out/${clickId}` : `/out/b/${brand.slug}`}
           target="_blank"
           rel="noopener nofollow sponsored"
           className="mt-6 block rounded-xl bg-accent px-6 py-4 text-center text-lg font-bold text-accent-fg"

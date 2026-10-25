@@ -420,6 +420,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 - [ ] P2.4: verify generated preview images in the Cloudflare Worker runtime and inspect representative long, missing-logo and transparent-logo brands.
 - [ ] P2.5: configure the Supabase JWT signing secret, Upstash and Sentry as hosted Worker secrets; measure redirect p95 from three regions and check live crawler previews.
 - [ ] P2.7: browser-check attribution and URL cleanup; verify consent cookies and a real Turnstile-backed 10-second request after P2.8 is implemented.
+- [ ] P2.9: verify promoter UTM tags appear in the test brand's GA/Plausible after staging is available.
 - [ ] P2.14: run the full beta end-to-end suite after the hosted services and device checks above are available.
 
 ### P2.5 — `/go/[code]` redirect
@@ -517,6 +518,10 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Build:** look up the click → set `outbound_at` if null → 302 to the brand URL plus `utm_source=brandbid&utm_medium=promoter&utm_campaign={handle}&utm_content={channel}`. Merge with existing params on the brand URL. Unknown click → fall back to `/out/b/{slug}` behaviour, or `/`.
 **Done when:**
 - [ ] UTM tags show in a test brand site's GA/Plausible (BUILD §22: "brands see brandbid traffic").
+
+**Built locally (2026-10-25):** `/out/{click_id}` validates the click, active brand, channel and promoter handle; preserves the brand URL's existing query values; adds promoter/channel UTM tags; sets `outbound_at` only when null; and returns a no-store 302. Malformed/missing clicks and unsafe targets fall back to `/`. Promo-mode Visit uses the click-aware route; organic Visit remains `/out/b/{slug}`. Four redirect tests pass and web typecheck passes.
+
+**Deferred:** verify the UTM visit in the test brand's real GA/Plausible after staging is available.
 
 ### P2.10 — Rate setting and pause state
 

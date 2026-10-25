@@ -114,10 +114,10 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 | P2.3 | Share sheet | wip | 2026-10-25 | Responsive modal with editable disclosure-protected copy, X/LinkedIn/copy/story actions, first-use story guide and consented channel events built. Left: verify share behavior on iOS Safari, Android Chrome and desktop Chrome. |
 | P2.4 | OG and story images | wip | 2026-10-25 | Open Graph and story-card routes, monogram fallback, rank/name/description, story cache built. Left: Cloudflare OpenNext runtime check, hosted Storage bucket, and visual cases. |
 | P2.5 | `/go` redirect | wip | 2026-10-25 | Cached code lookup, bot/prefetch handling, privacy-aware cookie and hashes, local JWT verification, rate limiting and async click dispatch built. Left: hosted Worker secrets, regional latency and crawler checks. |
-| P2.6 | `record_click` | wip | 2026-10-25 | SQL visitor matching, claim handling, ignored click reasons and idempotency built; local SQL test passes. Left: full attribution table coverage and concurrency workload. |
+| P2.6 | `record_click` | wip | 2026-10-25 | SQL visitor matching, claim handling, ignored click reasons and idempotency built; local SQL and P2.8 concurrency tests pass. Left: full BUILD §14 attribution table coverage. |
 | P2.7 | Brand page promo mode, qualify script | wip | 2026-10-25 | Attribution, consent flow, timer, FingerprintJS and Turnstile trigger built. Left: browser/staging checks after P2.8. |
 | P2.8 | `/api/q`, `qualify_visitor` | wip | 2026-10-25 | SQL reject/budget/waitlist tests and 1,000-visitor concurrency/refill pass locally; web tests/typecheck pass. Left: CI after owner pushes local commits. |
-| P2.9 | `/out/[click_id]` | todo | | |
+| P2.9 | `/out/[click_id]` | wip | 2026-10-25 | No-store click-through redirects with brandbid/promoter/channel UTMs; unit tests pass. Left: confirm GA/Plausible attribution on staging. |
 | P2.10 | Rate setting, pause state | todo | | |
 | P2.11 | Promoter dashboard | todo | | |
 | P2.12 | Brand traffic stats | todo | | |
