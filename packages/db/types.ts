@@ -616,14 +616,14 @@ isOneToOne: false
                   ]
                 },"withdrawals": {
                   Row: {
-                    "amount_cents": number,"created_at": string,"external_ref": string | null,"fee_cents": number | null,"id": string,"paid_at": string | null,"promoter_id": string,"provider": string,"status": string
+                    "amount_cents": number,"created_at": string,"external_ref": string | null,"fee_cents": number | null,"id": string,"paid_at": string | null,"promoter_id": string,"provider": string,"review_note": string | null,"reviewed_at": string | null,"reviewed_by": string | null,"status": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "amount_cents": number,"created_at"?: string,"external_ref"?: string | null,"fee_cents"?: number | null,"id"?: string,"paid_at"?: string | null,"promoter_id": string,"provider": string,"status"?: string
+                    "amount_cents": number,"created_at"?: string,"external_ref"?: string | null,"fee_cents"?: number | null,"id"?: string,"paid_at"?: string | null,"promoter_id": string,"provider": string,"review_note"?: string | null,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"status"?: string
                   }
                   Update: {
-                    "amount_cents"?: number,"created_at"?: string,"external_ref"?: string | null,"fee_cents"?: number | null,"id"?: string,"paid_at"?: string | null,"promoter_id"?: string,"provider"?: string,"status"?: string
+                    "amount_cents"?: number,"created_at"?: string,"external_ref"?: string | null,"fee_cents"?: number | null,"id"?: string,"paid_at"?: string | null,"promoter_id"?: string,"provider"?: string,"review_note"?: string | null,"reviewed_at"?: string | null,"reviewed_by"?: string | null,"status"?: string
                   }
                   Relationships: [
                     {
@@ -683,6 +683,12 @@ isOneToOne: false
                            },
             "admin_complete_budget_refund_item":
 { Args: { "p_admin_id": string,"p_item_id": string,"p_reference": string }; Returns: Json
+                           },
+            "admin_withdrawal_queue":
+{ Args: { "p_admin_id": string,"p_limit"?: number }; Returns: Json
+                           },
+            "admin_review_withdrawal":
+{ Args: { "p_admin_id": string,"p_withdrawal_id": string,"p_decision": string,"p_reason"?: string | null }; Returns: Json
                            },
             "admin_update_setting":
 { Args: { "p_admin_id": string,"p_key": string,"p_reason": string,"p_value": Json }; Returns: Json
