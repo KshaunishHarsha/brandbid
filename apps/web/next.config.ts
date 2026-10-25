@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // cacheComponents is intentionally off: it forbids `runtime = 'edge'`, which /go needs (BUILD s4, P2.5).
+  // cacheComponents is intentionally off: it is untested with the OpenNext Cloudflare adapter (D43).
   turbopack: {
     rules: {
       "*.css": {

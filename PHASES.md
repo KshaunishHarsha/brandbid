@@ -258,7 +258,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 
 **Goal:** you can see what's happening.
 **Depends on:** P1.1. **Refs:** BUILD §4 (Sentry, PostHog).
-**Build:** PostHog on web (pageviews plus listing funnel events: `list_started`, `list_prefilled`, `checkout_started`, `bid_succeeded`). Never used for money. Sentry source maps on Vercel. A worker heartbeat alert if no job ran for 10 min.
+**Build:** PostHog on web (pageviews plus listing funnel events: `list_started`, `list_prefilled`, `checkout_started`, `bid_succeeded`). Never used for money. Sentry source maps uploaded from the Cloudflare deploy step (use `@sentry/cloudflare` or the `@sentry/nextjs` Workers support; verify which works with the adapter). A worker heartbeat alert if no job ran for 10 min.
 **Done when:**
 - [ ] The listing funnel is visible in PostHog on staging.
 
@@ -270,15 +270,16 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 1. Domain `brandbid.wtf` (D39). Note: `.wtf` is a normal, working TLD, but some email filters and corporate networks distrust unusual TLDs. Set up SPF, DKIM and DMARC for Resend properly and test deliverability early (P3.1).
 2. GitHub repo (private) for this monorepo.
 3. Supabase: org with 2 projects (`brandbid-staging`, `brandbid-prod`), same region (pick one close to most users; `ap-south-1` if India-first, `us-east-1` if global).
-4. Vercel: project linked to the repo, domains `brandbid.wtf` and `staging.brandbid.wtf`.
+4. Cloudflare (D43): add the `brandbid.wtf` zone (point the registrar's nameservers at Cloudflare; Workers custom domains need the domain on Cloudflare DNS). Upgrade to the **Workers Paid** plan. Two Workers, `brandbid-staging` and `brandbid-prod`, with domains `staging.brandbid.wtf` and `brandbid.wtf`. Create an R2 bucket per environment for Next's incremental cache. A scoped API token for CI (Workers deploy only).
 5. AWS (D40): an account with billing alerts and an IAM role for CI (GitHub OIDC, no long-lived keys). Per environment: an ECR repo, an ECS Fargate service for the worker (1 task, 0.25 vCPU / 0.5 GB to start, always on because pg-boss polls), secrets in Secrets Manager, logs in CloudWatch. Deploy from GitHub Actions: build the worker image, push to ECR, update the service. Infrastructure as code (Terraform or CDK, pick one in P1.12) so staging and production match. Use a region close to the Supabase one. The worker needs the Supabase **direct** connection string, so check the connection limits and whether Supabase's IPv4 add-on is needed (Fargate tasks in public subnets can reach IPv4 only if the DB endpoint is IPv4).
 6. Razorpay: account with test keys now; KYC, international cards activation and live keys before launch.
 7. Cloudflare Turnstile site (test keys work locally), Upstash Redis (one DB per environment), Resend (verify the sending domain), Sentry (web and worker projects), PostHog.
 
 **Build**
-- Supabase projects: staging and production. Vercel project with a production branch `main`, the `staging` branch → staging domain, and PR previews using the staging DB. AWS: worker staging and production ECS services (D40).
-- CI: on merge to `staging` → `supabase db push` to staging → Vercel deploy. On merge to `main` → push to production → deploy. Migrations run **before** the web deploy.
-- Secrets set in each dashboard. Confirm local/preview can never reach production (separate keys, no prod keys in preview env).
+- Supabase projects: staging and production. Cloudflare Workers `brandbid-staging` and `brandbid-prod` (wrangler environments), deployed from GitHub Actions; previews use the staging DB. AWS: worker staging and production ECS services (D40).
+- CI: on merge to `staging` → `supabase db push` to staging → `opennextjs-cloudflare deploy --env staging`. On merge to `main` → push to production → deploy. Migrations run **before** the web deploy.
+- **OpenNext adapter setup (D43):** add `@opennextjs/cloudflare` and `wrangler` to `apps/web`; `open-next.config.ts` (R2 incremental cache); `wrangler.jsonc` with `nodejs_compat`, a current `compatibility_date`, the assets binding, and `staging`/`production` environments; scripts `preview` (local Workers runtime) and `deploy`. Remove any `export const runtime = 'edge'` (the build fails on it). Check the compressed bundle size against the plan limit, and run `wrangler dev` against the local Supabase to confirm Supabase, Upstash and Turnstile calls work from the Workers runtime.
+- Secrets set in each dashboard (Cloudflare Worker secrets for web). Confirm local/preview can never reach production (separate keys, no prod keys in preview env).
 
 **Done when:**
 - [ ] A PR → staging → main flow deploys a migration and a web change to both environments.
@@ -305,7 +306,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Build**
 - The **Advertise** button on board rows and brand pages, behind the beta flag.
 - Flow: not signed in → `/signin?next=/b/{slug}?advertise=1` → profile step if `handle` or `promoter_terms_accepted_at` is missing → back to the brand with the share sheet open.
-- `/onboarding/promoter`: handle (live availability check, regex, reserved list including brand slugs), country (prefilled from `x-vercel-ip-country`, editable, ISO list), terms checkbox linking to `/terms/promoter` (copy from BUILD §10 step 2). Saving it sets `promoter_terms_accepted_at`.
+- `/onboarding/promoter`: handle (live availability check, regex, reserved list including brand slugs), country (prefilled from the `cf-ipcountry` header, editable, ISO list), terms checkbox linking to `/terms/promoter` (copy from BUILD §10 step 2). Saving it sets `promoter_terms_accepted_at`.
 - Email verified check: `auth.users.email_confirmed_at` is not null. Google and magic link both set it, but check anyway.
 - `/earn` landing page explaining the program, CTA into the same flow.
 - Beta gate (D33): `settings.beta_allowlist` holds a JSON array of lowercase emails. Advertise shows only for allowlisted signed-in users, and `get_or_create_link` checks it too, so the gate holds server-side. Signed-out visitors see Advertise, and after sign-in a non-allowlisted user gets a "join the waitlist" screen (stores the email). Add a minimal `/admin/beta` screen to edit the list; the full settings editor comes in P3.8. Removing the gate later = setting `beta_allowlist` to `null` (meaning "open to all").
@@ -349,7 +350,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Depends on:** P1.8. **Refs:** BUILD §12 (story, link previews).
 
 **Build**
-- `/api/og/[code]` → 1200×630 PNG via `@vercel/og`: logo, name, rank, "on brandbid". Bundle the fonts.
+- `/api/og/[code]` → 1200×630 PNG via `next/og`: logo, name, rank, "on brandbid". Bundle the fonts. **First step: verify `ImageResponse` runs on Workers via OpenNext** (wasm and font bundling are the usual trouble). If it doesn't, use Satori + `@resvg/resvg-wasm` directly.
 - `/api/story/[code].png` → 1080×1920: logo, name, one-liner, rank, "on brandbid", "link in sticker" hint.
 - Cache in Storage `story-cache/{brand_id}/{rank}-{logo_hash}.png`. The cache key changes when the rank or logo changes. CDN `Cache-Control: public, max-age=3600`.
 - Broken or missing logo → fallback monogram.
@@ -357,25 +358,25 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Done when:**
 - [ ] Images render for brands with long names, missing logos, and transparent logos.
 
-### P2.5 — `/go/[code]` edge redirect
+### P2.5 — `/go/[code]` redirect
 
 **Goal:** count human clicks, skip previews, prefetches and bots, and redirect in under 100 ms.
 **Depends on:** P1.3, P2.2, P2.4. **Refs:** BUILD §13 step A, §20, D31, D32.
 
 **Build** (follow BUILD §13 A1–A9 in order)
-- Edge runtime route. Rate limit with Upstash: 30/min per ip_hash. Over the limit, still redirect, but `ignored_reason='rate_limited'`.
+- Plain route handler on the Node.js runtime (no `runtime = 'edge'`, D43). It runs at Cloudflare's edge anyway. Rate limit with Upstash (REST, works from Workers): 30/min per ip_hash. Over the limit, still redirect, but `ignored_reason='rate_limited'`.
 - Code lookup: a module-level `Map` cache with 60 s TTL, then Supabase REST (service role) → `{ link_id, brand_id, slug, promoter_id, status, brand_status }`. Unknown, disabled, or inactive brand → 302 to `/`.
 - Bot/preview detection: `isbot(ua)` OR our list → 200 HTML with OG/Twitter tags (BUILD §12). Not logged.
 - `Sec-Purpose: prefetch` / `Purpose: prefetch` → 204.
 - `bb_vid` cookie: read it if present. If absent, set a new 128-bit random value **unless** the country is in `CONSENT_COUNTRIES` (EU/EEA/UK, D32). Those visitors get no cookie at `/go`; matching uses IP+UA until the brand page sets `bb_vid` after consent (P2.7). An EU visitor who already consented has the cookie, and it's read normally.
-- Hashes via `shared/hash.ts`. Country from `x-vercel-ip-country`.
-- Session user id: read the Supabase auth cookie (same domain, brandbid.wtf, D31, D39) and verify the JWT on the edge (no network call) to get `viewer_user_id` for the self/member check.
+- Hashes via `shared/hash.ts`. Country from `cf-ipcountry`; client IP from `cf-connecting-ip`.
+- Session user id: read the Supabase auth cookie (same domain, brandbid.wtf, D31, D39) and verify the JWT locally (no network call) to get `viewer_user_id` for the self/member check.
 - `click_id = crypto.randomUUID()`. **302** to `/b/{slug}?c={click_id}&l={code}` [G6].
-- `waitUntil(rpc('record_click', {...}))`. Failures go to Sentry. The visitor never waits.
+- `getCloudflareContext().ctx.waitUntil(rpc('record_click', {...}))`. Failures go to Sentry. The visitor never waits.
 
 **Tests (Vitest):** bot list classification (a fixture of real UA strings from each platform); prefetch → 204; the redirect is 302 and never 301; unknown code → `/`.
 **Done when:**
-- [ ] p95 under 100 ms measured from 3 regions on staging.
+- [ ] p95 under 100 ms measured from 3 regions on staging. If not, split `/go` into its own tiny Worker (route `brandbid.wtf/go/*`) and re-measure.
 - [ ] Preview fetches from X, LinkedIn, WhatsApp, Slack, Discord and iMessage render cards and log no click.
 
 ### P2.6 — `record_click`

@@ -20,7 +20,7 @@ If code disagrees with BUILD.md, the code is wrong. If you change behaviour, upd
 
 ## Stack (BUILD §4)
 
-TypeScript strict · pnpm monorepo · Next.js App Router + Tailwind on Vercel · Supabase (Postgres, Auth with Google and magic link, Storage) · Vercel edge `/go/[code]` · Node worker on AWS ECS Fargate with pg-boss (D40) · Turnstile · FingerprintJS · Upstash ratelimit · isbot · @vercel/og · Resend · Sentry · PostHog · Vitest / SQL tests / Playwright.
+TypeScript strict · pnpm monorepo · Next.js App Router + Tailwind on Cloudflare Workers (OpenNext adapter, D43) · Supabase (Postgres, Auth with Google and magic link, Storage) · `/go/[code]` route (runs at the Cloudflare edge) · Node worker on AWS ECS Fargate with pg-boss (D40) · Turnstile · FingerprintJS · Upstash ratelimit · isbot · next/og · Resend · Sentry · PostHog · Vitest / SQL tests / Playwright.
 Payments in: **Razorpay** (USD, behind `apps/web/lib/payments` adapter, D29). Payouts out: **TBD (Phase 3)**.
 Domain: `brandbid.wtf` (D39). Links: `https://brandbid.wtf/go/{code}`, no short domain (D31). Min bid $10 (D30). Daily board resets 00:00 UTC.
 
@@ -137,7 +137,8 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 
 _Append one line per hard-won lesson (date, what, why)._
 
-- 2026-10-25: `create-next-app` turns on `cacheComponents`, which forbids `export const runtime = 'edge'`. It's off in `next.config.ts` because `/go` must be an edge function. Don't turn it back on.
+- 2026-10-25: Never use `export const runtime = 'edge'` in route files: the OpenNext Cloudflare adapter fails the build on it (D43). Every Worker already runs at the edge. Also keep `cacheComponents` off in `next.config.ts` (`create-next-app` turns it on): it's untested with the adapter.
+- 2026-10-25: Cloudflare headers: country is `cf-ipcountry`, client IP is `cf-connecting-ip`. Background work after responding is `getCloudflareContext().ctx.waitUntil(...)`.
 - 2026-10-25: In Next route handlers use `NextResponse.redirect`, not `Response.redirect`. The latter has immutable headers and returns 500.
 - 2026-10-25: Docker Desktop on an 8 GB Mac needs its memory limit lowered (~3 GB) to run the Supabase stack comfortably. `psql` isn't installed locally; `pnpm test:sql` falls back to `docker exec` into `supabase_db_brandbid`.
 - 2026-10-25: pg-boss 12 exports `{ PgBoss }` (no default export) and needs `createQueue()` before `work()`/`schedule()`.

@@ -31,10 +31,10 @@ flowchart TB
         A[Admin]
     end
 
-    subgraph Vercel
+    subgraph Cloudflare["Cloudflare Workers"]
         WEB["Next.js web app<br/>boards · brand pages · dashboards · admin<br/>/api/q · /api/checkout · /api/webhooks · /out"]
         EDGE["Edge function<br/>/go/[code]"]
-        OG["@vercel/og<br/>link previews · story images"]
+        OG["next/og<br/>link previews · story images"]
     end
 
     subgraph Supabase
@@ -184,13 +184,13 @@ Refund rules: a stagnant brand can get back only its unspent **ad budget**, neve
 | Env | Web | Database | Worker | Payments |
 | --- | --- | --- | --- | --- |
 | Local | `pnpm dev` | `supabase start` (Docker) | `pnpm --filter worker dev` | Razorpay test mode |
-| Preview | Vercel preview per PR | Staging Supabase | not run | Test mode |
-| Staging | Vercel `staging` branch | Staging Supabase | AWS Fargate staging | Test mode |
-| Production | Vercel `main` | Production Supabase | AWS Fargate production | Live |
+| Preview | Cloudflare preview version | Staging Supabase | not run | Test mode |
+| Staging | Cloudflare Worker `brandbid-staging` | Staging Supabase | AWS Fargate staging | Test mode |
+| Production | Cloudflare Worker `brandbid-prod` | Production Supabase | AWS Fargate production | Live |
 
 ## Tech stack
 
-TypeScript (strict) · pnpm monorepo · Next.js App Router + Tailwind · Supabase (Postgres, Auth, Storage) · Vercel (web + edge) · AWS ECS Fargate (worker) · pg-boss · Razorpay · Cloudflare Turnstile · FingerprintJS · Upstash Redis · Resend · Sentry · PostHog · Vitest, SQL tests, Playwright.
+TypeScript (strict) · pnpm monorepo · Next.js App Router + Tailwind · Supabase (Postgres, Auth, Storage) · Cloudflare Workers via OpenNext (web + edge) · AWS ECS Fargate (worker) · pg-boss · Razorpay · Cloudflare Turnstile · FingerprintJS · Upstash Redis · Resend · Sentry · PostHog · Vitest, SQL tests, Playwright.
 
 ## Repository layout
 

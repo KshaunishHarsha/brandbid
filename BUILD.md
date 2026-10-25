@@ -122,6 +122,7 @@ Every product decision, with the date it was made. To change one, add a new row 
 | D38 | 2026-10-24 | A rejected listing (paid, never went live) is refunded the full amount, including brandbid's 50% share. This is separate from D37, which covers stagnation refunds of a live brand. |
 | D39 | 2026-10-25 | The domain is `brandbid.wtf`. Replaces every `brandbid.com` in this file; links are `brandbid.wtf/go/{code}` (D31 otherwise unchanged). |
 | D40 | 2026-10-25 | The background worker runs on AWS instead of Railway: ECS Fargate, one service per environment, pulling images from ECR (default; see PHASES.md P1.12). Supersedes the Railway choice in section 4. |
+| D43 | 2026-10-25 | The web app is deployed on Cloudflare Workers through the OpenNext adapter (`@opennextjs/cloudflare`), not Vercel. The Node.js runtime is used; `runtime = 'edge'` is not supported by the adapter and must not appear in route files. Every Worker already runs at Cloudflare's edge, so `/go` needs no special runtime. Country comes from the `cf-ipcountry` header and client IP from `cf-connecting-ip`. The worker (AWS, D40) and database (Supabase) are unchanged. |
 | D41 | 2026-10-25 | Until v1 is live, work is pushed directly to `main` (CI still runs on every push). The `staging` branch and the feature-branch → PR → `staging` → `main` flow in section 5 start when the deploy pipeline is built (P1.12). |
 | D42 | 2026-10-25 | Schema additions from building P1.2: `categories.requires_review` drives the manual-review categories in section 8 (G18); `brands.ads_enabled` defaults to false and is switched on by the first bid; client roles get column-level grants only, and any future table or function starts with no client access. |
 
@@ -134,18 +135,18 @@ Every product decision, with the date it was made. To change one, add a new row 
 | Part | Choice | Notes |
 | --- | --- | --- |
 | Language | TypeScript everywhere | Strict mode on |
-| Web app | Next.js (App Router), current stable | Deployed on Vercel |
+| Web app | Next.js (App Router), current stable | Deployed on Cloudflare Workers via OpenNext (D43). Needs the Workers Paid plan: the app bundle is over the free plan's size limit |
 | Styling | Tailwind CSS | |
 | Database | Supabase Postgres | All money logic lives in SQL functions (section 7) |
 | Auth | Supabase Auth | Google and email magic link |
 | File storage | Supabase Storage | Brand logos, generated story images cache |
-| Click redirect | Vercel edge function at `/go/[code]` | Must respond fast worldwide |
+| Click redirect | Route `/go/[code]` in the web Worker (runs at Cloudflare's edge in every region) | Must respond fast worldwide. If it misses the 100 ms target it can be split into its own tiny Worker on the route `brandbid.wtf/go/*` without changing behaviour |
 | Background jobs | Node worker on AWS (ECS Fargate), using pg-boss (a job queue that runs on Postgres) | Settlement, fraud scoring, withdrawals, leaderboards, reconciliation |
 | Bot check | Cloudflare Turnstile (invisible) | Signup and qualification |
 | Fingerprinting | FingerprintJS open source to start; Fingerprint Pro if duplicates slip through | Only with consent for EU visitors |
 | Rate limiting | Upstash Redis + `@upstash/ratelimit` | On `/go`, `/api/q`, auth endpoints |
 | Bot user agents | `isbot` package plus our own list (section 13) | |
-| Images | `@vercel/og` | Link previews and story images |
+| Images | `next/og` (Satori) | Link previews and story images. Must be verified on Workers first (P2.4); fallback is Satori + resvg-wasm used directly |
 | Email | Resend | Templates in the repo |
 | Errors | Sentry | Web and worker |
 | Product analytics | PostHog | Funnels; never used for money decisions |
@@ -159,12 +160,12 @@ pnpm workspaces monorepo:
 ```
 brandbid/
   apps/
-    web/                 Next.js app (pages, API routes, /go edge function)
+    web/                 Next.js app (pages, API routes, /go redirect)
       app/
         (public)/        leaderboard, brand pages /b/[slug], promoter leaderboard
         (dash)/          brand dashboard, promoter dashboard
         admin/           admin panel
-        go/[code]/       edge redirect
+        go/[code]/       redirect (runs at the edge on Workers)
         out/[click]/     outbound redirect
         api/
           q/             qualification endpoint
@@ -203,12 +204,12 @@ An ORM on top of SQL functions for money, any client-side state library, any sec
 | Env | Web | Database | Worker | Payments |
 | --- | --- | --- | --- | --- |
 | Local | `pnpm dev` | `supabase start` (Docker) | `pnpm --filter worker dev` | Processor test mode |
-| Preview | Vercel preview per pull request | Staging Supabase project | Not run | Test mode |
-| Staging | Vercel staging branch | Staging Supabase project | AWS staging service | Test mode |
-| Production | Vercel production | Production Supabase project | AWS production service | Live |
+| Preview | Cloudflare preview version per deploy | Staging Supabase project | Not run | Test mode |
+| Staging | Cloudflare Worker `brandbid-staging` | Staging Supabase project | AWS staging service | Test mode |
+| Production | Cloudflare Worker `brandbid-prod` | Production Supabase project | AWS production service | Live |
 
 - Never connect local or preview to production data.
-- Secrets live in Vercel, AWS (Secrets Manager) and Supabase dashboards. `.env.example` lists every variable with a comment; real `.env` files are never committed.
+- Secrets live in Cloudflare (Worker secrets), AWS (Secrets Manager) and Supabase dashboards. `.env.example` lists every variable with a comment; real `.env` files are never committed.
 
 ### Branching and releases
 
@@ -702,7 +703,7 @@ export function randomCode(len = 8): string {
 
 ### URL
 
-- Short domain, for example `bbid.to/k7Qx2aPm` (domain TBD, section 23), pointing at the same Vercel project.
+- Short domain, for example `bbid.to/k7Qx2aPm` (domain TBD, section 23), pointing at the same Worker.
 - Fallback that always works: `brandbid.wtf/go/k7Qx2aPm`.
 
 ---
@@ -733,7 +734,7 @@ Check out {brand name}: {one-line description} {link} #ad
 
 Instagram has no web API for posting stories, so it's a guided flow:
 
-1. Generate a 1080×1920 PNG story card at `/api/story/{code}.png` with `@vercel/og`: brand logo, name, one-liner, rank, "on brandbid", and a short "link in sticker" hint. Cache it in Supabase Storage.
+1. Generate a 1080×1920 PNG story card at `/api/story/{code}.png` with `next/og`: brand logo, name, one-liner, rank, "on brandbid", and a short "link in sticker" hint. Cache it in Supabase Storage.
 2. Copy the promoter's link to the clipboard.
 3. On phones that support sharing files (`navigator.canShare({ files })`), open the native share sheet with the image; the promoter picks Instagram → Story. Otherwise download the image.
 4. Show a three-step guide the first time: open Instagram → add the image to your story → add the Link sticker and paste.
@@ -773,9 +774,9 @@ promo link ──► A. /go/[code] ──► B. /b/[brand]?c={click_id} ──�
 4. **Ignore prefetches.** If the request has `Sec-Purpose: prefetch` or `Purpose: prefetch`, return 204. Not counted.
 5. **Read or set the visitor cookie** `bb_vid`: 128-bit random ID, first-party on brandbid.wtf, `HttpOnly; Secure; SameSite=Lax; Max-Age=31536000`.
 6. **Build signals:**
-   - `ip_hash = HMAC-SHA256(IP_PEPPER, ip)` — the raw IP is never stored.
+   - `ip_hash = HMAC-SHA256(IP_PEPPER, ip)` — the raw IP (from the `cf-connecting-ip` header) is never stored.
    - `ua_hash = HMAC-SHA256(IP_PEPPER, user_agent)`
-   - `country` from the `x-vercel-ip-country` header.
+   - `country` from the `cf-ipcountry` header.
    - `referrer` from the `Referer` header (often empty from apps; that's fine).
 7. **Create a click ID** (UUID) now, so the redirect doesn't wait for the database.
 8. **Redirect with 302** (never 301 — browsers cache 301s, so repeat clicks would skip tracking) to `/b/{brand slug}?c={click_id}`.
