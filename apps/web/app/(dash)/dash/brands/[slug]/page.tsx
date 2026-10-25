@@ -100,6 +100,15 @@ export default async function BrandDashboard({ params, searchParams }: Props) {
         )}
       </section>
 
+      {live && <section className="mt-8 rounded-card border border-line bg-surface p-5" aria-labelledby="report-traffic">
+        <h2 id="report-traffic" className="text-lg font-bold">Report suspicious traffic</h2>
+        <p className="mt-1 text-sm text-muted">Send a note to the brandbid review team. Reports are private to admins and will not be visible to promoters.</p>
+        <form method="post" action={`/api/brands/${encodeURIComponent(brand.slug)}/report-traffic`} className="mt-3 space-y-2">
+          <label className="block text-sm">What looks suspicious?<textarea name="reason" required minLength={10} maxLength={1000} rows={3} className="mt-1 block w-full rounded-lg border border-line bg-bg px-3 py-2" /></label>
+          <button className="rounded-lg border border-line px-4 py-2 text-sm font-semibold">Send report</button>
+        </form>
+      </section>}
+
       <section className="mt-8" aria-labelledby="bids">
         <h2 id="bids" className="mb-3 text-lg font-bold">Payments</h2>
         {d.bids.length === 0 ? (

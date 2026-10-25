@@ -20,7 +20,7 @@ export default async function FraudQueue({ searchParams }: { searchParams: Promi
   return (
     <main className="pt-6">
       <h1 className="text-2xl font-bold">Fraud review</h1>
-      <p className="mt-1 text-sm text-muted">Review flagged earnings. Clear every open rule on an earning to release it; confirming any rule reverses the earning.</p>
+      <p className="mt-1 text-sm text-muted">Review earning flags and brand traffic reports. Clear every open rule on an earning to release it; confirming an earning flag reverses that earning. Other subjects can be cleared but do not trigger reversals.</p>
       {notice && <p role="status" className="mt-4 rounded-lg border border-line bg-surface p-3 text-sm">{notice}</p>}
       {error && <p role="alert" className="mt-4 rounded-lg border border-danger p-3 text-sm text-danger">The fraud queue could not be loaded.</p>}
       {!error && flags.length === 0 ? (
@@ -30,6 +30,8 @@ export default async function FraudQueue({ searchParams }: { searchParams: Promi
           {flags.map((flag) => {
             const earning = record(flag.earning);
             const details = record(flag.details);
+            const earningSubject = string(flag.subject_type) === 'earning';
+            const brandReport = string(flag.subject_type) === 'brand';
             const flagId = string(flag.flag_id);
             const amount = number(earning?.amount_cents);
             return (
@@ -52,6 +54,11 @@ export default async function FraudQueue({ searchParams }: { searchParams: Promi
                     <div><dt className="inline text-muted">Visitor: </dt><dd className="inline">{string(earning.visitor_id)} · {string(earning.country, 'Unknown')} · {number(earning.active_ms) ?? '—'} ms</dd></div>
                     <div><dt className="inline text-muted">Click-through: </dt><dd className="inline">{string(earning.outbound_at, 'none')}</dd></div>
                   </dl>
+                ) : brandReport ? (
+                  <div className="mt-3 rounded-lg border border-line bg-bg p-3 text-sm">
+                    <p className="font-semibold">Brand traffic report: {string(details?.brand_name, string(flag.subject_id))}</p>
+                    <p className="mt-1 text-muted">{number(details?.report_count) ?? 1} report(s) · {string(details?.latest_reason)}</p>
+                  </div>
                 ) : <p className="mt-3 text-sm text-muted">Related earning context is unavailable for this subject.</p>}
 
                 <div className="mt-4 flex flex-wrap items-end gap-3">
@@ -60,11 +67,11 @@ export default async function FraudQueue({ searchParams }: { searchParams: Promi
                     <label className="text-sm">Note (optional)<input name="reason" maxLength={500} className="mt-1 block rounded-lg border border-line bg-bg px-3 py-2 text-sm" /></label>
                     <button className="rounded-lg border border-line px-4 py-2 text-sm font-semibold">Clear flag</button>
                   </form>
-                  <form method="post" action={`/api/admin/fraud/${flagId}/review`} className="flex flex-wrap items-end gap-2">
+                  {earningSubject && <form method="post" action={`/api/admin/fraud/${flagId}/review`} className="flex flex-wrap items-end gap-2">
                     <input type="hidden" name="decision" value="confirm" />
                     <label className="text-sm">Reason<input name="reason" required minLength={3} maxLength={500} className="mt-1 block rounded-lg border border-line bg-bg px-3 py-2 text-sm" /></label>
                     <button className="rounded-lg bg-danger px-4 py-2 text-sm font-semibold text-white">Confirm and reverse</button>
-                  </form>
+                  </form>}
                 </div>
               </li>
             );

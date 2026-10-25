@@ -656,6 +656,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 ### P3.11 — Brand dashboard v2
 **Depends on:** P3.9, P3.3. **Refs:** BUILD §17.
 **Build:** refund button (when eligible); "Report suspicious traffic" → `fraud_flags`; team members invite by email (D34: Phase 3). New `brand_invites` table (brand_id, email, token hash, invited_by, expires_at, accepted_at). The owner invites, the invitee accepts after sign-in, and that creates a `brand_members` row (role `member`). Members can view stats and edit description/logo/rate. Only the owner can pay or request refunds. Members can't create links for the brand (existing self-promotion rule).
+**Built locally (2026-10-25):** active brand members can submit a private reasoned traffic report; reports are rate-limited per member and brand, audited, and added to the admin fraud queue as brand-level flags. Admins can clear these flags; the UI hides earning reversal for non-earning subjects. SQL fixture `27_brand_traffic_reports.sql` covers membership, rate limit, audit, admin visibility, clear and ACLs. Refund requests remain in P3.9; team invitations remain gated on the verified email setup in P3.1.
 
 ### P3.12 — Legal pages
 **Build:** `/terms`, `/terms/promoter`, `/privacy`, `/refunds`, with the reviewed text from P3.0. Link them from the footer, the sign-up and listing checkout, and the promoter onboarding.

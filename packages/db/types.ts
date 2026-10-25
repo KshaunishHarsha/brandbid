@@ -672,6 +672,9 @@ isOneToOne: false
             "admin_update_setting":
 { Args: { "p_admin_id": string,"p_key": string,"p_reason": string,"p_value": Json }; Returns: Json
                            },
+            "report_brand_suspicious_traffic":
+{ Args: { "p_brand_id": string,"p_reason": string,"p_reporter_id": string }; Returns: Json
+                           },
             "admin_disable_brand_ads":
 { Args: { "p_admin_id": string,"p_brand_id": string,"p_reason": string }; Returns: Json
                            },
