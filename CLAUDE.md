@@ -49,6 +49,7 @@ Needs Node ≥ 24 (`.nvmrc`), pnpm 12, Docker running, Supabase CLI.
 | `pnpm test:worker` | Runs the check-listing/cleanup jobs against the local DB with a fake site probe |
 | `pnpm db:reset` | Re-applies all migrations and seeds |
 | `pnpm db:types` | Regenerates `packages/db/types.ts` |
+| `apps/web/scripts/deploy-cloudflare.sh staging\|production [--dry-run]` | Build + deploy the web app to Cloudflare for one environment. Full guide: [DEPLOYMENT.md](DEPLOYMENT.md) |
 | `pnpm --filter web cf:build` | Builds the web app for Cloudflare Workers (OpenNext). Test it locally with `cd apps/web && cp .env.local .dev.vars && pnpm exec wrangler dev` (`.dev.vars` is git-ignored; delete it after) |
 
 Copy `.env.example` to `apps/web/.env.local` and `apps/worker/.env`. `supabase/migrations` is a symlink to `packages/db/migrations`.
@@ -105,7 +106,7 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 | P1.9 | Admin v1: listing review | todo | | |
 | P1.10 | Brand dashboard v1 | todo | | |
 | P1.11 | Observability, analytics | todo | | |
-| P1.12 | Environments, deploy | blocked (Q7: no accounts yet) | | |
+| P1.12 | Environments, deploy | wip | 2026-10-25 | Cloudflare part handed to a separate person: see DEPLOYMENT.md (envs in wrangler.jsonc, deploy script, tested up to a dry run). Left: their first real deploy; Supabase projects (owner); AWS worker undecided; CI deploys; R2 page cache |
 | P2.1 | Promoter onboarding | todo | | |
 | P2.2 | `get_or_create_link` | todo | | |
 | P2.3 | Share sheet | todo | | |
@@ -148,6 +149,7 @@ _Append one line per hard-won lesson (date, what, why)._
 - 2026-10-25: Local payments: set `PAYMENTS_MODE=mock` in `apps/web/.env.local`. The listing wizard then shows a "Simulate paying" button that sends a correctly signed webhook through the real handler. Refused in production. Run a worker job now with `pnpm --filter worker run-once check-listing`.
 - 2026-10-25: In rate-limited endpoints that create things, put strict limits and single-use bot checks AFTER validation, so typos don't burn attempts or Turnstile tokens.
 - 2026-10-25: Vitest resolves the web app's `@/` alias via `vitest.config.ts`.
+- 2026-10-25: `NEXT_PUBLIC_*` values are compiled into the Cloudflare build (tested), so staging and production need separate builds; runtime secrets are set with `wrangler secret`. Deploy only via `apps/web/scripts/deploy-cloudflare.sh`, which refuses to build with missing/local/mismatched values (a stray `.env.local` would otherwise fill gaps silently). Never set `PAYMENTS_MODE` for a deployed build.
 - 2026-10-25: pnpm 12 fails `pnpm install --frozen-lockfile` (so CI) if a dependency has a build script that is not approved. After adding any dependency, run `pnpm install --frozen-lockfile` locally; if it reports `ERR_PNPM_IGNORED_BUILDS`, add the package to `allowBuilds` in `pnpm-workspace.yaml`. A plain `pnpm add` only warns, which hides the problem until CI.
 - 2026-10-25: Built for Workers, `NODE_ENV` is `production`, so the rate limiter refuses to run without Upstash (fails closed, by design). For a local Workers test, expect `/api/auth/magic-link` to return 500 unless the Upstash vars are set.
 - 2026-10-25: Auth: `middleware.ts` stays (not Next 16 `proxy.ts`) until the Cloudflare adapter's proxy support is verified. Magic links use the token-hash flow + a Continue button (`/auth/confirm` -> `POST /api/auth/verify`) so they work across browsers and email scanners can't burn them. Local email is in Mailpit at http://127.0.0.1:54324. `supabase/config.toml` raises `email_sent` for local only. Zod 4: put `.max()` before `.pipe(z.email())`.

@@ -79,3 +79,7 @@ tmp/
 .dev.vars.*
 .wrangler/
 .open-next/
+
+# Cloudflare secrets files (copy apps/web/secrets.example.json to secrets.<env>.json)
+secrets.*.json
+!secrets.example.json

@@ -1,8 +1,33 @@
 {
+  // Cloudflare Workers config for the web app (OpenNext adapter). See /DEPLOYMENT.md.
+  //
+  // Always deploy with an explicit environment:
+  //   staging    -> worker "brandbid-staging",  https://staging.brandbid.wtf
+  //   production -> worker "brandbid-prod",     https://brandbid.wtf
+  // The top-level (no --env) config is only for local `wrangler dev` / previews.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "brandbid-web",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
-  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" }
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+
+  // Secrets (SUPABASE_SERVICE_ROLE_KEY, IP_PEPPER, ...) are NOT here: set them with `wrangler secret put`.
+  // NEXT_PUBLIC_* values are compiled in at BUILD time, not read from here (see DEPLOYMENT.md).
+  "env": {
+    "staging": {
+      "name": "brandbid-staging",
+      "workers_dev": false,
+      "routes": [{ "pattern": "staging.brandbid.wtf", "custom_domain": true }],
+      "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+      "vars": { "APP_ENV": "staging" }
+    },
+    "production": {
+      "name": "brandbid-prod",
+      "workers_dev": false,
+      "routes": [{ "pattern": "brandbid.wtf", "custom_domain": true }],
+      "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+      "vars": { "APP_ENV": "production" }
+    }
+  }
 }

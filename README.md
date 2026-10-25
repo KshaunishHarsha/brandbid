@@ -17,6 +17,7 @@ Domain: `brandbid.wtf` · Links: `brandbid.wtf/go/{code}`
 | [BUILD.md](BUILD.md) | Source of truth: product decisions (§3 log), data model, money rules, every flow. Wins over everything else. |
 | [PHASES.md](PHASES.md) | The build plan: 4 phases split into work packages with specs and acceptance checks. |
 | [CLAUDE.md](CLAUDE.md) | Short context for coding agents, plus the live progress table. |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | How to deploy: Cloudflare (web), Supabase, AWS (worker). Start here to set up environments. |
 
 ## Architecture
 
