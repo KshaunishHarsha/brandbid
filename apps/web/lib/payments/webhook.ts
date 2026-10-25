@@ -1,4 +1,4 @@
-import type { PaymentProcessor } from './types';
+import type { PaymentProcessor } from '@brandbid/payments';
 
 // Payment webhook logic, with every side effect injected so it can be tested without a network.
 //

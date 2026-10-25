@@ -1,6 +1,12 @@
 -- record_bid, fund_waitlist and cycle_end (BUILD s7, s8, s15; D36).
 begin;
 
+-- Hermetic: start from an empty database for this test only. TRUNCATE and DELETE are transactional, so the rollback at
+-- the end puts every real row back untouched. Seed data (settings, categories) is left alone.
+truncate table public.profiles, public.brands, public.audit_log, public.notification_outbox, public.member_signals cascade;
+delete from auth.users;
+
+
 create function public.zz_expect_error(q text, msg text) returns void language plpgsql as $$
 begin
   begin

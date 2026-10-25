@@ -1,6 +1,12 @@
 -- find_user_id_by_email and cleanup_stale_listings (P1.6, D45).
 begin;
 
+-- Hermetic: start from an empty database for this test only. TRUNCATE and DELETE are transactional, so the rollback at
+-- the end puts every real row back untouched. Seed data (settings, categories) is left alone.
+truncate table public.profiles, public.brands, public.audit_log, public.notification_outbox, public.member_signals cascade;
+delete from auth.users;
+
+
 insert into auth.users (id, email, email_confirmed_at, last_sign_in_at, created_at) values
   ('00000000-0000-0000-0000-0000000000a1', 'Owner@Test.dev',  now(), now(), now() - interval '30 days'),  -- confirmed, active
   ('00000000-0000-0000-0000-0000000000a2', 'stale@test.dev',   null,  null,  now() - interval '10 days'),  -- abandoned: should go

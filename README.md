@@ -123,7 +123,8 @@ flowchart LR
 | `process-withdrawals` | Sends `processing` withdrawals to the payout provider, records fees, marks paid or failed |
 | `refresh-leaderboards` | Daily board (every minute) and promoter boards (every 5 min) |
 | `reconcile-ledgers` | Verifies every money invariant in BUILD §7; strips user agents older than 90 days |
-| `notify` | Sends queued emails from `notification_outbox` |
+| `notify` | Sends queued emails from `notification_outbox` (listing approved / rejected so far; the rest arrive with Phase 3) |
+| `process-refunds` | Returns the money for rejected listings through the payment processor, retrying with backoff |
 | `check-listing` | Automatic checks on a freshly paid listing (approve, or hold for an admin with the reason) |
 | `cleanup` | Deletes unpaid draft listings and throwaway accounts older than 7 days |
 

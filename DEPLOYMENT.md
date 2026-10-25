@@ -277,6 +277,19 @@ For each of staging and production:
 
 ---
 
+### Making the first admin
+
+The admin panel (`/admin`) is only for accounts with `is_admin = true`. Sign in once with the admin's email, then in the **Supabase SQL editor** of that environment run:
+
+```sql
+update public.profiles set is_admin = true
+where id = (select id from auth.users where lower(email) = lower('you@example.com'));
+```
+
+Admins must have signed in within the last 12 hours to use it.
+
+---
+
 ## 4. AWS (background worker): to be decided
 
 The worker (`apps/worker`) runs the scheduled jobs. The plan in `BUILD.md` (D40) is a container on ECS Fargate, but this is **not decided or built yet**. When it is, this section will be filled in.
@@ -285,7 +298,8 @@ What this means for now:
 
 - The **web app works without it**, but anything that needs a background job waits: newly paid listings stay "under review" (the automatic check), and settlement and emails are not built yet anyway.
 - For testing, a job can be run by hand against a database: `DATABASE_URL=<direct connection string> pnpm --filter worker run-once check-listing`.
-- The worker needs one secret: `DATABASE_URL` (the direct Supabase connection string), plus `WORKER_SENTRY_DSN` if Sentry is used.
+- The worker needs `DATABASE_URL` (the direct Supabase connection string); `RESEND_API_KEY` and `EMAIL_FROM` (it sends the listing approved/rejected emails); `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` (it returns refunds for rejected listings); `NEXT_PUBLIC_SITE_URL` (links in emails); and `WORKER_SENTRY_DSN` if Sentry is used. It must also run with `APP_ENV` set to `staging` or `production` and never `PAYMENTS_MODE=mock`.
+- **Until it exists, rejected listings are still refunded immediately by the admin action, but retries and the approve/reject emails wait for the worker.**
 
 ---
 

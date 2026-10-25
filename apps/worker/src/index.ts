@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/node';
 import { PgBoss } from 'pg-boss';
-import { createPool } from './db.js';
+import { buildContext } from './context.js';
 import { env } from './env.js';
 import { registerJobs } from './jobs/index.js';
 
@@ -9,7 +9,7 @@ if (env.sentryDsn) {
 }
 
 async function main() {
-  const pool = createPool();
+  const ctx = buildContext();
   const boss = new PgBoss(env.databaseUrl);
   boss.on('error', (err: Error) => {
     console.error('[worker] pg-boss error', err);
@@ -17,7 +17,7 @@ async function main() {
   });
 
   await boss.start();
-  await registerJobs(boss, pool);
+  await registerJobs(boss, ctx);
   console.log(`[worker] started (${env.environment})`);
 
   // Heartbeat so a silent worker is visible in logs and alerts (P1.11).
@@ -26,7 +26,7 @@ async function main() {
   const shutdown = async () => {
     console.log('[worker] shutting down');
     await boss.stop({ graceful: true });
-    await pool.end();
+    await ctx.pool.end();
     await Sentry.close(2000);
     process.exit(0);
   };

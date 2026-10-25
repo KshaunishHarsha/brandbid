@@ -1,6 +1,4 @@
-import { createMockProcessor } from './mock';
-import { createRazorpayProcessor } from './razorpay';
-import type { PaymentProcessor } from './types';
+import { createMockProcessor, createRazorpayProcessor, type PaymentProcessor } from '@brandbid/payments';
 
 export type PaymentsMode = 'razorpay' | 'mock';
 

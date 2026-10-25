@@ -1,7 +1,7 @@
 import { createHmac } from 'node:crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { paymentsMode } from './index';
-import { createMockProcessor, MOCK_WEBHOOK_SECRET } from './mock';
+import { createMockProcessor, MOCK_WEBHOOK_SECRET } from '@brandbid/payments';
 import { handlePaymentWebhook } from './webhook';
 
 const BRAND = '11111111-1111-4111-8111-111111111111';

@@ -41,7 +41,7 @@ export async function runCheckListing(
     };
 
     const { rows: brands } = await client.query(
-      `select b.id, b.name, b.description, b.url, b.owner_id, coalesce(c.requires_review, false) as requires_review
+      `select b.id, b.slug, b.name, b.description, b.url, b.owner_id, coalesce(c.requires_review, false) as requires_review
          from public.brands b
          left join public.categories c on c.id = b.category_id
         where b.status = 'pending_review' and b.checked_at is null
@@ -68,7 +68,7 @@ export async function runCheckListing(
         await client.query(
           `insert into public.notification_outbox (kind, recipient_user_id, payload, dedupe_key)
            values ('listing_approved', $1, $2, $3) on conflict (dedupe_key) do nothing`,
-          [b.owner_id, JSON.stringify({ brand_id: b.id, name: b.name }), `listing_approved:${b.id}`],
+          [b.owner_id, JSON.stringify({ brand_id: b.id, name: b.name, slug: b.slug }), `listing_approved:${b.id}`],
         );
         result.approved++;
       } else {

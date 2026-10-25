@@ -1,6 +1,6 @@
 // Run a single job immediately, outside the scheduler. Handy for ops and debugging:
 //   DATABASE_URL=... pnpm --filter worker run-once check-listing
-import { createPool } from './db.js';
+import { buildContext } from './context.js';
 import { JOBS } from './jobs/index.js';
 
 const name = process.argv[2];
@@ -10,9 +10,9 @@ if (!job?.run) {
   process.exit(1);
 }
 
-const pool = createPool();
+const ctx = buildContext();
 try {
-  console.log(`${job.name}:`, await job.run(pool));
+  console.log(`${job.name}:`, await job.run(ctx));
 } finally {
-  await pool.end();
+  await ctx.pool.end();
 }

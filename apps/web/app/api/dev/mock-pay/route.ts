@@ -2,9 +2,8 @@ import { NextResponse } from 'next/server';
 import { createHmac } from 'node:crypto';
 import { z } from 'zod';
 import { paymentsMode } from '@/lib/payments';
-import { MOCK_WEBHOOK_SECRET } from '@/lib/payments/mock';
 import { buildWebhookDeps } from '@/lib/payments/wiring';
-import { createMockProcessor } from '@/lib/payments/mock';
+import { createMockProcessor, MOCK_WEBHOOK_SECRET } from '@brandbid/payments';
 import { handlePaymentWebhook } from '@/lib/payments/webhook';
 
 // DEV ONLY. "Pays" a mock order by sending ourselves a correctly signed payment.captured webhook,

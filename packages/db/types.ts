@@ -39,14 +39,14 @@ export type Database = {
                   ]
                 },"bids": {
                   Row: {
-                    "amount_cents": number,"brand_id": string,"budget_cents": number,"budget_refunded_cents": number,"created_at": string,"id": string,"payer_email": string | null,"payer_id": string,"payment_fingerprint": string | null,"processor": string,"processor_payment_id": string,"refund_ref": string | null,"refunded_at": string | null,"revenue_cents": number,"status": string
+                    "amount_cents": number,"brand_id": string,"budget_cents": number,"budget_refunded_cents": number,"created_at": string,"id": string,"payer_email": string | null,"payer_id": string,"payment_fingerprint": string | null,"processor": string,"processor_payment_id": string,"refund_attempts": number,"refund_last_error": string | null,"refund_ref": string | null,"refund_retry_at": string | null,"refunded_at": string | null,"revenue_cents": number,"status": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "amount_cents": number,"brand_id": string,"budget_cents": number,"budget_refunded_cents"?: number,"created_at"?: string,"id"?: string,"payer_email"?: string | null,"payer_id": string,"payment_fingerprint"?: string | null,"processor": string,"processor_payment_id": string,"refund_ref"?: string | null,"refunded_at"?: string | null,"revenue_cents": number,"status"?: string
+                    "amount_cents": number,"brand_id": string,"budget_cents": number,"budget_refunded_cents"?: number,"created_at"?: string,"id"?: string,"payer_email"?: string | null,"payer_id": string,"payment_fingerprint"?: string | null,"processor": string,"processor_payment_id": string,"refund_attempts"?: number,"refund_last_error"?: string | null,"refund_ref"?: string | null,"refund_retry_at"?: string | null,"refunded_at"?: string | null,"revenue_cents": number,"status"?: string
                   }
                   Update: {
-                    "amount_cents"?: number,"brand_id"?: string,"budget_cents"?: number,"budget_refunded_cents"?: number,"created_at"?: string,"id"?: string,"payer_email"?: string | null,"payer_id"?: string,"payment_fingerprint"?: string | null,"processor"?: string,"processor_payment_id"?: string,"refund_ref"?: string | null,"refunded_at"?: string | null,"revenue_cents"?: number,"status"?: string
+                    "amount_cents"?: number,"brand_id"?: string,"budget_cents"?: number,"budget_refunded_cents"?: number,"created_at"?: string,"id"?: string,"payer_email"?: string | null,"payer_id"?: string,"payment_fingerprint"?: string | null,"processor"?: string,"processor_payment_id"?: string,"refund_attempts"?: number,"refund_last_error"?: string | null,"refund_ref"?: string | null,"refund_retry_at"?: string | null,"refunded_at"?: string | null,"revenue_cents"?: number,"status"?: string
                   }
                   Relationships: [
                     {
@@ -623,7 +623,18 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "brand_ranks":
+            "admin_pending_listings":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "bid_count": number,"brand_id": string,"category_id": number,"category_name": string,"category_requires_review": boolean,"checked_at": string,"created_at": string,"description": string,"logo_path": string,"name": string,"owner_email": string,"owner_id": string,"review_reason": string,"slug": string,"total_paid_cents": number,"url": string
+            }[]
+                           },
+"admin_set_category":
+{ Args: { "p_admin_id": string,"p_brand_id": string,"p_category_id": number }; Returns: Json
+                           },
+"approve_listing":
+{ Args: { "p_admin_id": string,"p_brand_id": string }; Returns: Json
+                           },
+"brand_ranks":
 { Args: { "p_brand_id": string }; Returns: {
               "all_time_rank": number,"today_cents": number,"today_rank": number
             }[]
@@ -671,6 +682,9 @@ isOneToOne: false
                            },
 "record_bid":
 { Args: { "p_amount_cents": number,"p_brand_id": string,"p_payer_email"?: string,"p_payer_id": string,"p_payment_fingerprint"?: string,"p_processor": string,"p_processor_payment_id": string }; Returns: Json
+                           },
+"reject_listing":
+{ Args: { "p_admin_id": string,"p_brand_id": string,"p_reason": string }; Returns: Json
                            },
 "utc_day_start":
 { Args: Record<PropertyKey, never>; Returns: string

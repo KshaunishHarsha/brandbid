@@ -1,1 +1,1 @@
-{ "extends": "../../tsconfig.base.json", "compilerOptions": { "noEmit": true }, "include": ["src"] }
+{ "extends": "../../tsconfig.base.json", "compilerOptions": { "noEmit": true, "lib": ["ES2023", "DOM"] }, "include": ["src"] }

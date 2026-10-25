@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createRazorpayProcessor } from './razorpay';
+import { createRazorpayProcessor } from '@brandbid/payments';
 import { handlePaymentWebhook, type RecordBidResult, type WebhookDeps } from './webhook';
 
 const SECRET = 'whsec';

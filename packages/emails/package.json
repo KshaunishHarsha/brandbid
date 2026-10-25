@@ -4,5 +4,12 @@
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
-  "scripts": { "lint": "echo 'no lint yet'", "typecheck": "tsc --noEmit" }
+  "types": "./src/index.ts",
+  "scripts": {
+    "lint": "echo 'no lint yet'",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@brandbid/shared": "workspace:*"
+  }
 }

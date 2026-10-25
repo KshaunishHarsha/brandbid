@@ -1,6 +1,6 @@
 import { sendSignInLink } from '@/lib/auth-email';
 import { createAdminClient } from '@/lib/supabase/admin';
-import type { PaymentProcessor } from './types';
+import type { PaymentProcessor } from '@brandbid/payments';
 import type { WebhookDeps } from './webhook';
 
 /** Real side effects for the payment webhook handler: database, audit log, and the post-payment email. */

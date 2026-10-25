@@ -264,8 +264,11 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 
 **Tests (SQL):** reject reverses the ledger to 0 and `total_paid_cents` to 0; reject is idempotent.
 **Done when:**
-- [ ] Reject on staging triggers a test-mode refund.
-- [ ] The brand disappears from the boards.
+- [x] The brand disappears from the boards (verified: board, brand page 404, today's board).
+- [x] Reject triggers a refund: verified locally with the mock processor (immediate refund; the worker retries failures). **Still to do on staging with real Razorpay test keys:** one real test-mode refund, and confirm Razorpay's "already refunded" error wording matches `classifyRefundError` (it is matched loosely: "already ... refunded" / "fully refunded").
+
+**Built (2026-10-25), D49:** migration `000900` (`admin_pending_listings`, `approve_listing`, `reject_listing`, `admin_set_category`, refund retry columns on `bids`), `/admin` (overview + recent activity), `/admin/listings` (queue with site link, owner, amount, why it was held in plain words, category change, approve, reject-with-reason), `POST /api/admin/listings/[id]/{approve,reject,category}` guarded by same-origin + admin + 12 h sign-in, refund logic shared between the admin action and the worker (`packages/payments`: `classifyRefundError`, backoff), `packages/emails` (templates, Resend/Mailpit sender), worker jobs `notify` (listing approved/rejected) and `process-refunds`, the payments adapter moved to `packages/payments` so the worker can refund, `pnpm admin:grant <email>`. Tests: 7 SQL files (06 mutation-checked with 9 sabotage runs), worker integration (6 sabotage runs, including double-send and double-refund without row locks), 53 new unit tests. Verified by hand against the running app with a real admin session: cross-site, no-Origin, non-admin and signed-out attacks all refused with nothing changed.
+**Notes:** the rejection email and refund wording promise "5 to 10 business days"; check against Razorpay's real timing. Making the first admin: `pnpm admin:grant you@example.com` locally; on hosted Supabase run the same UPDATE in the SQL editor (see DEPLOYMENT.md). Not visually checked in a browser.
 
 ### P1.10 — Brand dashboard v1
 

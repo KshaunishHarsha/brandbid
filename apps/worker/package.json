@@ -12,6 +12,8 @@
     "run-once": "tsx src/run-once.ts"
   },
   "dependencies": {
+    "@brandbid/emails": "workspace:*",
+    "@brandbid/payments": "workspace:*",
     "@brandbid/shared": "workspace:*",
     "@sentry/node": "^11.9.0",
     "pg": "^8.23.1",

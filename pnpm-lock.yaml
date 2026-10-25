@@ -187,6 +187,9 @@ importers:
       '@brandbid/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@brandbid/payments':
+        specifier: workspace:*
+        version: link:../../packages/payments
       '@brandbid/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -251,6 +254,12 @@ importers:
 
   apps/worker:
     dependencies:
+      '@brandbid/emails':
+        specifier: workspace:*
+        version: link:../../packages/emails
+      '@brandbid/payments':
+        specifier: workspace:*
+        version: link:../../packages/payments
       '@brandbid/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -295,7 +304,17 @@ importers:
         specifier: ^4.23.15
         version: 4.23.15
 
-  packages/emails: {}
+  packages/emails:
+    dependencies:
+      '@brandbid/shared':
+        specifier: workspace:*
+        version: link:../shared
+
+  packages/payments:
+    dependencies:
+      '@brandbid/shared':
+        specifier: workspace:*
+        version: link:../shared
 
   packages/shared:
     dependencies:

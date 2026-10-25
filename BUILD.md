@@ -130,6 +130,7 @@ Every product decision, with the date it was made. To change one, add a new row 
 | D46 | 2026-10-25 | Sign-in methods from launch: Google and email magic link. Magic links use the token-hash flow so they work in a different browser than the one that requested them. |
 | D47 | 2026-10-25 | The automatic listing check (`check-listing`) polls for freshly paid listings every minute instead of being enqueued by `record_bid`, so a missed trigger can never strand a paid listing. Held listings keep `status = pending_review` and record why in `brands.review_reason`. |
 | D48 | 2026-10-25 | Today's board is a live query over the indexed `bids` table, not a materialized view: it is always exact, with no refresh job or one-minute staleness, so a brand that just paid shows up immediately. If it ever gets slow, a materialized view can sit behind the same SQL function. Also: the "+ $1" in the claim price is the `rank_step_cents` setting (100). Supersedes the materialized-view row in section 9. |
+| D49 | 2026-10-25 | Rejecting a held listing refunds the payer in full: the database reverses every bid in one transaction, the admin action then issues the processor refund immediately, and the worker's `process-refunds` job retries failures with backoff (1 minute doubling to 6 hours, 10 attempts, then an audit-log entry says it needs a manual refund). Listing approved/rejected emails are sent by the worker's `notify` job through Resend (the local Mailpit inbox in development). Admin endpoints require the same origin, an admin account, and a sign-in within 12 hours. |
 
 ---
 
@@ -185,6 +186,7 @@ brandbid/
         refresh-leaderboards.ts
         check-listing.ts
         cleanup.ts
+        process-refunds.ts
         reconcile-ledgers.ts
         notify.ts
   packages/

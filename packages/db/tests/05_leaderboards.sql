@@ -1,6 +1,12 @@
 -- Leaderboards, brand ranks and the claim price (BUILD s8, s9; D1, G1; P1.7).
 begin;
 
+-- Hermetic: start from an empty database for this test only. TRUNCATE and DELETE are transactional, so the rollback at
+-- the end puts every real row back untouched. Seed data (settings, categories) is left alone.
+truncate table public.profiles, public.brands, public.audit_log, public.notification_outbox, public.member_signals cascade;
+delete from auth.users;
+
+
 create function public.zz_expect_error(q text, msg text) returns void language plpgsql as $$
 begin
   begin

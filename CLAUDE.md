@@ -46,7 +46,8 @@ Needs Node ≥ 24 (`.nvmrc`), pnpm 12, Docker running, Supabase CLI.
 | `pnpm lint` · `pnpm typecheck` · `pnpm test` | Lint, TypeScript (web runs `next typegen` first), Vitest |
 | `pnpm test:sql` | Runs `packages/db/tests/*.sql` against the local DB (uses `docker exec` if `psql` is missing) |
 | `pnpm test:concurrency` | Fires parallel `record_bid` calls at the local DB |
-| `pnpm test:worker` | Runs the check-listing/cleanup jobs against the local DB with a fake site probe |
+| `pnpm test:worker` | Runs the worker job integration tests against the local DB (check-listing, cleanup, notify, process-refunds) with fake sites, mail and payments |
+| `pnpm admin:grant <email>` | Makes an existing account an admin (local DB; on hosted Supabase run the UPDATE in the SQL editor) |
 | `pnpm db:reset` | Re-applies all migrations and seeds |
 | `pnpm db:types` | Regenerates `packages/db/types.ts` |
 | `apps/web/scripts/deploy-cloudflare.sh staging\|production [--dry-run]` | Build + deploy the web app to Cloudflare for one environment. Full guide: [DEPLOYMENT.md](DEPLOYMENT.md) |
@@ -103,7 +104,7 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 | P1.6 | Brand listing flow | wip | 2026-10-25 | Done and tested end to end with mock payments: prefill (SSRF-safe), email-only checkout, webhook, worker auto-check + cleanup. Rank prices now done (P1.7 ladder). Left: real Razorpay widget (needs keys), browser click-through test, hosted `logos` bucket |
 | P1.7 | Leaderboards, claim price | done | 2026-10-25 | SQL (live boards, claim_price, ladder) mutation-tested; home page with tabs/categories/take-prices; checkout ladder. Boards are uncached until P1.12. Not visually checked in a browser |
 | P1.8 | Brand page (listing mode) | done | 2026-10-25 | `/b/[slug]` (live brands only, else 404), `/out/b/[slug]` UTM redirect, shared `addUtm` for P2.9. Not visually checked in a browser |
-| P1.9 | Admin v1: listing review | todo | | |
+| P1.9 | Admin v1: listing review | done | 2026-10-25 | `/admin`, `/admin/listings`, approve/reject(full refund)/category with audit log; refunds issued immediately + worker retries; approve/reject emails via worker `notify`. Left: one real Razorpay test refund on staging (needs keys). First admin: `pnpm admin:grant <email>` |
 | P1.10 | Brand dashboard v1 | todo | | |
 | P1.11 | Observability, analytics | todo | | |
 | P1.12 | Environments, deploy | wip | 2026-10-25 | Cloudflare part handed to a separate person: see DEPLOYMENT.md (envs in wrangler.jsonc, deploy script, tested up to a dry run). Left: their first real deploy; Supabase projects (owner); AWS worker undecided; CI deploys; R2 page cache |
@@ -153,6 +154,7 @@ _Append one line per hard-won lesson (date, what, why)._
 - 2026-10-25: pnpm 12 fails `pnpm install --frozen-lockfile` (so CI) if a dependency has a build script that is not approved. After adding any dependency, run `pnpm install --frozen-lockfile` locally; if it reports `ERR_PNPM_IGNORED_BUILDS`, add the package to `allowBuilds` in `pnpm-workspace.yaml`. A plain `pnpm add` only warns, which hides the problem until CI.
 - 2026-10-25: Built for Workers, `NODE_ENV` is `production`, so the rate limiter refuses to run without Upstash (fails closed, by design). For a local Workers test, expect `/api/auth/magic-link` to return 500 unless the Upstash vars are set.
 - 2026-10-25: Auth: `middleware.ts` stays (not Next 16 `proxy.ts`) until the Cloudflare adapter's proxy support is verified. Magic links use the token-hash flow + a Continue button (`/auth/confirm` -> `POST /api/auth/verify`) so they work across browsers and email scanners can't burn them. Local email is in Mailpit at http://127.0.0.1:54324. `supabase/config.toml` raises `email_sent` for local only. Zod 4: put `.max()` before `.pipe(z.email())`.
+- 2026-10-25: Money-moving worker jobs must use `FOR UPDATE SKIP LOCKED`: tested by removing it, two workers made 8 refund calls for 4 payments. psql does not expand `:'var'` in `-c` strings, send SQL on stdin. `\u2028` in a regex written through some tools becomes a literal line separator and breaks the regex: use `\p{Zl}\p{Zp}` with the `u` flag.
 - 2026-10-25: Postgres gives every new function `EXECUTE` to PUBLIC. `ALTER DEFAULT PRIVILEGES IN SCHEMA public ... FROM public` does NOT remove that; migration `000550` uses the form without `IN SCHEMA`. The test in `02_constraints.sql` fails if a new function is callable by a client role. Money functions are `SECURITY INVOKER`, service role only.
 - 2026-10-25: If `tsc` reports a stale error (e.g. a BigInt target error) after you changed `tsconfig.json`, delete `apps/web/tsconfig.tsbuildinfo`. Web targets ES2022 because shared code uses BigInt.
 - 2026-10-25: pg-boss 12 exports `{ PgBoss }` (no default export) and needs `createQueue()` before `work()`/`schedule()`.
