@@ -634,6 +634,11 @@ isOneToOne: false
 "approve_listing":
 { Args: { "p_admin_id": string,"p_brand_id": string }; Returns: Json
                            },
+"brand_budget_summary":
+{ Args: { "p_brand_id": string }; Returns: {
+              "added_cents": number,"rate_cents": number,"refunded_cents": number,"remaining_cents": number,"spent_cents": number,"visitors_left": number,"waitlisted_cents": number,"waitlisted_count": number
+            }[]
+                           },
 "brand_ranks":
 { Args: { "p_brand_id": string }; Returns: {
               "all_time_rank": number,"today_cents": number,"today_rank": number

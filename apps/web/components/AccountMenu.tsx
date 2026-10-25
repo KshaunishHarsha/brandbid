@@ -11,7 +11,8 @@ export async function AccountMenu() {
   }
   return (
     <form action="/auth/signout" method="post" className="flex items-center gap-3 text-sm">
-      <span className="opacity-70">{user.email}</span>
+      <a href="/dash" className="underline">Dashboard</a>
+      <span className="hidden opacity-70 sm:inline">{user.email}</span>
       <button className="underline" type="submit">
         Sign out
       </button>

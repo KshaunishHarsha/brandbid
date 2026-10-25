@@ -31,17 +31,19 @@ export const JOBS: JobDef[] = [
 ];
 
 export async function registerJobs(boss: PgBoss, ctx: JobContext): Promise<void> {
+  const placeholders: string[] = [];
   for (const job of JOBS) {
     await boss.createQueue(job.name);
+    const run = job.run;
+    if (!run) placeholders.push(`${job.name} (${job.wp})`);
+    // Placeholders still register and run on schedule so the plumbing is exercised, but stay silent each minute.
     await boss.work(job.name, async () => {
-      if (!job.run) {
-        console.log(`[worker] ${job.name}: not implemented yet (${job.wp})`);
-        return;
-      }
-      const result = await job.run(ctx);
+      if (!run) return;
+      const result = await run(ctx);
       const noisy = typeof result === 'object' && result !== null && Object.values(result).some((v) => v !== 0);
       if (noisy) console.log(`[worker] ${job.name}:`, result);
     });
     if (job.cron) await boss.schedule(job.name, job.cron);
   }
+  console.log(`[worker] not built yet, registered as no-ops: ${placeholders.join(', ')}`);
 }

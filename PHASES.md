@@ -284,8 +284,12 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 - Status banner for `pending_review` and `rejected`.
 
 **Done when:**
-- [ ] An owner can rerank from the dashboard and see the new rank after the webhook.
-- [ ] Non-members get a 404.
+- [x] An owner can rerank from the dashboard and see the new rank after the webhook (verified: Gamma paid its quote and moved #3 to #2; budget, payment table, public board all updated).
+- [x] Non-members get a 404 (verified for every other owner, signed-out, unknown and malformed slugs).
+
+**Built (2026-10-25):** migration `001000` (`brand_budget_summary`: remaining / added / spent / refunded / owed to waitlisted visitors / visitors left, straight from the ledger; SQL test 07 mutation-checked with 5 sabotage runs), `lib/dashboard.ts` (`getMemberBrand` checks membership with the user's OWN session so row-level security decides; the service role is used only afterwards for numbers members can't query), `/dash` (your brands) and `/dash/brands/[slug]` (status banners for under review / not listed / removed, rank and today, price to take the next rank, price ladder, pay to move up with the mock or Razorpay checkout, budget, waitlist notice, payment history with the split, edit description and logo), `POST /api/checkout/rerank`, `POST /api/brands/[slug]/edit`, `PaidWatcher` (refreshes until the webhook has landed), `lib/same-origin.ts`. 41 new unit tests; verified by hand with four signed-in owners and a raw-API attack by a non-member.
+**Differences from the spec:** the payment table shows the processor payment reference, not a receipt link (Razorpay emails the receipt; a link needs an extra API call, later). Rate is shown read-only (editing is P2.10). The dashboard shows a "Dashboard" link in the header menu.
+**Not verified:** the client-side payment widgets (`RerankPanel`'s real Razorpay window, `PaidWatcher`'s auto-refresh) can't be driven without a browser; their server calls are all tested. Not visually checked.
 
 ### P1.11 — Observability and analytics
 
