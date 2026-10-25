@@ -3,7 +3,7 @@
 import { formatUSD } from '@brandbid/shared';
 
 export type RenderedEmail = { subject: string; html: string; text: string };
-export type RenderContext = { siteUrl: string };
+export type RenderContext = { siteUrl: string; unsubscribeUrl?: string };
 
 /** Kinds this package can render. The notify job only sends these; other outbox rows wait for their phase. */
 export const SUPPORTED_KINDS = [
@@ -40,8 +40,12 @@ const str = (v: unknown, fallback = '') => (typeof v === 'string' ? v : fallback
 const amount = (v: unknown) => (typeof v === 'number' && Number.isSafeInteger(v) ? formatUSD(v) : null);
 
 function layout(body: string, ctx: RenderContext): string {
+  const unsubscribe = ctx.unsubscribeUrl
+    ? `<p style="font-size:12px;color:#777;margin-top:12px"><a href="${escapeHtml(ctx.unsubscribeUrl)}" style="color:#777">Unsubscribe from optional product alerts</a></p>`
+    : '';
   return `<!doctype html><html><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#111;max-width:520px;margin:0 auto;padding:24px;line-height:1.5">
 ${body}
+${unsubscribe}
 <p style="font-size:12px;color:#777;margin-top:32px">brandbid · <a href="${escapeHtml(ctx.siteUrl)}" style="color:#777">${escapeHtml(ctx.siteUrl.replace(/^https?:\/\//, ''))}</a></p>
 </body></html>`;
 }
@@ -78,7 +82,7 @@ export function renderEmail(kind: string, payload: Record<string, unknown>, ctx:
   if (message) {
     const subject = oneLine(message.subject);
     const html = layout(`<h2 style="margin:0 0 12px">${escapeHtml(message.heading)}</h2><p>${escapeHtml(message.body)}</p>${message.href ? button(message.href, message.action ?? 'Open brandbid') : ''}`, ctx);
-    return { subject, html, text: `${message.heading}\n\n${message.body}${message.href ? `\n\n${message.action ?? 'Open brandbid'}: ${message.href}` : ''}\n` };
+    return { subject, html, text: `${message.heading}\n\n${message.body}${message.href ? `\n\n${message.action ?? 'Open brandbid'}: ${message.href}` : ''}${ctx.unsubscribeUrl ? `\n\nUnsubscribe from optional product alerts: ${ctx.unsubscribeUrl}` : ''}\n` };
   }
 
   if (kind === 'listing_approved') {

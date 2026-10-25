@@ -472,14 +472,14 @@ isOneToOne: true
                   ]
                 },"profiles": {
                   Row: {
-                    "country": string | null,"created_at": string,"first_withdrawal_reviewed": boolean,"handle": string | null,"id": string,"is_admin": boolean,"kyc_status": string,"leaderboard_public": boolean,"phone_hash": string | null,"phone_verified_at": string | null,"promoter_terms_accepted_at": string | null,"status": string,"trust_score": number
+                    "country": string | null,"created_at": string,"first_withdrawal_reviewed": boolean,"handle": string | null,"id": string,"is_admin": boolean,"kyc_status": string,"leaderboard_public": boolean,"phone_hash": string | null,"phone_verified_at": string | null,"product_emails_enabled": boolean,"promoter_terms_accepted_at": string | null,"status": string,"trust_score": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "country"?: string | null,"created_at"?: string,"first_withdrawal_reviewed"?: boolean,"handle"?: string | null,"id": string,"is_admin"?: boolean,"kyc_status"?: string,"leaderboard_public"?: boolean,"phone_hash"?: string | null,"phone_verified_at"?: string | null,"promoter_terms_accepted_at"?: string | null,"status"?: string,"trust_score"?: number
+                    "country"?: string | null,"created_at"?: string,"first_withdrawal_reviewed"?: boolean,"handle"?: string | null,"id": string,"is_admin"?: boolean,"kyc_status"?: string,"leaderboard_public"?: boolean,"phone_hash"?: string | null,"phone_verified_at"?: string | null,"product_emails_enabled"?: boolean,"promoter_terms_accepted_at"?: string | null,"status"?: string,"trust_score"?: number
                   }
                   Update: {
-                    "country"?: string | null,"created_at"?: string,"first_withdrawal_reviewed"?: boolean,"handle"?: string | null,"id"?: string,"is_admin"?: boolean,"kyc_status"?: string,"leaderboard_public"?: boolean,"phone_hash"?: string | null,"phone_verified_at"?: string | null,"promoter_terms_accepted_at"?: string | null,"status"?: string,"trust_score"?: number
+                    "country"?: string | null,"created_at"?: string,"first_withdrawal_reviewed"?: boolean,"handle"?: string | null,"id"?: string,"is_admin"?: boolean,"kyc_status"?: string,"leaderboard_public"?: boolean,"phone_hash"?: string | null,"phone_verified_at"?: string | null,"product_emails_enabled"?: boolean,"promoter_terms_accepted_at"?: string | null,"status"?: string,"trust_score"?: number
                   }
                   Relationships: [
 
@@ -692,6 +692,12 @@ isOneToOne: false
                            },
             "request_withdrawal":
 { Args: { "p_promoter_id": string }; Returns: Json
+                           },
+            "email_unsubscribe_status":
+{ Args: { "p_token_hash": string }; Returns: boolean
+                           },
+            "confirm_email_unsubscribe":
+{ Args: { "p_token_hash": string }; Returns: boolean
                            },
             "admin_update_setting":
 { Args: { "p_admin_id": string,"p_key": string,"p_reason": string,"p_value": Json }; Returns: Json

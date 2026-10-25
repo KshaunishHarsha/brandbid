@@ -35,7 +35,7 @@ export default async function PromoterDashboard({ searchParams }: { searchParams
           <h1 className="text-2xl font-bold">Promoter dashboard</h1>
           <p className="mt-1 text-sm text-muted">See how your links are performing and when pending earnings settle.</p>
         </div>
-        <Link href="/dash" className="text-sm underline">Brand dashboard</Link>
+        <div className="flex gap-4 text-sm"><Link href="/dash/notifications" className="underline">Email preferences</Link><Link href="/dash" className="underline">Brand dashboard</Link></div>
       </div>
 
       <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Earnings summary">

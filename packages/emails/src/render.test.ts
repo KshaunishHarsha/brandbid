@@ -58,6 +58,22 @@ describe('brand_invite', () => {
   });
 });
 
+describe('optional product-alert unsubscribe', () => {
+  it('renders a text and escaped HTML unsubscribe link only when supplied', () => {
+    const url = 'https://brandbid.wtf/unsubscribe/' + 'a'.repeat(64);
+    const mail = renderEmail('outbid', { name: 'Acme' }, { ...ctx, unsubscribeUrl: url })!;
+    expect(mail.html).toContain(`href="${url}"`);
+    expect(mail.html).toContain('Unsubscribe from optional product alerts');
+    expect(mail.text).toContain(url);
+  });
+
+  it('does not add an unsubscribe link to transactional notices unless explicitly supplied', () => {
+    const mail = renderEmail('withdrawal_paid', {}, ctx)!;
+    expect(mail.html).not.toContain('Unsubscribe from optional product alerts');
+    expect(mail.text).not.toContain('/unsubscribe/');
+  });
+});
+
 describe('untrusted text', () => {
   const evil = `<img src=x onerror=alert(1)>"&'`;
   it('is escaped in every html field', () => {

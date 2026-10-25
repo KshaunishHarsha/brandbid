@@ -76,6 +76,8 @@ async function main() {
   check(approved && approved.html.includes(`https://brandbid.wtf/b/adm-${tag}-ok`), 'approval email links to the live page');
   check(rej && rej.html.includes('$25.01') && rej.html.includes('Not a fit'), 'rejection email states the refund and the reason');
   check(outbidMail && outbidMail.html.includes('was outbid'), 'outbid notification is rendered for the recipient');
+  check(outbidMail?.html.includes('/unsubscribe/') && outbidMail.text.includes('/unsubscribe/'), 'optional product alert includes unsubscribe links in both formats');
+  check((await q(`select count(*)::int n from public.email_unsubscribe_tokens where user_id=$1 and category='product_alerts'`, [owner])).rows[0].n === 1, 'outbox stores only one scoped unsubscribe token hash');
   const inviteMail = sent.find((m) => m.to === `invite-${tag}@test.dev`);
   check(inviteMail && inviteMail.html.includes(`/brands/invite/${inviteToken}`), 'brand invite email carries its one-time acceptance URL');
   const queuedInvite = (await q(`select sent_at, payload ? 'token' as has_token from public.notification_outbox where kind = 'brand_invite' and payload->>'invite_id' = $1`, [inviteId])).rows[0];
@@ -86,6 +88,13 @@ async function main() {
   const before = sent.length;
   await runNotify(ctx, 100);
   check(sent.length === before, 'a second run sends nothing new');
+
+  await q(`update public.profiles set product_emails_enabled=false where id=$1`, [owner]);
+  await q(`insert into public.notification_outbox (kind, recipient_user_id, payload, dedupe_key) values ('outbid', $1, '{}', $2)`, [owner, `optout-${tag}`]);
+  await runNotify(ctx, 100);
+  const suppressed = (await q(`select sent_at, suppressed_at from public.notification_outbox where dedupe_key=$1`, [`optout-${tag}`])).rows[0];
+  check(suppressed.sent_at === null && suppressed.suppressed_at !== null && sent.length === before, 'opted-out user receives no optional product alert');
+  await q(`update public.profiles set product_emails_enabled=true where id=$1`, [owner]);
 
   // failure -> backoff -> retry
   await q(`insert into public.notification_outbox (kind, recipient_email, payload, dedupe_key) values ('listing_approved', $1, '{"name":"Retry Co","slug":"retry-co"}', $2)`, [`retry-${tag}@test.dev`, `retry-${tag}`]);
@@ -179,6 +188,7 @@ main()
   .finally(async () => {
     const ids = brands;
     for (const [sql, params] of [
+      [`delete from public.email_unsubscribe_tokens where user_id = any($1::uuid[])`, [ids]],
       [`delete from public.notification_outbox where dedupe_key like $1 or recipient_user_id = $2 or payload->>'invite_id' in (select id::text from public.brand_invites where brand_id = any($3::uuid[]))`, [`%${tag}%`, owner, ids]],
       [`delete from public.audit_log where details::text like $1 or subject_id = any($2::uuid[])`, [`%${tag}%`, ids]],
       [`delete from public.brand_invites where brand_id = any($1::uuid[])`, [ids]],

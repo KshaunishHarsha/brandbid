@@ -614,7 +614,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Done when:**
 - [ ] Every BUILD §19 email can be triggered on staging and renders in Gmail and Outlook.
 
-**Built locally (2026-10-25):** The existing outbox worker, retry/backoff, Resend and Mailpit transports, and listing decision emails remain in place. `packages/emails` now has renderable HTML/text templates for all §19 notification categories; template escaping and coverage tests pass, and the worker integration confirms the outbid email is sent once. Email trigger wiring belongs to its producing phases. Still open: unsubscribe preferences, real Resend delivery, and Gmail/Outlook rendering after sender/provider setup.
+**Built locally (2026-10-25):** The outbox worker, retry/backoff, Resend and Mailpit transports, HTML/text templates and trigger wiring remain in place. Optional product alerts are classified as outbid and brand low-budget messages; account/payment/earning/security/review notices remain transactional. Users can change the preference in their dashboard or confirm a one-time 90-day unsubscribe token; raw tokens are never stored, GET requests do not unsubscribe, opted-out alerts are suppressed, and missing account preferences fail closed. SQL fixture `35_email_preferences.sql`, route/template tests, worker delivery and opt-out integration, full unit suite (560 tests), and workspace typecheck pass locally. Email trigger wiring belongs to its producing phases. Still open: configure a verified Resend sender/API key and inspect real delivery/rendering in Gmail and Outlook.
 
 ### P3.2 — Settlement
 **Depends on:** P2.8, P3.3. **Refs:** BUILD §15 (cycles, settlement).
