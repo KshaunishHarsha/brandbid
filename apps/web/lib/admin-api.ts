@@ -48,6 +48,9 @@ export const ADMIN_ERRORS: Record<string, string> = {
   earning_ledger_missing: 'Refusing to reverse: the promoter ledger credit is missing.',
   subject_not_reviewable: 'This flag type cannot be confirmed through the earning review flow.',
   invalid_fraud_decision: 'Choose clear or confirm.',
+  promoter_not_found: 'That promoter account no longer exists.',
+  admin_target_protected: 'Admin accounts cannot be suspended or banned from this screen.',
+  promoter_banned: 'That promoter is already banned.',
 };
 export function adminErrorNotice(message: string): string {
   return ADMIN_ERRORS[message] ?? 'Something went wrong. Nothing was changed.';
