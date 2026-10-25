@@ -12,13 +12,21 @@ vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: () => ({
     from: (table: string) => {
       const filters: Array<[string, unknown, unknown?]> = [];
-      const query: Record<string, (...args: unknown[]) => unknown> = {
+      type MockQuery = {
+        select: (columns: string) => MockQuery;
+        update: (values: unknown) => MockQuery;
+        eq: (column: string, value: unknown) => MockQuery;
+        is: (column: string, value: unknown) => MockQuery;
+        maybeSingle: () => Promise<{ data: unknown; error: unknown }>;
+        then: (resolve: (value: unknown) => unknown, reject?: (reason: unknown) => unknown) => Promise<unknown>;
+      };
+      const query: MockQuery = {
         select: () => query,
         update: (values: unknown) => { mocks.updates.push({ table, values, filters }); return query; },
         eq: (column: string, value: unknown) => { filters.push(['eq', column, value]); return query; },
         is: (column: string, value: unknown) => { filters.push(['is', column, value]); return query; },
         maybeSingle: async () => ({ data: mocks.rows[table] ?? null, error: mocks.lookupErrors[table] ?? null }),
-        then: (resolve: (value: unknown) => unknown, reject: (reason: unknown) => unknown) => Promise.resolve({ error: null }).then(resolve, reject),
+        then: (resolve: (value: unknown) => unknown, reject?: (reason: unknown) => unknown) => Promise.resolve({ error: null }).then(resolve, reject),
       };
       return query;
     },
