@@ -35,3 +35,10 @@ jobs:
       - run: supabase db reset
       - run: sudo apt-get update && sudo apt-get install -y postgresql-client
       - run: bash packages/db/run-sql-tests.sh
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:concurrency

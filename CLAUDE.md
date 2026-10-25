@@ -44,7 +44,8 @@ Needs Node ≥ 24 (`.nvmrc`), pnpm 12, Docker running, Supabase CLI.
 | `supabase start` | Local Postgres + Auth + Storage (Docker). Prints the anon and service-role keys for `.env` |
 | `pnpm dev` | Web (localhost:3000) and worker together. Web alone: `pnpm --filter web dev` |
 | `pnpm lint` · `pnpm typecheck` · `pnpm test` | Lint, TypeScript (web runs `next typegen` first), Vitest |
-| `pnpm test:sql` | Runs `packages/db/tests/*.sql` against the local DB (needs `psql`) |
+| `pnpm test:sql` | Runs `packages/db/tests/*.sql` against the local DB (uses `docker exec` if `psql` is missing) |
+| `pnpm test:concurrency` | Fires parallel `record_bid` calls at the local DB |
 | `pnpm db:reset` | Re-applies all migrations and seeds |
 | `pnpm db:types` | Regenerates `packages/db/types.ts` |
 
@@ -95,7 +96,7 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 | P1.2 | Schema, RLS, seeds | done | 2026-10-25 | 5 migrations; 3 SQL test files (smoke, RLS, constraints) mutation-checked. New tables/functions start with no client access: GRANT explicitly |
 | P1.3 | Shared: money, codes, schemas | done | 2026-10-25 | 79 tests, 100% branch coverage on money.ts + codes.ts. Also hash.ts, constants (bots, consent countries, reserved handles), `linkUrl()` |
 | P1.4 | Auth and profiles | todo | | |
-| P1.5 | Payments in, `record_bid` | todo | | Razorpay test mode |
+| P1.5 | Payments in, `record_bid` | wip | 2026-10-25 | SQL + webhook + adapter done and tested (SQL tests, 100-call concurrency test, 29 unit tests, real route vs local DB). Left: a real Razorpay test-mode payment (needs keys); `/api/checkout` moved to P1.6 |
 | P1.6 | Brand listing flow | todo | | |
 | P1.7 | Leaderboards, claim price | todo | | |
 | P1.8 | Brand page (listing mode) | todo | | |
@@ -141,4 +142,6 @@ _Append one line per hard-won lesson (date, what, why)._
 - 2026-10-25: Cloudflare headers: country is `cf-ipcountry`, client IP is `cf-connecting-ip`. Background work after responding is `getCloudflareContext().ctx.waitUntil(...)`.
 - 2026-10-25: In Next route handlers use `NextResponse.redirect`, not `Response.redirect`. The latter has immutable headers and returns 500.
 - 2026-10-25: Docker Desktop on an 8 GB Mac needs its memory limit lowered (~3 GB) to run the Supabase stack comfortably. `psql` isn't installed locally; `pnpm test:sql` falls back to `docker exec` into `supabase_db_brandbid`.
+- 2026-10-25: Postgres gives every new function `EXECUTE` to PUBLIC. `ALTER DEFAULT PRIVILEGES IN SCHEMA public ... FROM public` does NOT remove that; migration `000550` uses the form without `IN SCHEMA`. The test in `02_constraints.sql` fails if a new function is callable by a client role. Money functions are `SECURITY INVOKER`, service role only.
+- 2026-10-25: If `tsc` reports a stale error (e.g. a BigInt target error) after you changed `tsconfig.json`, delete `apps/web/tsconfig.tsbuildinfo`. Web targets ES2022 because shared code uses BigInt.
 - 2026-10-25: pg-boss 12 exports `{ PgBoss }` (no default export) and needs `createQueue()` before `work()`/`schedule()`.

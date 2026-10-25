@@ -623,11 +623,20 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "is_admin":
+            "cycle_end":
+{ Args: { "p_at": string,"p_link_created": string }; Returns: string
+                           },
+"fund_waitlist":
+{ Args: { "p_brand_id": string }; Returns: number
+                           },
+"is_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "is_brand_member":
 { Args: { "p_brand_id": string }; Returns: boolean
+                           },
+"record_bid":
+{ Args: { "p_amount_cents": number,"p_brand_id": string,"p_payer_email"?: string,"p_payer_id": string,"p_payment_fingerprint"?: string,"p_processor": string,"p_processor_payment_id": string }; Returns: Json
                            }
           }
           Enums: {

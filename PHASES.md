@@ -143,7 +143,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Build**
 - `apps/web/lib/payments/`: a small `PaymentProcessor` interface (`createCheckout`, `verifyWebhook`, `parseEvent`, `refund(paymentId, amountCents)`) with a **Razorpay** implementation (D29). The interface keeps a processor swap cheap.
 - Razorpay specifics: charge in **USD** (D21). Create a Razorpay Order server-side (`amount` in cents, `currency: 'USD'`, `notes: { brand_id, payer_id }`), then open Razorpay Checkout on the client. International cards must be activated on the Razorpay account; test mode works without that. Store `razorpay_payment_id` as `processor_payment_id`. Payer email and card fingerprint (if exposed) go into G11 columns. Confirm Razorpay's refund window and record it in BUILD.md, because §8 refunds depend on it.
-- `POST /api/checkout`: auth required. Input `{ brandId, amountCents }`. Validates `amountCents >= min_bid_cents` (1000, D30). Creates the order. Returns what Checkout needs.
+- `POST /api/checkout` is built in **P1.6** with the listing flow, because it needs a signed-in user (P1.4). P1.5 delivers the processor's `createOrder` it will call. The route validates `amountCents >= min_bid_cents` (1000, D30), creates the order with `notes { brand_id, payer_id }`, and returns what Razorpay Checkout needs.
 - Never trust the client-side Checkout success callback for money. It only shows a "processing" state. The bid is recorded **only** from the webhook.
 - `POST /api/webhooks/razorpay`: verifies `X-Razorpay-Signature` (HMAC-SHA256 of the raw body with the webhook secret, constant-time compare). On `payment.captured` (or `order.paid`, pick one and ignore the other to avoid double handling), calls `record_bid` over a service-role RPC. Returns 200 on duplicates. Unknown events → 200 and ignore. Payment capture must be set to automatic in Razorpay settings.
 - SQL `record_bid(p_brand_id, p_payer_id, p_amount_cents, p_processor, p_processor_payment_id, p_payer_email, p_payment_fingerprint)`, `security definer`, one transaction:
@@ -161,8 +161,11 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Tests (SQL, record_bid):** the split is correct; a duplicate `processor_payment_id` is a no-op; `budget_cents` = ledger sum; `total_reached_at` updates; a draft becomes `pending_review`; an active brand stays active.
 **Tests (unit):** webhook signature verify with a recorded Razorpay fixture (valid, tampered, wrong secret).
 **Done when:**
-- [ ] A test-mode payment end to end writes exactly one bid with the right split.
-- [ ] Replaying the webhook (resend from the Razorpay dashboard, or replay the fixture) changes nothing.
+- [x] A signed webhook end to end writes exactly one bid with the right split (verified against local Supabase with a signed fixture).
+- [x] Replaying the webhook changes nothing.
+- [ ] **Still to do with real Razorpay test keys (needs your account):** one real test-mode payment, and confirm the payment entity carries `notes`, `card_id` and `email` the way `parseEvent` assumes (the handler falls back to the order's notes if not).
+
+**Built (2026-10-25):** migrations `000550` (function default-privilege fix) and `000600` (`cycle_end`, `fund_waitlist`, `record_bid`); `apps/web/lib/payments/{types,razorpay,webhook}.ts`; `/api/webhooks/razorpay`; `lib/supabase/admin.ts`; SQL tests `03_record_bid`; `pnpm test:concurrency` (100 parallel calls). D44: unrecordable payments are auto-refunded and audited. `check-listing` is not enqueued by `record_bid`: P1.6's worker job should poll for `pending_review` brands instead (add a `checked_at` column there).
 
 ### P1.6 — Brand listing flow
 
