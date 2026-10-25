@@ -54,6 +54,9 @@ export const ADMIN_ERRORS: Record<string, string> = {
   admin_target_protected: 'Admin accounts cannot be suspended or banned from this screen.',
   promoter_banned: 'That promoter is already banned.',
   brand_not_active: 'Only active brands can be changed here. Pending listings must be handled in the review queue.',
+  setting_not_editable: 'That setting cannot be changed here.',
+  setting_not_found: 'That setting is missing from the database.',
+  setting_value_invalid: 'That value is invalid or outside the allowed range.',
 };
 export function adminErrorNotice(message: string): string {
   return ADMIN_ERRORS[message] ?? 'Something went wrong. Nothing was changed.';

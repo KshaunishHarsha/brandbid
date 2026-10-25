@@ -666,6 +666,12 @@ isOneToOne: false
             "admin_reconciliation_history":
 { Args: { "p_admin_id": string,"p_limit"?: number }; Returns: Json
                            },
+            "admin_settings":
+{ Args: { "p_admin_id": string }; Returns: Json
+                           },
+            "admin_update_setting":
+{ Args: { "p_admin_id": string,"p_key": string,"p_reason": string,"p_value": Json }; Returns: Json
+                           },
             "admin_disable_brand_ads":
 { Args: { "p_admin_id": string,"p_brand_id": string,"p_reason": string }; Returns: Json
                            },

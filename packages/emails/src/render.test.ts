@@ -39,6 +39,15 @@ describe('listing_rejected', () => {
   });
 });
 
+describe('rate_floor_raised', () => {
+  it('states the new rate and that existing visitor claims keep their rate', () => {
+    const mail = renderEmail('rate_floor_raised', { name: 'Acme', rate_cents: 25 }, ctx)!;
+    expect(mail.subject).toContain('rate was updated');
+    expect(mail.text).toContain('$0.25');
+    expect(mail.text).toContain('Existing visitor claims keep their original rate');
+  });
+});
+
 describe('untrusted text', () => {
   const evil = `<img src=x onerror=alert(1)>"&'`;
   it('is escaped in every html field', () => {
