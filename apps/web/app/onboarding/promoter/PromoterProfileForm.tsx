@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { captureListingEvent } from '@/lib/analytics';
 
 export function PromoterProfileForm({ next, initialHandle, initialCountry, countries }: {
   next: string;
@@ -39,7 +40,10 @@ export function PromoterProfileForm({ next, initialHandle, initialCountry, count
       });
       const data = await res.json();
       if (!res.ok) setError(data.error === 'handle_taken' ? 'That handle is taken or reserved.' : 'Could not save your profile. Check the fields and try again.');
-      else window.location.assign(data.next);
+      else {
+        captureListingEvent('promoter_profile_completed');
+        window.location.assign(data.next);
+      }
     } catch { setError('Network error. Try again.'); }
     finally { setBusy(false); }
   }

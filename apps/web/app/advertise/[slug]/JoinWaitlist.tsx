@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { captureListingEvent } from '@/lib/analytics';
 
 export function JoinWaitlist() {
   const [state, setState] = useState<'idle' | 'busy' | 'done' | 'error'>('idle');
@@ -8,6 +9,7 @@ export function JoinWaitlist() {
     setState('busy');
     try {
       const res = await fetch('/api/beta/waitlist', { method: 'POST' });
+      if (res.ok) captureListingEvent('beta_waitlist_joined');
       setState(res.ok ? 'done' : 'error');
     } catch { setState('error'); }
   }

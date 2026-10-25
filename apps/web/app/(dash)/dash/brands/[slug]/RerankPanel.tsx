@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { captureListingEvent } from '@/lib/analytics';
 
 declare global {
   interface Window {
@@ -57,6 +58,7 @@ export function RerankPanel({ slug, brandName, minBidCents, ladder, suggestedCen
         return setBusy(false);
       }
       const order = data.order as { orderId: string; keyId: string; amountCents: number; mode: string };
+      captureListingEvent('rerank_checkout_started', { amount_cents: order.amountCents });
       if (order.mode === 'mock') {
         setMock({ orderId: order.orderId, brandId: data.brandId, payerId: data.payerId, amountCents: order.amountCents });
         return setBusy(false);

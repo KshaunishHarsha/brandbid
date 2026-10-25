@@ -10,6 +10,11 @@ if (dsn) {
   });
 }
 
-initAnalytics();
+try {
+  initAnalytics();
+} catch (error) {
+  // Optional analytics configuration must not block application hydration in local development.
+  console.warn('[analytics] PostHog initialization failed; optional events are disabled.', error);
+}
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

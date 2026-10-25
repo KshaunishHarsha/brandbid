@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { flushPostHogServerLogs, logPostHogServerInfo } from '@/instrumentation';
 import { getLimiter } from '@/lib/ratelimit';
 import { getClientIp, hashValue } from '@/lib/request';
 import { safeNext } from '@/lib/safe-next';
@@ -42,6 +43,12 @@ export async function POST(req: Request) {
     },
   });
   if (error) console.error('[magic-link] signInWithOtp failed:', error.message);
+
+  logPostHogServerInfo('Magic link request completed', {
+    event: 'magic_link_request_completed',
+    delivery_status: error ? 'failed' : 'requested',
+  });
+  after(flushPostHogServerLogs);
 
   // Same answer whether or not the account exists or the send failed: reveals nothing to a prober.
   return NextResponse.json({ ok: true });

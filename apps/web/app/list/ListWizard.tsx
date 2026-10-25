@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Turnstile } from '@/components/Turnstile';
 import { captureListingEvent } from '@/lib/analytics';
 
@@ -86,7 +86,6 @@ export function ListWizard({
     done: string;
   }>(null);
 
-  useEffect(() => captureListingEvent('list_started'), []);
 
   function pickLogo(file: File | null) {
     if (logoPreview) URL.revokeObjectURL(logoPreview);
@@ -100,6 +99,7 @@ export function ListWizard({
 
   async function prefill(e: React.FormEvent) {
     e.preventDefault();
+    captureListingEvent('list_started');
     setBusy(true);
     setError('');
     setNote('');

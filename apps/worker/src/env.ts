@@ -16,6 +16,8 @@ export const env = {
   // Supabase's transaction-mode pooler.
   databaseUrl: required('DATABASE_URL'),
   sentryDsn: process.env.WORKER_SENTRY_DSN,
+  posthogProjectToken: process.env.POSTHOG_PROJECT_TOKEN,
+  posthogHost: process.env.POSTHOG_HOST,
   environment,
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
 

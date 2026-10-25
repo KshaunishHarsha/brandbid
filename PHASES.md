@@ -300,7 +300,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Done when:**
 - [ ] The listing funnel is visible in PostHog on staging.
 
-**In progress (2026-10-25):** Web pageviews and the four listing funnel events are wired to PostHog after optional analytics consent. Real worker handlers send Sentry cron check-ins and an in-process warning is emitted after 10 minutes without a handler run. Staging PostHog/Sentry credentials do not exist yet, so live events and alerts remain unverified. Source-map upload remains open until the deploy process can guarantee maps are private.
+**Built locally (2026-10-26):** Client pageviews, listing/sign-in/profile/waitlist/rerank events and pseudonymous account identification are gated by persisted analytics consent; email addresses are not sent to PostHog. Autocapture, session recording and persistence stay disabled by default, and denied browser storage or missing local credentials leave core flows working with analytics off. Web and worker can emit curated OpenTelemetry logs to PostHog when configured; worker exceptions still go to Sentry. Unit tests cover missing credentials, explicit consent, blocked storage and ID-only identification. Staging PostHog/Sentry credentials and live funnel/alert delivery remain unverified. Source-map upload remains deferred until deploy can guarantee maps stay private.
 
 ### P1.12 — Environments and deploy pipeline
 

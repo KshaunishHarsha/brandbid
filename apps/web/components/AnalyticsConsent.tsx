@@ -1,9 +1,46 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
-import { ANALYTICS_CONSENT_KEY, setAnalyticsConsent } from '@/lib/analytics';
+import { useEffect, useSyncExternalStore } from 'react';
+import {
+  clearAnalyticsConsent,
+  hasAnalyticsConsent,
+  identifyAnalyticsUser,
+  isAnalyticsConsentPending,
+  resetAnalyticsUser,
+  setAnalyticsConsent,
+} from '@/lib/analytics';
+import { createClient } from '@/lib/supabase/client';
 
 export function AnalyticsConsent() {
+  useEffect(() => {
+    const supabase = createClient();
+    const reconcileIdentity = (user: { id: string; email?: string | null } | null) => {
+      if (user) {
+        identifyAnalyticsUser(user.id);
+      } else {
+        resetAnalyticsUser();
+      }
+    };
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      reconcileIdentity(session?.user ?? null);
+    });
+    const reconcileConsent = () => {
+      if (!hasAnalyticsConsent()) {
+        resetAnalyticsUser();
+        return;
+      }
+      void supabase.auth.getSession().then(({ data: { session } }) => {
+        reconcileIdentity(session?.user ?? null);
+      });
+    };
+    window.addEventListener('bb-analytics-consent', reconcileConsent);
+
+    return () => {
+      listener.subscription.unsubscribe();
+      window.removeEventListener('bb-analytics-consent', reconcileConsent);
+    };
+  }, []);
+
   const show = useSyncExternalStore(
     (notify) => {
       window.addEventListener('storage', notify);
@@ -15,7 +52,7 @@ export function AnalyticsConsent() {
     },
     () =>
       !!process.env.NEXT_PUBLIC_POSTHOG_KEY &&
-      window.localStorage.getItem(ANALYTICS_CONSENT_KEY) === null,
+      isAnalyticsConsentPending(),
     () => false,
   );
 
@@ -26,7 +63,7 @@ export function AnalyticsConsent() {
         type="button"
         className="fixed bottom-2 right-2 z-40 rounded bg-surface px-2 py-1 text-xs text-muted"
         onClick={() => {
-          window.localStorage.removeItem(ANALYTICS_CONSENT_KEY);
+          clearAnalyticsConsent();
           window.dispatchEvent(new Event('bb-analytics-consent'));
         }}
       >

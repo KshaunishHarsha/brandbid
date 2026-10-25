@@ -15,9 +15,14 @@
     "@brandbid/emails": "workspace:*",
     "@brandbid/payments": "workspace:*",
     "@brandbid/shared": "workspace:*",
+    "@opentelemetry/api-logs": "^0.223.0",
+    "@opentelemetry/exporter-logs-otlp-http": "^0.300.0",
+    "@opentelemetry/resources": "^3.0.0",
+    "@opentelemetry/sdk-logs": "^3.0.0",
     "@sentry/node": "^11.9.0",
     "pg": "^8.23.1",
-    "pg-boss": "^12.38.0"
+    "pg-boss": "^12.38.0",
+    "posthog-node": "^5.57.1"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { Turnstile } from '@/components/Turnstile';
+import { captureListingEvent } from '@/lib/analytics';
 import { createClient } from '@/lib/supabase/client';
 
 type State = 'idle' | 'sending' | 'sent' | 'error';
@@ -25,7 +26,10 @@ export function SignInForm({ next }: { next: string }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, turnstileToken: token ?? undefined, next }),
       });
-      if (res.ok) return setState('sent');
+      if (res.ok) {
+        captureListingEvent('magic_link_requested');
+        return setState('sent');
+      }
       setState('error');
       setMessage(
         res.status === 429
@@ -41,6 +45,7 @@ export function SignInForm({ next }: { next: string }) {
   }
 
   async function google() {
+    captureListingEvent('google_sign_in_started');
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: 'google',
