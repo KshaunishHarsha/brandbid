@@ -28,7 +28,7 @@ Domain: `brandbid.wtf` (D39). Links: `https://brandbid.wtf/go/{code}`, no short 
 
 ```
 apps/web/        Next.js: (public) boards + /b/[slug], (dash), admin, go/[code], out/[click], api/{q,og,story,webhooks}
-apps/worker/     pg-boss jobs: check-listing, cleanup, notify, process-refunds (built); settle-cycles, score-fraud, process-withdrawals, refresh-leaderboards, reconcile-ledgers (placeholders)
+apps/worker/     pg-boss jobs: check-listing, cleanup, notify, process-refunds, settle-cycles, reconcile-ledgers (built); score-fraud, process-withdrawals, refresh-leaderboards (placeholders)
 packages/db/     migrations/, tests/ (SQL tests), types.ts (generated)
 packages/shared/ money, codes, hash, ssrf + safeFetch, utm, slug, listing-check, schemas (zod)
 packages/payments/ processor adapter (Razorpay + mock) and refund rules; used by web and worker
@@ -131,9 +131,9 @@ Status values: `todo` · `wip` · `blocked (reason)` · `done`
 | P3.5 | Payout account, KYC, tax | todo | | |
 | P3.6 | Withdrawals | todo | | |
 | P3.7 | Reversal, clawback, ban | done | 2026-10-25 | Admin-checked service functions reverse/reconcile budget, claw back credited earnings, fund the waitlist, and idempotently ban/forfeit; transactional SQL fixture covers pending/available/waitlisted reversals, recovery from negative balance, link disablement and positive-balance forfeiture. |
-| P3.8 | Admin v2 | wip | 2026-10-25 | Fraud queue, user search/moderation, and brand search/moderation with financial ledger context are built locally. Active brand ads can be disabled or brands soft-removed without erasing financial history. SQL fixtures and focused route tests cover these slices. Remaining work includes withdrawal review (P3.6), reconciliation (P3.10), settings, trust adjustments (policy decision needed), and refund request handling. |
+| P3.8 | Admin v2 | wip | 2026-10-25 | Fraud queue, user search/moderation, and brand search/moderation with financial ledger context are built locally. Active brand ads can be disabled or brands soft-removed without erasing financial history. SQL fixtures and focused route tests cover these slices. Remaining work includes withdrawal review (P3.6), settings, trust adjustments (policy decision needed), and refund request handling. |
 | P3.9 | Budget refunds | todo | | |
-| P3.10 | Reconciliation, data hygiene | todo | | |
+| P3.10 | Reconciliation, data hygiene | wip | 2026-10-25 | Nightly worker reconciliation stores invariant findings, alerts through Sentry, and strips click user agents older than 90 days; admin history screen and rollback SQL fixture are built. The local demo dataset currently contains a fundable waitlist head for brand 20000000-0000-4000-8000-000000000001. Sentry alert delivery needs P1.11 credentials. |
 | P3.11 | Brand dashboard v2 | todo | | |
 | P3.12 | Legal pages | todo | | |
 | P3.13 | Live money launch | todo | | |

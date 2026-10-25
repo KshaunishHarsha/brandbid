@@ -663,6 +663,9 @@ isOneToOne: false
             "admin_search_brands":
 { Args: { "p_admin_id": string,"p_query": string }; Returns: Json
                            },
+            "admin_reconciliation_history":
+{ Args: { "p_admin_id": string,"p_limit"?: number }; Returns: Json
+                           },
             "admin_disable_brand_ads":
 { Args: { "p_admin_id": string,"p_brand_id": string,"p_reason": string }; Returns: Json
                            },
