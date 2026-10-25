@@ -66,14 +66,24 @@ async function main() {
     }
 
     const floorRows = (await db.query(`select (value #>> '{}')::int as value from public.settings where key = 'floor_cents'`)).rows;
-    const waitlistRows = (await db.query(`select (value #>> '{}')::int as value from public.settings where key = 'waitlist_days'`)).rows;
     const cycleRows = (await db.query(`select (value #>> '{}')::int as value from public.settings where key = 'cycle_hours'`)).rows;
     const claimRows = (await db.query(`select (value #>> '{}')::int as value from public.settings where key = 'claim_days'`)).rows;
     const rateCents = Math.max(25, Number(floorRows[0]?.value ?? 10));
-    const waitlistDays = Number(waitlistRows[0]?.value ?? 30);
     const cycleHours = Number(cycleRows[0]?.value ?? 24);
     const claimDays = Number(claimRows[0]?.value ?? 7);
-    const initialBudgetCents = rateCents * 800;
+    let expectedQualified = 0;
+    let expectedSequence = 0;
+    for (let dayIndex = 0; dayIndex < 30; dayIndex++) {
+      for (let linkIndex = 0; linkIndex < PROMOTER_IDS.length * CHANNELS.length; linkIndex++) {
+        const events = 1 + ((dayIndex + linkIndex) % 3);
+        for (let eventIndex = 0; eventIndex < events; eventIndex++) {
+          expectedSequence++;
+          if (expectedSequence % 5 !== 0 && (dayIndex + linkIndex + eventIndex) % 3 !== 0) expectedQualified++;
+        }
+      }
+    }
+    const waitlistedTarget = Math.min(20, Math.max(0, expectedQualified - 1));
+    const initialBudgetCents = rateCents * (expectedQualified - waitlistedTarget);
     const bidAmountCents = initialBudgetCents * 2;
     const now = new Date();
     const linkCreatedAt = new Date(now.getTime() - 60 * DAY);
@@ -103,6 +113,7 @@ async function main() {
     const budgetSpendRows: Row[] = [];
     const promoterLedgerRows: Row[] = [];
     let sequence = 0;
+    let remainingBudgetCents = initialBudgetCents;
     for (let dayIndex = 0; dayIndex < 30; dayIndex++) {
       const eventDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 29 + dayIndex));
       for (let linkIndex = 0; linkIndex < links.length; linkIndex++) {
@@ -115,7 +126,6 @@ async function main() {
           const createdAt = new Date(eventDay.getTime() + 8 * 60 * 60 * 1000 + (linkIndex * 45 + eventIndex * 7) * 60_000);
           const ignoredReason = sequence % 5 === 0 ? 'rate_limited' : null;
           const isQualified = ignoredReason === null && (dayIndex + linkIndex + eventIndex) % 3 !== 0;
-          const isWaitlisted = isQualified && (dayIndex + linkIndex + eventIndex) % 17 === 0;
           const qualifiedAt = isQualified ? new Date(createdAt.getTime() + 15_000) : null;
           const country = COUNTRY[(dayIndex + linkIndex + eventIndex) % COUNTRY.length];
           const identity = `${dayIndex}:${linkIndex}:${eventIndex}`;
@@ -138,6 +148,7 @@ async function main() {
 
           if (isQualified && qualifiedAt) {
             const earningId = randomUUID();
+            const isWaitlisted = remainingBudgetCents < rateCents;
             if (isWaitlisted) {
               earningRows.push([earningId, link.promoterId, BRAND_ID, link.id, visitorId, clickId, rateCents, null, 'waitlisted', null, null, qualifiedAt]);
             } else {
@@ -145,6 +156,7 @@ async function main() {
               const status = settledAt <= now ? 'available' : 'pending';
               earningRows.push([earningId, link.promoterId, BRAND_ID, link.id, visitorId, clickId, rateCents, settledAt, status, qualifiedAt, status === 'available' ? settledAt : null, qualifiedAt]);
               budgetSpendRows.push([BRAND_ID, -rateCents, 'visitor', earningId]);
+              remainingBudgetCents -= rateCents;
               if (status === 'available') promoterLedgerRows.push([link.promoterId, rateCents, 'earning', earningId, settledAt]);
             }
           }
@@ -161,6 +173,9 @@ async function main() {
     const pendingSpend = budgetSpendRows.reduce((total, row) => total + Math.abs(Number(row[1])), 0);
     const waitlistedCount = earningRows.filter((row) => row[8] === 'waitlisted').length;
     const remaining = initialBudgetCents - pendingSpend;
+    if (remaining !== remainingBudgetCents || (waitlistedCount > 0 && remaining >= rateCents)) {
+      throw new Error('Demo seed budget does not match its funded and waitlisted earnings.');
+    }
     await db.query(`update public.brands set budget_cents = $2, ads_enabled = ($3 = 0 and $2 >= rate_cents) where id = $1`, [BRAND_ID, remaining, waitlistedCount]);
     await db.query('commit');
 
