@@ -114,7 +114,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 
 **Tests (Vitest):** split rounding (odd cents, 1 cent, large values), `toCents` rejects floats/garbage, `randomCode` length and alphabet and distribution sanity (no modulo bias over 1M samples), handle regex, HMAC gives the same output on Node and edge.
 **Done when:**
-- [ ] 100% branch coverage on `money.ts` and `codes.ts`.
+- [x] 100% branch coverage on `money.ts` and `codes.ts` (verified with Vitest v8 coverage on 2026-10-26: both files report 100% statements, branches, functions, and lines).
 
 ### P1.4 — Auth and profiles
 
@@ -407,7 +407,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 - Broken or missing logo → fallback monogram.
 
 **Done when:**
-- [ ] Images render for brands with long names, missing logos, and transparent logos.
+- [x] Images render locally for brands with long names, missing logos, and transparent logos (OG/story route tests verify PNG signatures and dimensions). Cloudflare runtime and hosted-bucket verification remain below.
 
 **Built locally (2026-10-25):** `/api/og/{code}` and `/api/story/{code}.png` render branded cards from an active link, with monogram fallback, rank, brand name and description. Story cache keys fingerprint the rendered logo data, name, description and rank, so overwriting a logo at the same storage path invalidates stale cards; an unavailable logo uses a separate monogram cache entry. Helper tests cover stable and changing creative inputs plus monograms. Five route tests render and validate actual PNG signatures/dimensions for a long-name monogram card and a transparent-logo card, plus story generation and cache-hit behavior; story generation still succeeds if the cache bucket is unavailable. Deferred: verify `ImageResponse` in the Cloudflare OpenNext runtime and provision the hosted `story-cache` bucket under P1.12; visually inspect device/social presentation.
 
