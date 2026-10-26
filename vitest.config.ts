@@ -8,7 +8,7 @@ export default defineConfig({
   },
   test: {
     passWithNoTests: true,
-    include: ['packages/**/*.test.ts', 'apps/**/*.test.ts'],
+    include: ['packages/**/*.test.ts', 'apps/**/*.test.ts', 'deploy/**/*.test.ts'],
     exclude: ['**/node_modules/**', '**/.next/**', '**/.open-next/**'],
   },
 });

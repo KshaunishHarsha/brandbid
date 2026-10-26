@@ -1,4 +1,4 @@
-# Core hosted sign-in settings for STAGING (project brandbid-main). Pushed by deploy/supabase/push-config.sh.
+# Core hosted sign-in settings for STAGING (see project-ref). Pushed by deploy/supabase/setup.mjs.
 # Only properties declared here are changed on the project; the repo's main supabase/config.toml (local development
 # values such as a 1 second email re-send limit and localhost URLs) is never pushed.
 
