@@ -203,7 +203,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Design note:** the strict per-email limit and the single-use Turnstile check run *after* all validation, so a typo never burns an attempt or a token.
 **Still open:**
 - [ ] The real Razorpay Checkout widget (`checkout.js`) is coded to the docs but untested until we have test keys. Everything behind it is tested via the mock.
-- [ ] Step 3 should show "price to take rank N". Needs `claim_price` from P1.7; the amount picker has presets and a custom amount for now.
+- [x] Step 3 shows the P1.7 claim-price ladder as "Take #N" choices and keeps a custom amount field; selecting a rank fills its current quoted price. The server refreshes the ladder when the page loads.
 - [ ] A click-through browser test (Playwright). I verified every API call and that the pages render, but did not drive the wizard in a browser.
 - [ ] Hosted Supabase: create the `logos` bucket (public, 1 MiB, png/jpeg/webp). `config.toml` only configures local. Add to P1.12.
 - [ ] Logos are stored as uploaded (no resize): Workers has no image library. Fine under 1 MB; revisit if it matters.
