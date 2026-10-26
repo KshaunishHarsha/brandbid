@@ -48,7 +48,10 @@ insert into public.budget_ledger (brand_id, delta_cents, reason, earning_id) val
   ('00000000-0000-0000-0000-000000000e55', -250, 'visitor', '00000000-0000-0000-0000-000000000e70');
 update public.brands set budget_cents = 0 where id = '00000000-0000-0000-0000-000000000e55';
 insert into public.fraud_flags (subject_type, subject_id, rule, score, details)
-values ('earning', '00000000-0000-0000-0000-000000000e67', 'R9', 60, '{"signal":"test"}');
+values
+  ('earning', '00000000-0000-0000-0000-000000000e67', 'R9', 60, '{"signal":"test"}'),
+  ('earning', '00000000-0000-0000-0000-000000000e68', 'R1', 40, '{"signal":"test"}'),
+  ('earning', '00000000-0000-0000-0000-000000000e68', 'R4', 20, '{"signal":"test"}');
 
 do $$
 declare result jsonb; again jsonb; balance bigint;
@@ -58,13 +61,20 @@ begin
   assert (select status from public.earnings where id = '00000000-0000-0000-0000-000000000e67') = 'reversed', 'available earning is reversed';
   assert (select status from public.earnings where id = '00000000-0000-0000-0000-000000000e69') = 'pending', 'waitlisted earning is funded after budget return';
   assert (select status from public.fraud_flags where subject_id = '00000000-0000-0000-0000-000000000e67') = 'confirmed', 'associated open fraud flag is confirmed';
+  assert (select trust_score from public.profiles where id = '00000000-0000-0000-0000-000000000e51') = -50, 'confirmed R9 applies the configured self-promotion penalty';
+  assert (select status from public.profiles where id = '00000000-0000-0000-0000-000000000e51') = 'suspended', 'trust below the configured threshold suspends the promoter';
+  assert (select count(*) from public.links where promoter_id = '00000000-0000-0000-0000-000000000e51' and status <> 'disabled') = 0, 'trust suspension disables active promoter links';
+  assert (select count(*) from public.audit_log where action = 'promoter_suspended_trust_threshold' and subject_id = '00000000-0000-0000-0000-000000000e51') = 1, 'automatic suspension is audited once';
   assert (select sum(delta_cents) from public.promoter_ledger where promoter_id = '00000000-0000-0000-0000-000000000e51') = -250, 'clawback can make the promoter balance negative';
   assert (select budget_cents from public.brands where id = '00000000-0000-0000-0000-000000000e55') = 150, 'reversal funds the waitlist from returned budget';
   again := public.reverse_earning('00000000-0000-0000-0000-000000000e67', 'confirmed self-promotion', '00000000-0000-0000-0000-000000000e54');
   assert not (again->>'changed')::boolean, 'a repeated reversal is idempotent';
+  assert (select trust_score from public.profiles where id = '00000000-0000-0000-0000-000000000e51') = -50, 'a repeated reversal does not apply its trust penalty again';
 
   result := public.reverse_earning('00000000-0000-0000-0000-000000000e68', 'invalid pending traffic', '00000000-0000-0000-0000-000000000e54');
   assert (select status from public.earnings where id = '00000000-0000-0000-0000-000000000e68') = 'reversed', 'pending earning is reversed';
+  assert (select trust_score from public.profiles where id = '00000000-0000-0000-0000-000000000e51') = -70, 'each confirmed non-R9 flag applies its configured penalty';
+  assert (select count(*) from public.fraud_flags where subject_id = '00000000-0000-0000-0000-000000000e68' and status = 'confirmed') = 2, 'all flags confirmed by the reversal are closed';
   assert (select count(*) from public.promoter_ledger where earning_id = '00000000-0000-0000-0000-000000000e68') = 0, 'pending reversal does not claw back uncredited earnings';
   result := public.settle_due_earnings();
   assert (select sum(delta_cents) from public.promoter_ledger where promoter_id = '00000000-0000-0000-0000-000000000e51') = 0, 'next clean settlement recovers the clawback';

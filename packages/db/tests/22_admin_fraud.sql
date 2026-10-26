@@ -52,6 +52,9 @@ begin
   result := public.review_fraud_flag('00000000-0000-0000-0000-000000000e9a', 'confirm', 'confirmed self-promotion', '00000000-0000-0000-0000-000000000e83');
   assert (select status from public.earnings where id = '00000000-0000-0000-0000-000000000e99') = 'reversed', 'confirm invokes the audited reversal flow';
   assert (select status from public.fraud_flags where id = '00000000-0000-0000-0000-000000000e9a') = 'confirmed', 'confirm closes the flag as confirmed';
+  assert (select trust_score from public.profiles where id = '00000000-0000-0000-0000-000000000e81') = -49, 'confirmed self-promotion applies the configured penalty after the clean-cycle credit';
+  assert (select status from public.profiles where id = '00000000-0000-0000-0000-000000000e81') = 'suspended', 'admin confirmation suspends an account below the trust threshold';
+  assert (select count(*) from public.links where promoter_id = '00000000-0000-0000-0000-000000000e81' and status <> 'disabled') = 0, 'admin-confirmed trust suspension disables links';
   assert has_function_privilege('service_role', 'public.admin_fraud_queue(uuid)', 'EXECUTE');
   assert not has_function_privilege('authenticated', 'public.admin_fraud_queue(uuid)', 'EXECUTE');
 end $$;
