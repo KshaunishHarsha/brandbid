@@ -1,18 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { background, waitUntil, rpc, sentry } = vi.hoisted(() => {
+const { background, waitUntil, rpc, sentry, mockFlags } = vi.hoisted(() => {
   const background: Promise<unknown>[] = [];
   const waitUntil = vi.fn((task: Promise<unknown>) => { background.push(task); });
   const rpc = vi.fn();
   const sentry = vi.fn();
-  return { background, waitUntil, rpc, sentry };
+  const mockFlags = { lookupFailure: false, rateLimitFailure: false };
+  return { background, waitUntil, rpc, sentry, mockFlags };
 });
 
 vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: () => ({ ctx: { waitUntil } }) }));
 vi.mock('@sentry/nextjs', () => ({ captureException: sentry }));
 vi.mock('@/lib/auth-cookie', () => ({ viewerIdFromAuthCookie: vi.fn().mockResolvedValue(null) }));
 vi.mock('@/lib/request', () => ({ getClientIp: () => '203.0.113.7', hashValue: async (value: string) => `hash:${value}` }));
-vi.mock('@/lib/ratelimit', () => ({ getLimiter: () => ({ limit: vi.fn().mockResolvedValue({ success: true }) }) }));
+vi.mock('@/lib/ratelimit', () => ({ getLimiter: () => ({ limit: vi.fn().mockImplementation(async () => {
+  if (mockFlags.rateLimitFailure) throw new Error('redis unavailable');
+  return { success: true };
+}) }) }));
 vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: () => ({
     from: (table: string) => {
@@ -20,7 +24,9 @@ vi.mock('@/lib/supabase/admin', () => ({
       query.select = () => query;
       query.eq = (_column: string, value: string) => { if (table === 'links' && value === 'Unknown1') query.unknown = true; return query; };
       query.maybeSingle = async () => table === 'links'
-        ? { data: query.unknown ? null : { id: 'link-id', brand_id: 'brand-id', promoter_id: 'promoter-id', status: 'active' }, error: null }
+        ? mockFlags.lookupFailure
+          ? { data: null, error: new Error('database unavailable') }
+          : { data: query.unknown ? null : { id: 'link-id', brand_id: 'brand-id', promoter_id: 'promoter-id', status: 'active' }, error: null }
         : table === 'brands'
           ? { data: { slug: 'acme', name: 'Acme & Co', description: 'Useful <things>', status: 'active' }, error: null }
           : { data: { status: 'active' }, error: null };
@@ -37,6 +43,8 @@ const req = (code: string, headers: Record<string, string> = {}) => new Request(
 
 beforeEach(() => {
   background.length = 0;
+  mockFlags.lookupFailure = false;
+  mockFlags.rateLimitFailure = false;
   waitUntil.mockClear();
   rpc.mockReset().mockResolvedValue({ error: null });
   sentry.mockClear();
@@ -52,6 +60,32 @@ describe('GET /go/[code]', () => {
     expect(unknown.status).toBe(302);
     expect(new URL(unknown.headers.get('location')!).pathname).toBe('/');
     expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('does not count a click when link lookup fails', async () => {
+    mockFlags.lookupFailure = true;
+
+    const response = await GET(req('Lookup01'), ctx('Lookup01'));
+
+    expect(response.status).toBe(302);
+    expect(new URL(response.headers.get('location')!).pathname).toBe('/');
+    expect(rpc).not.toHaveBeenCalled();
+    expect(waitUntil).not.toHaveBeenCalled();
+    expect(sentry).toHaveBeenCalledWith(expect.any(Error), { tags: { route: 'go', stage: 'lookup' } });
+  });
+
+  it('redirects during rate-limiter outages but records the click as ignored', async () => {
+    mockFlags.rateLimitFailure = true;
+
+    const response = await GET(req('RateErr1', { 'user-agent': 'Mozilla/5.0 Chrome/120.0' }), ctx('RateErr1'));
+    const location = new URL(response.headers.get('location')!);
+
+    expect(response.status).toBe(302);
+    expect(location.pathname).toBe('/b/acme');
+    expect(waitUntil).toHaveBeenCalledOnce();
+    await Promise.all(background);
+    expect(rpc).toHaveBeenCalledWith('record_click', expect.objectContaining({ p_rate_limited: true }));
+    expect(sentry).toHaveBeenCalledWith(expect.any(Error), { tags: { route: 'go', stage: 'rate_limit' } });
   });
 
   it('serves escaped preview metadata to crawlers without recording a click', async () => {
