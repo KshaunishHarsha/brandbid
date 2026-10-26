@@ -21,7 +21,7 @@
     "test:concurrency": "tsx packages/db/tests/concurrency-record-bid.ts && tsx packages/db/tests/concurrency-qualify.ts && tsx packages/db/tests/concurrency-withdrawals.ts && tsx packages/db/tests/concurrency-links.ts",
     "test:worker": "node scripts/test-worker.mjs",
     "admin:grant": "bash scripts/grant-admin.sh",
-    "lint:migrations": "bash packages/db/check-migrations.sh"
+    "lint:migrations": "node packages/db/check-migrations.mjs"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^3.2.7",
