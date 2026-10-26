@@ -34,7 +34,7 @@ export default async function Advertise({ params }: { params: Promise<{ slug: st
     db.from('brand_members').select('role').eq('brand_id', brand.id).eq('user_id', user.id).maybeSingle(),
   ]);
   if (membership) {
-    return <main className="mx-auto max-w-md space-y-4 p-6"><Link href={`/b/${brand.slug}`} className="text-sm underline">← {brand.name}</Link><h1 className="text-2xl font-bold">You can&apos;t promote this brand</h1><p>You&apos;re part of its team.</p></main>;
+    return <main className="mx-auto max-w-md space-y-4 p-6"><Link href={`/b/${brand.slug}`} className="text-sm underline">← {brand.name}</Link><h1 className="text-2xl font-bold">You can&apos;t promote a brand you&apos;re part of.</h1><p>You&apos;re part of its team.</p></main>;
   }
   if (!profile?.handle || !profile.promoter_terms_accepted_at) redirect(`/onboarding/promoter?next=${encodeURIComponent(next)}`);
   let links;

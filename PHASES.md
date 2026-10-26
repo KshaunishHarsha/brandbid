@@ -374,7 +374,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 **Tests (SQL):** existing link returned; brand member refused; suspended promoter refused; 2 parallel calls produce 1 row.
 **Done when:**
 - [ ] All tests pass.
-- [ ] The share sheet shows the "You can't promote a brand you're part of." message for members.
+- [x] Brand members are stopped before the share sheet and see "You can't promote a brand you're part of." The Advertise page test covers both the membership check and the database self-promotion guard.
 
 **Built locally (2026-10-25):** Service-role-only `get_or_create_link` with server-generated codes, five collision retries, and stable channel URLs on the Advertise page. SQL tests cover existing links, self-promotion, and suspension. `concurrency-links.ts` now fires 25 parallel requests for the same tuple and verifies one returned and persisted ID/code; the full local concurrency suite passes. Hosted sign-in verification remains open.
 
