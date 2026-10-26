@@ -357,7 +357,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 
 **Done when:**
 - [ ] A new user goes from tapping Advertise to the share sheet in under a minute (timed).
-- [ ] Taken and reserved handles are rejected.
+- [x] Taken and reserved handles are rejected. Route tests cover reserved/taken responses; `handleAvailable` tests verify both profile handles and brand slugs are checked, the current user may keep their handle, and query errors fail closed.
 
 **Built locally (2026-10-25):** Advertise entry on boards and brand pages, verified-email and allowlist checks, waitlist and admin allowlist editor, promoter profile with handle/country/terms validation, `/earn`, and hashed brand-member dashboard signals. The profile route now has direct tests for same-origin access, verified email, beta allowlist, reserved/taken handles, a concurrent uniqueness collision, and successful safe navigation. The share destination is supplied by P2.2/P2.3. Live timing of the sign-in-to-share flow remains open and needs a configured sign-in path/browser session.
 
