@@ -305,11 +305,11 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 ### P1.12 — Environments and deploy pipeline
 
 **Goal:** staging and production exist and deploy safely.
-**Depends on:** P1.1, P1.2. **Refs:** BUILD §5. **Needs from you:** [Q7] none of the accounts exist yet. Create them before this WP, in this order:
+**Depends on:** P1.1, P1.2. **Refs:** BUILD §5. **Current state:** the GitHub repo exists. Staging Supabase `brandbid-main` in `ap-south-1` was last recorded with 15 migrations, but the repo now has 37; reconcile and apply pending migrations, then rerun the project checker. The `logos` bucket and core sign-in settings were previously verified. See `DEPLOYMENT.md` for exact steps.
 
 1. Domain `brandbid.wtf` (D39). Note: `.wtf` is a normal, working TLD, but some email filters and corporate networks distrust unusual TLDs. Set up SPF, DKIM and DMARC for Resend properly and test deliverability early (P3.1).
-2. GitHub repo (private) for this monorepo.
-3. Supabase: org with 2 projects (`brandbid-staging`, `brandbid-prod`), same region (pick one close to most users; `ap-south-1` if India-first, `us-east-1` if global).
+2. GitHub repo (private) for this monorepo — already created.
+3. Supabase: staging project `brandbid-main` already exists in `ap-south-1`; compare its applied migrations with the current 37-file repo, apply pending migrations, and rerun the checker. Then finish SMTP and email-template setup. Create `brandbid-prod` in the same region before production deployment.
 4. Cloudflare (D43): add the `brandbid.wtf` zone (point the registrar's nameservers at Cloudflare; Workers custom domains need the domain on Cloudflare DNS). Upgrade to the **Workers Paid** plan. Two Workers, `brandbid-staging` and `brandbid-prod`, with domains `staging.brandbid.wtf` and `brandbid.wtf`. Create an R2 bucket per environment for Next's incremental cache. A scoped API token for CI (Workers deploy only).
 5. AWS (D40): an account with billing alerts and an IAM role for CI (GitHub OIDC, no long-lived keys). Per environment: an ECR repo, an ECS Fargate service for the worker (1 task, 0.25 vCPU / 0.5 GB to start, always on because pg-boss polls), secrets in Secrets Manager, logs in CloudWatch. Deploy from GitHub Actions: build the worker image, push to ECR, update the service. Infrastructure as code (Terraform or CDK, pick one in P1.12) so staging and production match. Use a region close to the Supabase one. The worker needs the Supabase **direct** connection string, so check the connection limits and whether Supabase's IPv4 add-on is needed (Fargate tasks in public subnets can reach IPv4 only if the DB endpoint is IPv4).
 6. Razorpay: account with test keys now; KYC, international cards activation and live keys before launch.
@@ -414,7 +414,7 @@ Dependency spine: `P1.1 → P1.2 → P1.3 → P1.5 → P1.6 → P1.7`. Everythin
 ### Setup-dependent checks to do later
 
 - [ ] P1.11: configure staging PostHog and Sentry credentials; verify real funnel events and alerts. Keep source-map upload deferred as requested.
-- [ ] P1.12: create staging/production Supabase, Cloudflare and AWS resources and secrets; configure hosted Storage buckets including `logos` and `story-cache`; validate deployment.
+- [ ] P1.12: staging Supabase `brandbid-main` exists, but its last recorded migration count is 15 while the repo has 37; reconcile, apply pending migrations, and rerun the checker. Then configure Resend SMTP and the email template; create production Supabase; complete Cloudflare account/domain/secrets and first staging deploy; decide and provision AWS worker infrastructure; add R2 cache; and validate the staging-to-production deployment flow. See `DEPLOYMENT.md`.
 - [ ] P2.1: run the hosted verified-email/allowlist onboarding flow and time it through to sharing.
 - [ ] P2.3: test X, LinkedIn, copy-link and story sharing on iOS Safari, Android Chrome and desktop Chrome.
 - [ ] P2.4: verify generated preview images in the Cloudflare Worker runtime and inspect representative long, missing-logo and transparent-logo brands.
