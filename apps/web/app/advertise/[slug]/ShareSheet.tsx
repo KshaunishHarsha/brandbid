@@ -19,7 +19,9 @@ export function ShareSheet({ brandName, description, links, storyImageUrl, retur
   const [draft, setDraft] = useState(`Check out ${brandName}: ${description} ${links.link} #ad`.replace(/\s+/g, ' ').trim());
   const [notice, setNotice] = useState('');
   const [showGuide, setShowGuide] = useState(false);
-  const textForShare = () => shareText(draft);
+  // The draft contains a generic link. Platform actions attach their own channel link separately,
+  // so remove every known tracked URL from the caption before sharing it.
+  const textForShare = () => shareText(draft, Object.values(links));
   const track = (channel: string) => {
     if (safeStorageGet(ANALYTICS_CONSENT_KEY) === 'yes') {
       posthog.capture('share_channel_tapped', { channel });

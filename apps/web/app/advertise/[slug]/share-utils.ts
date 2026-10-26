@@ -1,5 +1,9 @@
-export function shareText(draft: string): string {
-  const content = draft.replace(/\s*#ad\s*/gi, ' ').trim();
+export function shareText(draft: string, trackedLinks: readonly string[] = []): string {
+  const withoutTrackedLinks = trackedLinks.reduce(
+    (text, link) => (link ? text.replaceAll(link, ' ') : text),
+    draft,
+  );
+  const content = withoutTrackedLinks.replace(/\s*#ad\s*/gi, ' ').trim();
   return content ? `${content} #ad` : '#ad';
 }
 
