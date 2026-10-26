@@ -42,7 +42,43 @@ export async function POST(req: Request) {
     const cookieId = consented && rawCookie && /^[0-9a-f]{32}$/i.test(rawCookie) ? rawCookie : null;
     const fingerprintHash = consented && parsed.data.fingerprint ? await hashValue(parsed.data.fingerprint) : null;
 
-    const { error } = await createAdminClient().rpc('qualify_visitor', {
+    const admin = createAdminClient();
+    // /go writes clicks with waitUntil, so its row can appear after the
+    // consent POST has already tried to attach this cookie. Qualification
+    // runs after the visitor has spent time on the page; retry the binding
+    // here so a slow background click write cannot turn consent into a
+    // cookie_mismatch rejection.
+    if (cookieId) {
+      try {
+        let click: { brand_id: string; visitor_id: string } | null = null;
+        for (let attempt = 0; attempt < 4 && !click; attempt++) {
+          const { data } = await admin.from('clicks')
+            .select('brand_id,visitor_id')
+            .eq('id', parsed.data.clickId)
+            .maybeSingle();
+          if (data?.brand_id && data.visitor_id) {
+            click = { brand_id: data.brand_id, visitor_id: data.visitor_id };
+          }
+          else if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+        if (click) {
+          const cookieHash = await hashValue(cookieId);
+          await admin.from('visitor_keys').upsert({
+            brand_id: click.brand_id,
+            key_type: 'cookie',
+            key_hash: cookieHash,
+            visitor_id: click.visitor_id,
+          }, { onConflict: 'brand_id,key_type,key_hash', ignoreDuplicates: true });
+          await admin.from('clicks').update({ cookie_id: cookieId })
+            .eq('id', parsed.data.clickId)
+            .eq('visitor_id', click.visitor_id);
+        }
+      } catch (error) {
+        Sentry.captureException(error, { tags: { route: 'qualify', stage: 'cookie_binding' } });
+      }
+    }
+
+    const { error } = await admin.rpc('qualify_visitor', {
       p_click_id: parsed.data.clickId,
       p_fp_hash: fingerprintHash,
       p_cookie_id: cookieId,

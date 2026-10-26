@@ -2,6 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   rpc: vi.fn(),
+  from: vi.fn(),
+  lookupClick: vi.fn(),
+  upsert: vi.fn(),
+  update: vi.fn(),
+  updateEq: vi.fn(),
+  updateVisitorEq: vi.fn(),
   limit: vi.fn(),
   hashValue: vi.fn(),
   verifyTurnstile: vi.fn(),
@@ -17,7 +23,7 @@ vi.mock('next/headers', () => ({ cookies: async () => ({ get: (name: string) => 
 vi.mock('@/lib/ratelimit', () => ({ getLimiter: () => ({ limit: mocks.limit }) }));
 vi.mock('@/lib/request', () => ({ getClientIp: () => '198.51.100.5', hashValue: mocks.hashValue }));
 vi.mock('@/lib/same-origin', () => ({ isSameOrigin: () => true }));
-vi.mock('@/lib/supabase/admin', () => ({ createAdminClient: () => ({ rpc: mocks.rpc }) }));
+vi.mock('@/lib/supabase/admin', () => ({ createAdminClient: () => ({ rpc: mocks.rpc, from: mocks.from }) }));
 vi.mock('@/lib/turnstile', () => ({ verifyTurnstile: mocks.verifyTurnstile }));
 
 import { POST } from './route';
@@ -46,6 +52,16 @@ beforeEach(() => {
   mocks.hashValue.mockImplementation(async (value: string) => `hash:${value}`);
   mocks.verifyTurnstile.mockResolvedValue(true);
   mocks.rpc.mockResolvedValue({ error: null });
+  mocks.lookupClick.mockResolvedValue({ data: null, error: null });
+  mocks.upsert.mockResolvedValue({ error: null });
+  mocks.updateVisitorEq.mockResolvedValue({ error: null });
+  mocks.updateEq.mockReturnValue({ eq: mocks.updateVisitorEq });
+  mocks.update.mockReturnValue({ eq: mocks.updateEq });
+  mocks.from.mockImplementation(() => ({
+    select: () => ({ eq: () => ({ maybeSingle: mocks.lookupClick }) }),
+    upsert: mocks.upsert,
+    update: mocks.update,
+  }));
 });
 
 describe('POST /api/q', () => {
@@ -86,6 +102,7 @@ describe('POST /api/q', () => {
   });
 
   it('passes consented cookie and HMACed fingerprint to SQL', async () => {
+    mocks.lookupClick.mockResolvedValueOnce({ data: { brand_id: 'brand-1', visitor_id: 'visitor-1' }, error: null });
     mocks.cookieValues.set('bb_vid', '0123456789abcdef0123456789abcdef');
     mocks.cookieValues.set('bb_consent', 'yes');
     const response = await POST(request(body, 'GB'));
@@ -95,5 +112,14 @@ describe('POST /api/q', () => {
       p_fp_hash: `hash:${body.fingerprint}`,
       p_cookie_id: '0123456789abcdef0123456789abcdef',
     }));
+    expect(mocks.upsert).toHaveBeenCalledWith({
+      brand_id: 'brand-1',
+      key_type: 'cookie',
+      key_hash: 'hash:0123456789abcdef0123456789abcdef',
+      visitor_id: 'visitor-1',
+    }, { onConflict: 'brand_id,key_type,key_hash', ignoreDuplicates: true });
+    expect(mocks.update).toHaveBeenCalledWith({ cookie_id: '0123456789abcdef0123456789abcdef' });
+    expect(mocks.updateEq).toHaveBeenCalledWith('id', body.clickId);
+    expect(mocks.updateVisitorEq).toHaveBeenCalledWith('visitor_id', 'visitor-1');
   });
 });
