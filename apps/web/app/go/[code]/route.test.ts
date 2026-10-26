@@ -65,6 +65,23 @@ describe('GET /go/[code]', () => {
     expect(waitUntil).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['X', 'Twitterbot/1.0', 'Xbot0001'],
+    ['LinkedIn', 'Mozilla/5.0 (compatible; LinkedInBot/1.0; +http://www.linkedin.com)', 'Link0001'],
+    ['WhatsApp', 'WhatsApp/2.23.20 A', 'Whats001'],
+    ['Slack', 'Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)', 'Slack001'],
+    ['Discord', 'Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)', 'Disc0001'],
+    ['iMessage', 'Mozilla/5.0 (Macintosh; Intel Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/6051.15 Applebot/0.1', 'Apple001'],
+  ])('serves preview HTML to %s without counting a click', async (_platform, userAgent, code) => {
+    const response = await GET(req(code, { 'user-agent': userAgent }), ctx(code));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toContain('text/html');
+    expect(await response.text()).toContain('og:image');
+    expect(rpc).not.toHaveBeenCalled();
+    expect(waitUntil).not.toHaveBeenCalled();
+  });
+
   it('returns 204 for link prefetches without setting a cookie or recording a click', async () => {
     const response = await GET(req('Prefetc1', { purpose: 'prefetch', 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }), ctx('Prefetc1'));
     expect(response.status).toBe(204);
