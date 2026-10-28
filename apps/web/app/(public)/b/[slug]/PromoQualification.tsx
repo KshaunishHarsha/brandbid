@@ -72,10 +72,11 @@ export function PromoQualification({ clickId, linkCode, needsConsent, initialCon
   }
 
   return <>
-    {viaHandle && <p className="mb-4 rounded-lg bg-accent/10 px-4 py-3 text-sm font-semibold">You&apos;re here via <span className="text-accent">@{viaHandle}</span> on brandbid</p>}
-    {needsConsent && consent === null && <section className="fixed inset-x-3 bottom-3 z-50 mx-auto max-w-xl rounded-xl border border-line bg-surface p-4 shadow-xl" aria-label="Privacy choices">
-      <p className="text-sm">Allow a visitor cookie and device recognition to measure qualified visits from promoter links? If you decline, we use only privacy-preserving network signals.</p>
-      <div className="mt-3 flex justify-end gap-2"><button className="rounded-lg border border-line px-4 py-2 text-sm" onClick={() => void chooseConsent('no')}>Decline</button><button className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-accent-fg" onClick={() => void chooseConsent('yes')}>Accept</button></div>
+    {viaHandle && <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-surface px-3.5 py-2 text-[13px] font-medium text-muted ring-1 ring-line"><span className="flex h-[22px] w-[22px] items-center justify-center rounded-full bg-[#6b4fd8] text-[9px] font-semibold uppercase text-white">{viaHandle.slice(0, 2)}</span>Shared by <span className="font-semibold text-fg">@{viaHandle}</span></p>}
+    {needsConsent && consent === null && <section className="fixed inset-x-3 bottom-3 z-50 mx-auto flex max-w-sm flex-col gap-3 rounded-2xl bg-ink p-[18px] text-ink-fg shadow-xl" aria-label="Privacy choices">
+      <h2 className="font-display text-[17px] font-bold">Cookies</h2>
+      <p className="text-[13px] leading-normal text-[#d7d2c5]">Allow a visitor cookie and device recognition to measure qualified visits from promoter links? If you decline, we use only privacy-preserving network signals.</p>
+      <div className="flex gap-2"><button className="flex-1 rounded-full bg-brand p-[11px] text-[13px] font-semibold text-ink" onClick={() => void chooseConsent('yes')}>Accept</button><button className="flex-1 rounded-full border-[1.5px] border-ink-fg p-[9.5px] text-[13px] font-semibold" onClick={() => void chooseConsent('no')}>Decline</button></div>
     </section>}
     {qualification && <div className="sr-only" aria-hidden="true"><Turnstile onToken={onTurnstileToken} /></div>}
   </>;

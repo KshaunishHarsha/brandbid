@@ -51,7 +51,7 @@ export default async function Advertise({ params }: { params: Promise<{ slug: st
   const storyImageUrl = new URL(`/api/story/${storyCode}.png`, storyUrl.origin).toString();
   return (
     <main className="min-h-screen bg-bg">
-      <ShareSheet brandName={brand.name} description={brand.description ?? ''} links={links} storyImageUrl={storyImageUrl} returnHref={`/b/${brand.slug}`} />
+      <ShareSheet brandName={brand.name} logoPath={brand.logoPath} description={brand.description ?? ''} links={links} storyImageUrl={storyImageUrl} returnHref={`/b/${brand.slug}`} />
     </main>
   );
 }

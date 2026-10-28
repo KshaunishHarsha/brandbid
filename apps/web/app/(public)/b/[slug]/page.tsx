@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { formatUSDCompact } from '@brandbid/shared';
 import { BrandLogo } from '@/components/BrandLogo';
+import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getBrandPage } from '@/lib/brand';
 import { getUser } from '@/lib/auth';
@@ -37,7 +38,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const listed = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
-const rankColor = (rank: number) => (rank === 1 ? 'text-gold' : rank === 2 ? 'text-silver' : rank === 3 ? 'text-bronze' : 'text-fg');
 
 export default async function BrandPageRoute({ params, searchParams }: Props) {
   const { slug } = await params;
@@ -65,90 +65,103 @@ export default async function BrandPageRoute({ params, searchParams }: Props) {
   const consentCookie = (await cookies()).get(CONSENT_COOKIE)?.value;
   const initialConsent = consentCookie === 'yes' || consentCookie === 'no' ? consentCookie : null;
 
+  const host = new URL(brand.url).hostname.replace(/^www\./, '');
+  const visitHref = viaHandle && clickId ? `/out/${clickId}` : `/out/b/${brand.slug}`;
+
   return (
-    <main className="mx-auto max-w-3xl px-4 pb-16">
+    <>
+    <main className="mx-auto max-w-[1280px] px-5 sm:px-10">
       <SiteHeader />
 
       <PromoQualification clickId={viaHandle ? clickId : null} linkCode={promoLinkCode} needsConsent={consentRequired} initialConsent={initialConsent} viaHandle={viaHandle} />
 
-      <article className="rounded-card border border-line bg-surface p-5 sm:p-7">
-        <div className="flex items-start gap-4">
-          <BrandLogo name={brand.name} logoPath={brand.logoPath} size={72} />
-          <div className="min-w-0">
-            <h1 className="text-2xl font-extrabold leading-tight tracking-tight sm:text-3xl">{brand.name}</h1>
-            {brand.category && (
-              <Link href={`/?category=${brand.category.slug}`} className="mt-1 inline-block text-sm text-muted hover:underline">
-                {brand.category.name}
-              </Link>
-            )}
+      <nav aria-label="Breadcrumb" className="pt-5 text-[13px] font-medium text-muted">
+        <Link href="/" className="text-muted hover:text-fg">Boards</Link>
+        {brand.category && <> / <Link href={`/?category=${brand.category.slug}`} className="text-muted hover:text-fg">{brand.category.name}</Link></>}
+        {' / '}<span className="text-fg">{brand.name}</span>
+      </nav>
+
+      <div className="grid gap-10 pb-12 pt-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-12">
+        <div className="flex min-w-0 flex-col gap-6">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
+            <BrandLogo name={brand.name} logoPath={brand.logoPath} size={120} />
+            <div className="flex min-w-0 flex-col gap-2.5">
+              <div className="flex items-center gap-2">
+                {brand.category && <span className="rounded-full border border-line bg-surface px-3 py-[5px] text-[13px] font-medium">{brand.category.name}</span>}
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#ddf1e3] py-1 pl-2 pr-2.5 text-xs font-semibold text-[#145c33]"><span className="h-1.5 w-1.5 rounded-full bg-positive" />Live</span>
+              </div>
+              <h1 className="break-words text-[44px] font-extrabold leading-[0.9] tracking-[-0.04em] sm:text-[64px] lg:text-[76px]">{brand.name}</h1>
+              {brand.description && <p className="max-w-[600px] text-pretty text-[17px] leading-[1.45] text-muted sm:text-[19px]">{brand.description}</p>}
+              <div className="mt-1.5 flex flex-wrap items-center gap-2.5">
+                <a href={visitHref} target="_blank" rel="noopener nofollow sponsored" className="rounded-full bg-accent px-[22px] py-[13px] text-[15px] font-semibold text-accent-fg hover:text-accent-fg">Visit {host} ↗</a>
+                {showAdvertise && <Link href={`/advertise/${brand.slug}`} className="rounded-full bg-brand px-[22px] py-[13px] text-[15px] font-semibold text-ink hover:text-ink">Advertise this brand</Link>}
+              </div>
+            </div>
           </div>
+
+          {topPromoters.length > 0 && <section aria-labelledby="top-promoters">
+            <h2 id="top-promoters" className="pb-1.5 font-display text-[22px] font-bold">Top promoters</h2>
+            <p className="mb-3 text-sm text-muted">Promoters ranked by settled earnings from this brand.</p>
+            <ol className="rounded-2xl border border-line bg-surface">
+              {topPromoters.map((promoter) => <li key={promoter.rank} className="grid grid-cols-[3rem_1fr_auto] items-center gap-3 border-t border-line px-4 py-3 first:border-t-0">
+                <span className="num font-mono text-sm font-semibold text-muted">#{promoter.rank}</span>
+                <span className="truncate font-semibold">{promoter.anonymous ? 'Anonymous' : `@${promoter.handle ?? 'anonymous'}`}</span>
+                <span className="text-right"><strong className="num block font-mono">{formatUSDCompact(promoter.earnedCents)}</strong><small className="text-muted">{promoter.qualifiedVisitors.toLocaleString()} visitors</small></span>
+              </li>)}
+            </ol>
+          </section>}
+
+          {brand.related.length > 0 && (
+            <section aria-labelledby="more" className="flex flex-col gap-1">
+              <h2 id="more" className="pb-1.5 font-display text-[22px] font-bold">{brand.category ? `More in ${brand.category.name}` : 'More on the board'}</h2>
+              <ul>
+                {brand.related.map((r) => (
+                  <li key={r.brandId}>
+                    <Link href={`/b/${r.slug}`} className="flex items-center gap-3.5 border-t border-line py-3 text-fg hover:text-fg">
+                      <span className="num w-8 shrink-0 font-mono text-[15px] font-semibold">#{r.rank}</span>
+                      <BrandLogo name={r.name} logoPath={r.logoPath} size={36} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-display text-base font-bold">{r.name}</span>
+                        {r.description && <span className="block truncate text-sm text-muted">{r.description}</span>}
+                      </span>
+                      <span className="shrink-0 text-[13px] font-semibold underline">View</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </div>
 
-        {brand.description && <p className="mt-4 text-lg">{brand.description}</p>}
+        <aside className="flex flex-col gap-3.5">
+          <div className="flex flex-col gap-[18px] rounded-[18px] bg-ink p-6 text-ink-fg">
+            <div className="flex items-center gap-4">
+              <span className={`num flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-2xl font-mono text-[34px] font-bold ${brand.allTimeRank === 1 ? 'bg-brand text-ink' : 'bg-ink-line text-ink-fg'}`}>{brand.allTimeRank ?? '–'}</span>
+              <div className="flex flex-col gap-0.5">
+                <span className="font-display text-[22px] font-bold">{brand.allTimeRank ? `#${brand.allTimeRank} all-time` : 'Not ranked yet'}</span>
+                <span className="text-[13px] text-ink-muted">{brand.todayRank ? `#${brand.todayRank} today` : 'no bids today'}{brand.todayCents > 0 ? ` · ${formatUSDCompact(brand.todayCents)}` : ''}</span>
+              </div>
+            </div>
+            <dl className="flex flex-col gap-3 border-t border-ink-line pt-3.5 text-sm text-ink-muted">
+              <div className="flex justify-between"><dt>Total paid</dt><dd className="num font-mono text-[15px] font-semibold text-ink-fg">{formatUSDCompact(brand.totalPaidCents)}</dd></div>
+              <div className="flex justify-between"><dt>Listed</dt><dd className="text-ink-fg">{listed(brand.listedAt)}</dd></div>
+            </dl>
+            <span className="text-[13px] font-medium text-ink-muted">Own this brand? <Link href="/dash" className="text-ink-fg underline hover:text-ink-fg">Manage in dashboard</Link></span>
+          </div>
 
-        <dl className="mt-6 grid grid-cols-3 gap-3 text-center">
-          <Stat label="All-time rank" value={brand.allTimeRank ? `#${brand.allTimeRank}` : '–'} valueClass={brand.allTimeRank ? rankColor(brand.allTimeRank) : ''} />
-          <Stat label="Today" value={brand.todayRank ? `#${brand.todayRank}` : '–'} sub={brand.todayCents > 0 ? `${formatUSDCompact(brand.todayCents)} today` : 'no bids today'} valueClass={brand.todayRank ? rankColor(brand.todayRank) : ''} />
-          <Stat label="Total paid" value={formatUSDCompact(brand.totalPaidCents)} sub={`since ${listed(brand.listedAt)}`} />
-        </dl>
+          {showAdvertise && <div className="flex flex-col gap-3 rounded-[18px] border border-line bg-surface p-[22px]">
+            <div className="font-mono text-[11px] uppercase text-muted">For promoters</div>
+            <p className="text-pretty text-sm leading-normal text-muted">Someone new to {brand.name} opens your link and stays on the page for 10 seconds. The brand pays you for each qualified visitor, settled after every 24-hour cycle.</p>
+            <Link href={`/advertise/${brand.slug}`} className="rounded-full bg-brand p-[13px] text-center text-[15px] font-semibold text-ink hover:text-ink">Get my link</Link>
+          </div>}
+        </aside>
+      </div>
 
-        <a
-          href={viaHandle && clickId ? `/out/${clickId}` : `/out/b/${brand.slug}`}
-          target="_blank"
-          rel="noopener nofollow sponsored"
-          className="mt-6 block rounded-xl bg-accent px-6 py-4 text-center text-lg font-bold text-accent-fg"
-        >
-          Visit {brand.name} →
-        </a>
-        <p className="mt-2 text-center text-xs text-muted">Opens {new URL(brand.url).hostname.replace(/^www\./, '')} in a new tab</p>
-        {showAdvertise && <Link href={`/advertise/${brand.slug}`} className="mt-4 block text-center text-sm font-semibold underline">Advertise this brand</Link>}
-      </article>
-
-      {topPromoters.length > 0 && <section className="mt-10" aria-labelledby="top-promoters">
-        <h2 id="top-promoters" className="mb-3 text-lg font-bold">Top promoters</h2>
-        <p className="mb-3 text-sm text-muted">Promoters ranked by settled earnings from this brand.</p>
-        <ol className="divide-y divide-line rounded-card border border-line bg-surface">
-          {topPromoters.map((promoter) => <li key={promoter.rank} className="grid grid-cols-[3rem_1fr_auto] items-center gap-3 px-4 py-3">
-            <span className="num text-sm font-bold text-muted">#{promoter.rank}</span>
-            <span className="truncate font-semibold">{promoter.anonymous ? 'Anonymous' : `@${promoter.handle ?? 'anonymous'}`}</span>
-            <span className="text-right"><strong className="num block">{formatUSDCompact(promoter.earnedCents)}</strong><small className="text-muted">{promoter.qualifiedVisitors.toLocaleString()} visitors</small></span>
-          </li>)}
-        </ol>
-      </section>}
-
-      {brand.related.length > 0 && (
-        <section className="mt-10" aria-labelledby="more">
-          <h2 id="more" className="mb-3 text-lg font-bold">{brand.category ? `More in ${brand.category.name}` : 'More on the board'}</h2>
-          <ul className="divide-y divide-line rounded-card border border-line bg-surface">
-            {brand.related.map((r) => (
-              <li key={r.brandId}>
-                <Link href={`/b/${r.slug}`} className="flex items-center gap-3 p-3 hover:bg-bg sm:p-4">
-                  <BrandLogo name={r.name} logoPath={r.logoPath} size={40} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate font-semibold">{r.name}</span>
-                    {r.description && <span className="block truncate text-sm text-muted">{r.description}</span>}
-                  </span>
-                  <span className="num shrink-0 text-sm font-semibold">{formatUSDCompact(r.totalPaidCents)}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      <p className="mt-10 text-center text-sm text-muted">
+      <p className="pb-4 text-center text-sm text-muted">
         Want a spot on the board? <Link href="/list" className="underline">List your brand</Link>
       </p>
     </main>
-  );
-}
-
-function Stat({ label, value, sub, valueClass = '' }: { label: string; value: string; sub?: string; valueClass?: string }) {
-  return (
-    <div className="rounded-lg border border-line p-3">
-      <dt className="text-xs text-muted">{label}</dt>
-      <dd className={`num mt-1 text-xl font-extrabold ${valueClass}`}>{value}</dd>
-      {sub && <dd className="mt-0.5 text-xs text-muted">{sub}</dd>}
-    </div>
+    <SiteFooter />
+    </>
   );
 }
