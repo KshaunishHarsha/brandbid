@@ -2,7 +2,7 @@
 
 This is the single source of truth for building brandbid: what we decided, why, and exactly how each part is built. If code, a ticket, a chat, or the planning doc disagrees with this file, this file wins. Change it by pull request, and log every decision change in section 3.
 
-Last updated: 2026-10-24
+Last updated: 2026-10-26
 
 ---
 
@@ -157,7 +157,7 @@ Every product decision, with the date it was made. To change one, add a new row 
 | Email | Resend | Templates in the repo |
 | Errors | Sentry | Web and worker |
 | Product analytics | PostHog | Funnels; never used for money decisions |
-| Payments in | TBD (section 23) | Must support webhooks and partial refunds |
+| Payments in | Razorpay (D29) | USD and international cards behind the processor adapter; sandbox credentials and merchant/refund constraints still need verification (section 21) |
 | Payouts out | TBD with CA (section 23) | |
 
 ### Repository layout
@@ -590,7 +590,7 @@ No scams, adult content, gambling, weapons, or illegal products. Regulated finan
 
 - All-time rank = order by `total_paid_cents` desc, ties broken by whoever reached that total first.
 - The price to take rank N = (current holder's total − your total) + $1. For a new brand, your total is 0.
-- A brand can pay any amount at or above the minimum bid (TBD, section 23). Every payment adds to `total_paid_cents`.
+- A brand can pay any amount at or above the $10 minimum bid (D30). Every payment adds to `total_paid_cents`.
 - Each payment is a bid, split by D2. There are no other ways to add budget (D19).
 
 ### Setting the rate
@@ -713,7 +713,7 @@ export function randomCode(len = 8): string {
 
 ### URL
 
-- Short domain, for example `bbid.to/k7Qx2aPm` (domain TBD, section 23), pointing at the same Worker.
+- No short domain at launch (D31/D39): links use `brandbid.wtf/go/{code}`.
 - Fallback that always works: `brandbid.wtf/go/k7Qx2aPm`.
 
 ---
@@ -998,7 +998,7 @@ Starting thresholds; tune them from real data and record changes in section 3.
 | R8 | Account younger than 7 days earned more than $50 in one cycle | 25 |
 | R9 | Self-promotion signals (below) | 60 |
 
-An earning group with a total score of 50 or more is flagged and held for review. Below 50, the scores still add to the promoter's history and lower their trust score.
+An earning group with a total score of 50 or more is flagged and held for review. Below 50, the scores still add to the promoter's assessment history. Whether and how sub-threshold assessments lower trust is not yet specified; keep trust unchanged until the decrement and accumulation/idempotency rules are decided (section 23).
 
 ### Self-promotion signals (R9)
 
@@ -1175,12 +1175,15 @@ Scope: promoter leaderboards (public), "discover brands" for promoters, top prom
 
 | Item | Needed by | Notes |
 | --- | --- | --- |
-| Payment processor | Phase 1 | Must support international cards for a sole proprietor, webhooks, partial refunds |
-| Minimum bid amount | Phase 1 | outbid.lol's daily board shows bids as low as $10 |
-| Daily board timezone | Phase 1 | Document assumes UTC |
-| Short link domain | Phase 2 | e.g. `bbid.to`; check availability |
-| Payout provider(s) | Phase 3 | Decide with CA (section 21) |
-| KYC provider (if payout provider doesn't do it) | Phase 3 | |
-| Phone verification provider | Phase 3 | Supabase phone auth or Twilio Verify |
-| Final budget split | Before public launch | Currently 50/50, tentative (D2) |
-| IP intelligence service | Phase 4 | For rule R7 |
+| Payment processor for bids | Chosen; verify before live payments | Razorpay (D29), behind the adapter. Test credentials and confirmation of merchant eligibility, international-card support, partial-refund behavior and refund windows remain under section 21/P1.5/P3.9. |
+| Minimum bid amount | Decided (D30) | $10. |
+| Daily board timezone | Before launch | UTC is implemented; owner confirmation remains open (Q3). |
+| Short link domain | Decided (D31/D39) | No short domain at launch; use `brandbid.wtf/go/{code}`. |
+| Payout provider(s) and countries | Phase 3 / before real payouts | Owner and CA must choose supported rails and countries, and confirm fees, foreign-exchange rules, KYC, webhook/sandbox availability and payout eligibility for an India-based sole proprietor. |
+| KYC provider | Phase 3 / before collecting KYC | Choose a payout provider that performs KYC or select a separate provider; document the provider's supported countries and statuses. |
+| Phone verification provider | Phase 3 / before phone onboarding | Choose and configure a provider (for example Supabase phone auth or Twilio Verify); decide supported countries, delivery, retries, rate limits and sandbox access. |
+| Tax information and storage | Phase 3 / before collecting tax data | CA must specify Indian and foreign-promoter tax fields, TDS/GST treatment, retention, and whether data stays with the provider or is stored encrypted. |
+| Legal and custody review | Before real payouts | CA/lawyer to resolve section 21 (holding promoter funds, entity structure, terms, privacy and refund wording, and ad disclosures). Publish reviewed policies before launch. |
+| Sub-threshold trust adjustment | Phase 3 | BUILD §16 already sets confirmed penalties (−10 per confirmed non-R9 flag, −50 for confirmed R9) and suspension below the configured −30 threshold; migration `036` implements those rules. Still decide the trust decrement, accumulation window and repeat-assessment behavior for below-threshold scores, which currently only enter assessment history. |
+| Brand billing-name signal for R9 | Phase 3 | Decide whether to collect/store a legal billing name and add its privacy/retention rules before implementing payout-name comparison. |
+| IP intelligence service | Phase 4 | Select and configure a provider before enabling R7; do not infer data-centre/VPN ranges locally. |

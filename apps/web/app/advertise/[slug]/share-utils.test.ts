@@ -9,6 +9,16 @@ describe('share sheet helpers', () => {
     expect(shareText('')).toBe('#ad');
   });
 
+  it('removes tracked links from platform captions so the attached channel link is not duplicated', () => {
+    const generic = 'https://brandbid.wtf/go/generic01';
+    const xLink = 'https://brandbid.wtf/go/channelx01';
+    const linkedinLink = 'https://brandbid.wtf/go/channelin1';
+
+    expect(shareText(`Check this out ${generic} #ad`, [generic, xLink, linkedinLink])).toBe('Check this out #ad');
+    expect(shareText(`Check this out ${xLink} #AD`, [generic, xLink, linkedinLink])).toBe('Check this out #ad');
+    expect(shareText(`More at https://example.com ${generic}`, [generic])).toBe('More at https://example.com #ad');
+  });
+
   it('treats unavailable local storage as optional and keeps sharing usable', () => {
     const denied = () => { throw new Error('storage blocked'); };
     expect(safeStorageGet('consent', denied)).toBeNull();

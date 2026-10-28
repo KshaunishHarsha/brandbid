@@ -3,18 +3,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Turnstile } from '@/components/Turnstile';
 import { ActiveTimeQualificationTimer } from './active-time';
+import { hasTurnstileProof } from './qualification';
 
 type Props = { clickId: string | null; linkCode: string | null; needsConsent: boolean; initialConsent: 'yes' | 'no' | null; viaHandle: string | null };
 
 export function PromoQualification({ clickId, linkCode, needsConsent, initialConsent, viaHandle }: Props) {
   const [consent, setConsent] = useState(initialConsent);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const [turnstileReady, setTurnstileReady] = useState(!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
   const [qualification, setQualification] = useState<{ activeMs: number; interactions: number } | null>(null);
   const fired = useRef(false);
   const requestSent = useRef(false);
   const canMeasure = !needsConsent || consent === 'yes';
-  const onTurnstileToken = useCallback((token: string | null) => { setTurnstileToken(token); setTurnstileReady(true); }, []);
+  const onTurnstileToken = useCallback((token: string | null) => { setTurnstileToken(token); }, []);
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -39,8 +39,8 @@ export function PromoQualification({ clickId, linkCode, needsConsent, initialCon
   }, [clickId, canMeasure]);
 
   useEffect(() => {
-    if (!qualification || !clickId || !turnstileReady || requestSent.current) return;
-    requestSent.current = true;
+    const needsBotCheck = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+    if (!qualification || !clickId || requestSent.current || !hasTurnstileProof(needsBotCheck, turnstileToken)) return;
     let cancelled = false;
     void (async () => {
       let fingerprint: string | undefined;
@@ -52,18 +52,13 @@ export function PromoQualification({ clickId, linkCode, needsConsent, initialCon
         } catch { /* Qualification can continue using cookie/IP+UA signals. */ }
       }
       if (cancelled) return;
+      requestSent.current = true;
       const body = JSON.stringify({ clickId, linkCode, activeMs: qualification.activeMs, interactions: qualification.interactions, turnstileToken: turnstileToken ?? undefined, fingerprint });
       try { await fetch('/api/q', { method: 'POST', headers: { 'content-type': 'application/json' }, body, keepalive: true }); } catch { /* Best-effort beacon; the click remains recorded. */ }
       setQualification(null);
     })();
     return () => { cancelled = true; };
-  }, [qualification, clickId, linkCode, needsConsent, consent, turnstileToken, turnstileReady]);
-
-  useEffect(() => {
-    if (!qualification || turnstileReady) return;
-    const timeout = window.setTimeout(() => setTurnstileReady(true), 2000);
-    return () => window.clearTimeout(timeout);
-  }, [qualification, turnstileReady]);
+  }, [qualification, clickId, linkCode, needsConsent, consent, turnstileToken]);
 
   async function chooseConsent(choice: 'yes' | 'no') {
     const response = await fetch('/api/consent', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ choice, clickId }) });

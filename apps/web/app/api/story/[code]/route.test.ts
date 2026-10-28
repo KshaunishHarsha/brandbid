@@ -10,6 +10,8 @@ vi.mock('@/lib/creative', async (importOriginal) => ({
   getLinkCreative: (...args: unknown[]) => getCreative(...args),
 }));
 vi.mock('@/lib/supabase/admin', () => ({ createAdminClient: () => ({ storage: { from: () => ({ download, upload }) } }) }));
+const captureException = vi.hoisted(() => vi.fn());
+vi.mock('@sentry/nextjs', () => ({ captureException }));
 
 import { GET } from './route';
 import type { LinkCreative } from '@/lib/creative';
@@ -23,6 +25,7 @@ beforeEach(() => {
   getCreative.mockReset().mockResolvedValue(creative);
   download.mockReset().mockResolvedValue({ data: null, error: new Error('bucket unavailable') });
   upload.mockReset().mockResolvedValue({ error: new Error('bucket unavailable') });
+  captureException.mockReset();
 });
 
 describe('story image route', () => {
@@ -38,6 +41,26 @@ describe('story image route', () => {
     expect(bytes.length).toBeGreaterThan(1000);
     expect(upload).toHaveBeenCalledOnce();
     expect(upload.mock.calls[0]?.[1]).toBeInstanceOf(Uint8Array);
+  });
+
+  it('still serves the generated image when cache download throws', async () => {
+    download.mockRejectedValueOnce(new Error('storage connection failed'));
+
+    const response = await GET(new Request('https://brandbid.wtf/api/story/Story003'), { params: Promise.resolve({ code: 'Story003' }) });
+
+    expect(response.status).toBe(200);
+    expect((await response.arrayBuffer()).byteLength).toBeGreaterThan(1000);
+    expect(captureException).toHaveBeenCalledWith(expect.any(Error), { tags: { route: 'story', stage: 'cache_read' } });
+  });
+
+  it('still serves the generated image when cache upload throws', async () => {
+    upload.mockRejectedValueOnce(new Error('storage connection failed'));
+
+    const response = await GET(new Request('https://brandbid.wtf/api/story/Story004'), { params: Promise.resolve({ code: 'Story004' }) });
+
+    expect(response.status).toBe(200);
+    expect((await response.arrayBuffer()).byteLength).toBeGreaterThan(1000);
+    expect(captureException).toHaveBeenCalledWith(expect.any(Error), { tags: { route: 'story', stage: 'cache_write' } });
   });
 
   it('serves the cached PNG when available without rerendering or uploading', async () => {
